@@ -1,0 +1,102 @@
+const statusCode = {
+    OK: 200,
+    CREATED: 201,
+    BAD_REQUEST: 400,
+    UNAUTHORIZED: 401,
+    FORBIDDEN: 403,
+    NOT_FOUND: 404,
+    CONFLICT: 409,
+    INTERNAL_SERVER_ERROR: 500,
+    SUCCESS: 200 // Often used for GET success, though OK is more standard
+};
+
+const resMessage = {
+    Project_already_exists: "Project with this name already exists.",
+    Project_created_successfully: "Project created successfully.",
+    Projects_fetch_successfully: "Projects fetched successfully.",
+    No_data_found: "No data found.",
+    Unauthorized_access: "Unauthorized access.",
+    Forbidden_access: "Forbidden access.",
+    Server_error: "Internal server error.",
+
+    Group_already_exists: "Group with this title already exists for this project.",
+    Group_created: "Group created successfully.",
+    Groups_fetch_successfully: "Groups fetched successfully.",
+    No_groups_found: "No groups found.",
+    Group_updated_successfully: "Group updated successfully.",
+    Group_deleted_successfully: "Group deleted successfully.",
+    Group_status_updated_successfully: "Group status updated successfully.",
+    No_IDs_provided_for_deletion: "No IDs provided for deletion.",
+    No_IDs_provided_for_updation: "No IDs provided for updation.",
+    Groups_updated_successfully: "Groups updated successfully.",
+
+    Contact_created_successfully: "Contact created successfully.",
+    Contact_already_exists: "Contact with this phone number already exists in this project.",
+    Contacts_fetch_successfully: "Contacts fetched successfully.",
+    No_contacts_found: "No contacts found.",
+    Contact_updated_successfully: "Contact updated successfully.",
+    Contact_deleted_successfully: "Contact deleted successfully.",
+    Contact_blocked_successfully: "Contact blocked successfully.",
+    Contact_unblocked_successfully: "Contact unblocked successfully.",
+    File_upload_successful: "File uploaded and contacts processed successfully.",
+    File_upload_failed: "File upload failed.",
+    Invalid_file_format: "Invalid file format. Please upload Excel or CSV files.",
+    No_file_uploaded: "No file uploaded.",
+    Contact_not_found: "Contact not found.",
+    Bulk_update_successful: "Bulk update successful.",
+    Bulk_delete_successful: "Bulk delete successful.",
+
+    Template_submitted: "Template submitted successfully.",
+    Template_fetched: "Templates fetched successfully.",
+    Media_uploaded: "Media uploaded successfully.",
+    Template_ID_is_required: "Template ID is required.",
+    template_view_successfully: "Template view successfully.",
+    Template_deleted_successfully: "Template deleted successfully.",
+    hsm_id_and_name_is_required: "HSM ID (template_id) and name are required.",
+    Missing_required_fields: "Required fields are missing.", // General message for missing fields
+    Media_required: "Media file is required for this template type.",
+
+    Message_sent_successfully: "Message sent successfully.",
+    Message_send_failed: "Message failed to send.",
+    Bulk_messages_sent_successfully: "Bulk messages sent successfully.",
+    Bulk_send_completed_with_errors: "Bulk send completed with some errors.",
+    Invalid_message_type: "Invalid message type provided.",
+    Meta_API_credentials_not_configured: "Meta API credentials (especially Access Token or Facebook URL) are not configured for this tenant. Please set them in your Tenant Admin Dashboard.",
+    No_valid_contacts_for_bulk_send: "No valid contacts found for bulk messaging.",
+    Project_whatsapp_number_not_configured: "Project WhatsApp number (for sending messages) is not configured. Please set it in your project settings.",
+
+    // NEW Webhook-specific messages
+    WEBHOOK_VERIFIED: "WEBHOOK_VERIFIED",
+    WEBHOOK_RECEIVE_SUCCESS: "Webhook received successfully.",
+    WEBHOOK_INVALID_VERIFY_TOKEN: "Invalid verify token.",
+
+    Team_member_already_exists: "Team member with this email or username already exists.",
+    Team_member_created_successfully: "Team member created successfully.",
+    Team_member_fetched_successfully: "Team members fetched successfully.",
+    Team_member_not_found: "Team member not found.",
+    Team_member_updated_successfully: "Team member updated successfully.",
+    Team_member_deleted_successfully: "Team member deleted successfully.",
+    Unauthorized_action: "Unauthorized action.",
+
+
+   // NEW WhatsApp Number Registration messages (updated for direct input)
+    WhatsApp_numbers_fetched_successfully: "WhatsApp phone numbers fetched successfully.",
+    No_whatsapp_numbers_found: "No WhatsApp phone numbers found for the provided WABA ID. Please ensure the WABA ID and Access Token are correct.",
+    Failed_to_fetch_whatsapp_numbers: "Failed to fetch WhatsApp phone numbers from Meta API. Check WABA ID and Access Token.",
+    WABA_ID_and_ACCESS_TOKEN_REQUIRED: "WABA ID and Access Token are required to fetch WhatsApp numbers.",
+
+
+     No_valid_contacts_for_bulk_send: "No valid contacts found in the file for bulk sending.",
+        Bulk_messages_sent_successfully: "Bulk messages sent successfully.",
+        Bulk_send_completed_with_errors: "Bulk send completed with errors for some contacts.",
+        Bulk_send_job_created: "Bulk send job created and started.",
+        Bulk_send_job_updated: "Bulk send job updated successfully.",
+        Bulk_send_job_not_found: "Bulk send job not found.",
+        Bulk_send_job_detail_fetched: "Bulk send job details fetched successfully.",
+        Bulk_send_jobs_fetched: "Bulk send jobs fetched successfully.",
+};
+
+module.exports = {
+    statusCode,
+    resMessage
+};
