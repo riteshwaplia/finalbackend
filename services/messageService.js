@@ -330,33 +330,62 @@ exports.sendBulkMessageService = async (req) => {
                 return;
             }
 
-            const components = [];
+          const components = [];
 
-            if (contactRow.header_text) {
-                components.push({
-                    type: 'HEADER',
-                    parameters: [{ type: 'text', text: contactRow.header_text }]
-                });
-            }
+// 1. Add image header from template if applicable
+templateComponents.forEach((component) => {
+  if (component.type === 'HEADER' && component.format === 'IMAGE') {
+    const imageLink = component.example?.header_handle?.[0];
+    if (imageLink) {
+      components.push({
+        type: 'HEADER',
+        parameters: [
+          {
+            type: 'image',
+            image: { link: imageLink },
+          },
+        ],
+      });
+    }
+  }
+});
 
-            const bodyParams = [];
-            Object.entries(contactRow).forEach(([key, value]) => {
-                if (key.startsWith('body_') && value) {
-                    bodyParams.push({ type: 'text', text: value });
-                }
-            });
-            if (bodyParams.length) {
-                components.push({
-                    type: 'BODY',
-                    parameters: bodyParams
-                });
-            }
+// 2. Add dynamic header text from Excel if provided (overrides image if present)
+if (contactRow.header_text) {
+  // Replace HEADER if already exists (image one)
+  const headerIndex = components.findIndex((c) => c.type === 'HEADER');
+  const headerComponent = {
+    type: 'HEADER',
+    parameters: [{ type: 'text', text: contactRow.header_text }],
+  };
+  if (headerIndex >= 0) {
+    components[headerIndex] = headerComponent;
+  } else {
+    components.push(headerComponent);
+  }
+}
 
-            const templateMessage = {
-                name: baseMessage.name,
-                language: baseMessage.language,
-                components
-            };
+// 3. BODY components from Excel like body_1, body_2, etc.
+const bodyParams = [];
+Object.entries(contactRow).forEach(([key, value]) => {
+  if (key.startsWith('body_') && value) {
+    bodyParams.push({ type: 'text', text: value });
+  }
+});
+if (bodyParams.length > 0) {
+  components.push({
+    type: 'BODY',
+    parameters: bodyParams,
+  });
+}
+
+// 4. Final message payload
+const templateMessage = {
+  name: baseMessage.name,
+  language: baseMessage.language,
+  components,
+};
+
 
             try {
                 const sendResult = await sendWhatsAppMessage({

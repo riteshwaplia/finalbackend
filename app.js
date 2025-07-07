@@ -5,8 +5,7 @@ const tenantResolver = require('./middleware/tenantResolver'); // Important!
 const cors = require('cors');
 const http = require('http'); // Import http module
 const { Server } = require('socket.io'); // Import Server 
-const allowedOrigins = ['http://localhost:5173', 'http://localhost:3000',  'https://7e84-2409-40d4-30d7-4559-ddbb-2db4-f5a7-271c.ngrok-free.app' // Add your current ngrok URL here
-];
+
 
 // Import routes
 const tenantRoutes = require('./routes/tenant');
@@ -26,16 +25,33 @@ connectDB(); // Connect to MongoDB
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json()); // Body parser
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://wachatfinal.onrender.com',
+  'https://bb7a-2401-4900-1c7b-7fa8-1003-9674-6424-5de0.ngrok-free.app'
+];
+
 app.use(cors({
   origin: function (origin, callback) {
-    if (!origin || origin.startsWith('http://localhost') || origin.includes('ngrok-free.app')) {
-      callback(null, true);
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, origin); // ✅ Echo the actual origin back
     } else {
       callback(new Error('CORS not allowed for this origin: ' + origin));
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: [
+    'Origin',
+    'X-Requested-With',
+    'Content-Type',
+    'Accept',
+    'Authorization',
+    'X-Tenant-Domain' // ✅ Add any custom headers you're using
+  ]
 }));
+
+
 app.use('/api/webhook', webhookRoutes); // This is crucial
 
 // Public site configuration route - resolve tenant first

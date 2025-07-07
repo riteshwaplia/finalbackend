@@ -58,21 +58,27 @@ const storage = multer.diskStorage({
 
 const fileFilter = (req, file, cb) => {
     const allowedTypes = [
-        'image/jpeg', 
-        'image/png', 
+        'image/jpeg',
+        'image/png',
         'image/gif',
-        'application/pdf'
+        'application/pdf',
+        'audio/mpeg',
+        'audio/mp3',
+        'audio/wav',
+        'video/mp4',
+        'video/webm',
+        'video/quicktime',
     ];
-    
+
     if (allowedTypes.includes(file.mimetype)) {
         cb(null, true);
     } else {
-        cb(new Error('Invalid file type. Only images and PDFs are allowed!'), false);
+        cb(new Error('Invalid file type. Only images, PDFs, audio, and videos are allowed!'), false);
     }
 };
 
 module.exports = multer({
     storage: storage,
-    limits: { fileSize: 25 * 1024 * 1024 }, // 25MB
+    limits: { fileSize: 25 * 1024 * 1024 }, // 25MB limit
     fileFilter: fileFilter
 });
