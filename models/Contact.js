@@ -42,7 +42,8 @@ const ContactSchema = new mongoose.Schema({
         type: String,
         trim: true,
         sparse: true, // Can be null if contact isn't a WhatsApp user
-        index: true
+        index: true,  default: undefined // avoids setting it as null
+
     },
     profileName: { // WhatsApp display name for the contact
         type: String,
@@ -72,7 +73,7 @@ const ContactSchema = new mongoose.Schema({
 // Ensure unique mobile number + country code per project for a user
 ContactSchema.index({ projectId: 1, userId: 1, countryCode: 1, mobileNumber: 1 }, { unique: true });
 // Optional: Ensure unique whatsappId per project for a user
-ContactSchema.index({ projectId: 1, userId: 1, whatsappId: 1 }, { unique: true, sparse: true });
+// ContactSchema.index({ projectId: 1, userId: 1, whatsappId: 1 }, { unique: true, sparse: true });
 
 ContactSchema.pre('save', function(next) {
     this.updatedAt = Date.now();

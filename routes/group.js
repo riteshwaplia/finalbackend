@@ -12,6 +12,7 @@ router.post("/", protect, groupController.createController);
 router.get("/", protect, groupController.getController);
 // Multi-delete groups (POST with IDs in body)
 router.delete("/", protect, groupController.multiDeleteController);
+router.get("/archiveList", protect, groupController.archiveListController); // Renamed for clarity: was archiveGroup
 
 // Get, Edit, Delete a specific group
 router.get("/:groupId", protect, groupController.editGetController);
@@ -23,7 +24,7 @@ router.put("/archive/:groupId", protect, groupController.updateFalseStatusContro
 router.put("/removeArchive/:groupId", protect, groupController.updateTrueStatusController);
 
 // Get archived groups
-router.get("/archiveList", protect, groupController.archiveListController); // Renamed for clarity: was archiveGroup
+// router.get("/archiveList", protect, groupController.archiveListController); // Renamed for clarity: was archiveGroup
 
 // Multi-archive groups (PATCH with IDs in body)
 router.patch("/archive", protect, groupController.multiUpdateController); // Original route was /project/:id/archiveGroup

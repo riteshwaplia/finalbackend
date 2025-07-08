@@ -5,7 +5,7 @@ const tenantResolver = require('./middleware/tenantResolver'); // Important!
 const cors = require('cors');
 const http = require('http'); // Import http module
 const { Server } = require('socket.io'); // Import Server 
-
+// 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
 
 // Import routes
 const tenantRoutes = require('./routes/tenant');
@@ -20,6 +20,9 @@ const webhookRoutes = require('./routes/webhook'); // NEW: Import Group routes
 const teamMemberRoutes = require('./routes/teamMember'); // NEW: Import Group routes
 const whatsappRoutes = require('./routes/whatsapp'); // NEW: Import Group routes
 const conversationRoutes = require('./routes/conversation'); // NEW: Import Group routes
+const dashboardRoutes = require('./routes/dashboardRoutes'); // NEW: Import Group routes
+const projectDashboardRoutes = require('./routes/projectDashboard'); // NEW: Import Group routes
+const flowRoutes = require('./routes/flowRoutes'); // NEW: Import Group routes
 
 connectDB(); // Connect to MongoDB
 const app = express();
@@ -28,7 +31,7 @@ app.use(express.json()); // Body parser
 const allowedOrigins = [
   'http://localhost:5173',
   'https://wachatfinal.onrender.com',
-  'https://bb7a-2401-4900-1c7b-7fa8-1003-9674-6424-5de0.ngrok-free.app'
+  'https://ec88-2401-4900-1c7b-9b2d-5b5-f96e-9b02-40da.ngrok-free.app'
 ];
 
 app.use(cors({
@@ -66,10 +69,13 @@ app.use('/api/users', userRoutes); // Tenant admin/user routes (needs protect mi
 app.use('/api/project', projectRoutes); // NEW: Use Project routes
 app.use('/api/whatsapp/', whatsappRoutes); 
 app.use('/api/templates', templateRoutes);
+app.use('/api/dashboard', dashboardRoutes); // NEW: Use dashboard routes
 app.use('/api/projects/:projectId/groups', groupRoutes);
 app.use('/api/projects/:projectId/contacts', conntactRoutes);
 app.use('/api/projects/:projectId/conversations', conversationRoutes);
-
+app.use('/api/projects/:projectId/flows', flowRoutes); // NEW: Use flow routes
+app.use('/api/projects/', projectDashboardRoutes);
+// api/projects/686b7112dd16c62f0b63105e/dashboard/stats
 // app.use('/api/projects/:projectId/templates', templateRoutes);
 app.use('/api/projects/:projectId/messages', messageRoutes);
 app.use('/api/projects/:projectId/team-member', teamMemberRoutes);

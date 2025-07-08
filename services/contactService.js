@@ -2,6 +2,7 @@ const Contact = require("../models/Contact");
 const Group = require("../models/Group"); // Needed to validate groupIds
 const { statusCode, resMessage } = require("../config/constants");
 const xlsx = require('xlsx'); // For reading Excel/CSV files
+const mongoose = require('mongoose');
 
 // Utility function to validate Group IDs
 const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {

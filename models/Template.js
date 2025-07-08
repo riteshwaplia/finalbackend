@@ -75,10 +75,10 @@ TemplateSchema.index(
   { unique: true, partialFilterExpression: { metaTemplateId: { $type: "string" } } }
 );
 
-TemplateSchema.index(
-  { tenantId: 1, businessProfileId: 1, name: 1, language: 1 },
-  { unique: true }
-);
+// TemplateSchema.index(
+//   { tenantId: 1, businessProfileId: 1, name: 1, language: 1 },
+//   { unique: true }
+// );
 // Ensure updatedAt is updated on save
 TemplateSchema.pre('save', function(next) {
     this.updatedAt = Date.now();

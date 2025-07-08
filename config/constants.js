@@ -94,6 +94,18 @@ const resMessage = {
         Bulk_send_job_not_found: "Bulk send job not found.",
         Bulk_send_job_detail_fetched: "Bulk send job details fetched successfully.",
         Bulk_send_jobs_fetched: "Bulk send jobs fetched successfully.",
+
+
+            Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
+
+
+            Flow_created_successfully: 'Flow created successfully.',
+    Flows_fetched_successfully: 'Flows fetched successfully.',
+    Flow_fetched_successfully: 'Flow fetched successfully.',
+    Flow_updated_successfully: 'Flow updated successfully.',
+    Flow_deleted_successfully: 'Flow deleted successfully.',
+    Flow_name_exists: 'A flow with this name already exists for this project.'
+
 };
 
 module.exports = {
