@@ -31,7 +31,7 @@ app.use(express.json()); // Body parser
 const allowedOrigins = [
   'http://localhost:5173',
   'https://wachatfinal.onrender.com',
-  'https://ec88-2401-4900-1c7b-9b2d-5b5-f96e-9b02-40da.ngrok-free.app'
+  'https://c1d2faae5baf.ngrok-free.app'
 ];
 
 app.use(cors({

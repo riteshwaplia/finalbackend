@@ -2,7 +2,7 @@
 const Message = require("../models/Message");
 const Contact = require("../models/Contact");
 const Conversation = require("../models/ConversationSchema"); // FIX: Corrected model import (removed 'Schema' suffix)
-const Project = require("../models/Project");
+const Project = require("../models/project");
 const { statusCode, resMessage } = require('../config/constants');
 const crypto = require('crypto'); // For webhook signature verification (future enhancement)
 

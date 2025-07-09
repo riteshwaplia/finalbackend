@@ -5,7 +5,7 @@ const path = require('path');
 const FormData = require('form-data'); // Ensure you have installed this: npm install form-data
 
 const BusinessProfile = require('../models/BusinessProfile');
-const Project = require('../models/Project');
+const Project = require('../models/project');
 const { statusCode, resMessage } = require('../config/constants');
 const Template = require("../models/Template");
 

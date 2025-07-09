@@ -255,7 +255,7 @@
 // server/services/projectService.js
 // server/services/projectService.js
 // server/services/projectService.js
-const Project = require('../models/Project');
+const Project = require('../models/project');
 const BusinessProfile = require('../models/BusinessProfile');
 const { statusCode, resMessage } = require('../config/constants');
 
