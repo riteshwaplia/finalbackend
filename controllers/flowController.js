@@ -1,31 +1,19 @@
 // server/controllers/flowController.js
 const flowService = require('../services/flowService');
-const { statusCode, resMessage } = require('../config/constants');
+const { statusCode } = require('../config/constants');
 
-/**
- * @desc    Create a new conversational flow.
- * @route   POST /api/projects/:projectId/flows
- * @access  Private (User/Team Member)
- */
-exports.createFlowController = async (req) => {
-    const { projectId } = req.params;
-    const { name, triggerKeyword, description, nodes, edges, status, whatsappPhoneNumberId } = req.body;
-    const userId = req.user._id;
-    const tenantId = req.tenant._id;
-
-    return await flowService.createFlow({
-        name,
-        projectId,
-        userId,
-        tenantId,
-        triggerKeyword,
-        description,
-        nodes,
-        edges,
-        status,
-        whatsappPhoneNumberId,
-    });
-};
+exports.createController = async (req) => {
+    try {
+        return await flowService.create(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        }
+    }
+}
 
 /**
  * @desc    Get all conversational flows for a specific project.

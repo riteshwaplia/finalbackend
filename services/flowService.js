@@ -1,69 +1,77 @@
 // server/services/flowService.js
 const Flow = require('../models/Flow');
 const { statusCode, resMessage } = require('../config/constants');
+const Project = require("../models/project");
 
-/**
- * @desc    Create a new conversational flow.
- * @param {Object} flowData - Data for the new flow.
- * @param {string} flowData.name - Name of the flow.
- * @param {string} flowData.projectId - ID of the project.
- * @param {string} flowData.userId - ID of the user creating the flow.
- * @param {string} flowData.tenantId - ID of the tenant.
- * @param {string} [flowData.triggerKeyword] - Keyword that triggers the flow.
- * @param {string} [flowData.description] - Description of the flow.
- * @param {Array} [flowData.nodes] - Array of flow nodes.
- * @param {Array} [flowData.edges] - Array of flow edges.
- * @param {string} [flowData.status] - Status of the flow (draft, active, archived).
- * @returns {Object} Success status and the created flow.
- */
-exports.createFlow = async ({ name, projectId, userId, tenantId, triggerKeyword, description, nodes, edges, status, whatsappPhoneNumberId }) => {
-    if (!name || !projectId || !userId || !tenantId) {
-        return {
-            status: statusCode.BAD_REQUEST,
-            success: false,
-            message: resMessage.Missing_required_fields + " (name, projectId, userId, tenantId are required)."
-        };
-    }
-
+exports.create = async (req) => {
     try {
-        // Check if a flow with the same name already exists for this project/user/tenant
-        const existingFlow = await Flow.findOne({ name, projectId, userId, tenantId });
-        if (existingFlow) {
+        const { nodes, edges } = req.body; 
+        
+        const checkProject = await Project.findOne({ _id: req.params.projectId, userId: req.user._id });
+        console.log("checkProject", req.params.projectId);
+        if (!checkProject) {
             return {
-                status: statusCode.CONFLICT,
+                status: statusCode.NOT_FOUND,
                 success: false,
-                message: resMessage.Flow_name_exists,
-            };
+                message: resMessage.Project_already_exists,
+                statusCode: statusCode.NOT_FOUND,
+            }
         }
 
-        const newFlow = await Flow.create({
-            name,
-            projectId,
-            userId,
-            tenantId,
-            triggerKeyword,
-            description,
-            nodes: nodes || [],
-            edges: edges || [],
-            status: status || 'draft',
-            whatsappPhoneNumberId,
+        if (!Array.isArray(nodes) || nodes.length === 0) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: resMessage.nodes_array_is_required,
+                statusCode: statusCode.BAD_REQUEST
+            }
+        }
+
+        if (!Array.isArray(edges)) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: resMessage.edges_array_is_required,
+                statusCode: statusCode.BAD_REQUEST
+            }
+        }
+
+        const entryNode = nodes.find(n => n.id === 'node_0' && n.data?.message);
+        console.log("entryNode", entryNode);
+        const entryPoint = entryNode?.data?.message?.toLowerCase();
+
+        if (!entryPoint) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: resMessage.No_valid_entry_point,
+                statusCode: statusCode.BAD_REQUEST
+            }
+        }
+
+        const savedFlow = await Flow.create({
+            projectId: req.params.projectId,
+            userId: req.auth._id,
+            entryPoint,
+            nodes,
+            edges
         });
 
         return {
-            status: statusCode.CREATED,
+            status: statusCode.SUCCESS,
             success: true,
             message: resMessage.Flow_created_successfully,
-            data: newFlow,
-        };
+            data: savedFlow,
+            statusCode: statusCode.SUCCESS
+        }
     } catch (error) {
-        console.error("Error creating flow:", error);
         return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
-            message: error.message || resMessage.Server_error,
+            message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR,
         };
     }
-};
+}
 
 /**
  * @desc    Get all flows for a specific project, user, and tenant.

@@ -11,6 +11,10 @@ const statusCode = {
 };
 
 const resMessage = {
+    nodes_array_is_required: "Nodes array is required",
+    edges_array_is_required: "Edges array is required",
+    No_valid_entry_point: "No valid entry point",
+
     Project_already_exists: "Project with this name already exists.",
     Project_created_successfully: "Project created successfully.",
     Projects_fetch_successfully: "Projects fetched successfully.",
@@ -99,12 +103,13 @@ const resMessage = {
             Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
 
 
-            Flow_created_successfully: 'Flow created successfully.',
+    Flow_created_successfully: 'Flow created successfully.',
     Flows_fetched_successfully: 'Flows fetched successfully.',
     Flow_fetched_successfully: 'Flow fetched successfully.',
     Flow_updated_successfully: 'Flow updated successfully.',
     Flow_deleted_successfully: 'Flow deleted successfully.',
     Flow_name_exists: 'A flow with this name already exists for this project.'
+    
 
 };
 
