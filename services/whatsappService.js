@@ -6,8 +6,6 @@
 // const { statusCode, resMessage } = require('../config/constants');
 // const crypto = require('crypto'); // For webhook signature verification (future enhancement)
 
-const { default: axios } = require("axios");
-const { statusCode, resMessage } = require("../config/constants");
 
 // /**
 //  * Handles incoming WhatsApp webhook payloads for message status updates and inbound messages.
@@ -243,7 +241,15 @@ const { statusCode, resMessage } = require("../config/constants");
 //     }
 // };
 
-exports.getPhoneNumbersFromMeta = async ({ wabaId, accessToken, facebookUrl = 'https://graph.facebook.com', graphVersion = 'v19.0' }) => {
+const axios = require('axios');
+const { statusCode, resMessage } = require('../config/constants');
+
+exports.getPhoneNumbersFromMeta = async ({
+    wabaId,
+    accessToken,
+    facebookUrl = 'https://graph.facebook.com',
+    graphVersion = 'v19.0'
+}) => {
     if (!wabaId || !accessToken) {
         return {
             success: false,
@@ -262,7 +268,6 @@ exports.getPhoneNumbersFromMeta = async ({ wabaId, accessToken, facebookUrl = 'h
             }
         });
 
-        // Meta's API returns phone numbers in `response.data.data`
         const phoneNumbers = response.data.data || [];
 
         return {
@@ -272,12 +277,26 @@ exports.getPhoneNumbersFromMeta = async ({ wabaId, accessToken, facebookUrl = 'h
             data: phoneNumbers
         };
     } catch (error) {
-        console.error("Error fetching phone numbers from Meta:", error.response?.data || error.message);
+        const metaError = error.response?.data?.error;
+        const fbMessage = metaError?.message || error.message;
+        const fbCode = metaError?.code;
+
+        // 🔴 Custom response for known Meta errors
+        let userFriendlyMessage = `Failed to fetch phone numbers from Meta.`;
+
+        if (fbCode === 190) {
+            userFriendlyMessage = "Invalid or expired access token, or the app has been deleted from Meta.";
+        } else if (fbCode === 100 && fbMessage.includes('param')) {
+            userFriendlyMessage = "Invalid WABA ID or missing parameter.";
+        }
+
+        console.error("Meta API Error:", metaError);
+
         return {
             success: false,
             status: error.response?.status || statusCode.INTERNAL_SERVER_ERROR,
-            message: `Failed to fetch phone numbers from Meta: ${error.response?.data?.error?.message || error.message}`,
-            metaError: error.response?.data?.error || null,
+            message: userFriendlyMessage,
+            metaError,
         };
     }
 };

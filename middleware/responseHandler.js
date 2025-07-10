@@ -42,15 +42,21 @@ const responseHandler = (fn) => async (req, res, next) => {
     try {
         const result = await fn(req);
 
-        if (result.raw) { // Custom flag to indicate raw response
+        if (result.raw) {
             if (result.status) res.status(result.status);
             res.send(result.body);
         } else {
-            res.status(result.status || 200).json({
+            const responsePayload = {
                 success: result.success,
                 message: result.message,
                 data: result.data
-            });
+            };
+
+            if (result.pagination) {
+                responsePayload.pagination = result.pagination;
+            }
+
+            res.status(result.status || 200).json(responsePayload);
         }
     } catch (error) {
         console.error("Error in response handler:", error);
@@ -63,3 +69,5 @@ const responseHandler = (fn) => async (req, res, next) => {
 };
 
 module.exports = responseHandler;
+
+

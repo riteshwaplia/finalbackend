@@ -723,4 +723,90 @@ exports.uploadMedia = async (req) => {
   }
 };
 
-module.exports = { sendWhatsAppMessage };
+
+
+const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, message, FACEBOOK_URL }) => {
+  const PHONE_NUMBER_ID = phoneNumberId;
+  const ACCESS_TOKEN = accessToken;
+console.log("favebookUrl:", FACEBOOK_URL);
+  const url = `${FACEBOOK_URL}/${PHONE_NUMBER_ID}/messages`;
+ 
+  const payload = {
+    messaging_product: 'whatsapp',
+    recipient_type: 'individual',
+    to,
+    type
+  };
+ 
+  switch(type) {
+    case 'text':
+      payload.text = { body: message.text?.body || message.text };
+      break;
+ 
+    case 'video':
+      payload.video = {};
+      if (message.link) payload.video.link = message.link;
+      if (message.caption) payload.video.caption = message.caption;
+      break;
+ 
+    case 'template':
+      payload.template = {
+        name: message.name,
+        language: {
+          code: message.language.code
+        }
+      };
+      if (Array.isArray(message.components)) {
+        payload.template.components = message.components;
+      }
+      break;
+ 
+    case 'image':
+      payload.image = {};
+      if (message.link) payload.image.link = message.link;
+      if (message.id) payload.image.id = message.id;
+      if (message.caption) payload.image.caption = message.caption;
+      break;
+ 
+    case 'document':
+      payload.document = {};
+      if (message.link) payload.document.link = message.link;
+      if (message.id) payload.document.id = message.id;
+      if (message.filename) payload.document.filename = message.filename;
+      break;
+ 
+    default:
+      return { success: false, error: 'Unsupported message type in payload building' };
+  }
+ 
+  try {
+    const response = await axios.post(url, payload, {
+      headers: {
+        'Authorization': `Bearer ${ACCESS_TOKEN}`,
+        'Content-Type': 'application/json'
+      }
+    });
+ 
+    if (response.data && to && type === 'text') {
+      await Chat.create({
+        from: 'Wachat', // or a fixed string to indicate it's from the business
+        to,
+        direction: 'outgoing',
+        text: payload.text?.body,
+        status: 'sent',
+        type,
+        messageId: response.data.messages?.[0]?.id || null
+      });
+    }
+ 
+ 
+    return { success: true, data: response.data };
+  } catch (err) {
+    const error = err.response?.data || err.message;
+    console.error('Send WhatsApp Message Error:', error);
+    return { success: false, error };
+  }
+};
+
+module.exports = {
+  sendWhatsAppMessages}

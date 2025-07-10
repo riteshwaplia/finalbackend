@@ -8,6 +8,7 @@ const Businessprofile = require("../models/BusinessProfile");
 const Flow = require("../models/Flow");
 const { sendWhatsAppMessage } = require("./messageService");
 const { traverseFlow } = require('../functions/functions');
+const {sendWhatsAppMessages} = require("../services/messageService");
 
 /**
  * Handles incoming WhatsApp webhook payloads for message status updates and inbound messages.
@@ -279,14 +280,15 @@ exports.handleWebhookPayload = async (req) => {
                                             continue;
                                         }
 
-                                        const response = await sendWhatsAppMessage({
+                                        console.log("messagePayload=======", messagePayload);
+
+                                        const response = await sendWhatsAppMessages({
                                             to: userNumber,
                                             type,
                                             message: messagePayload,
                                             phoneNumberId,
                                             accessToken,
-                                            facebookUrl: "https://graph.facebook.com",
-                                            graphVersion: "v16.0"
+                                            FACEBOOK_URL: "https://graph.facebook.com/v22.0"
                                         });
 
                                         if (!response.success) {
@@ -303,15 +305,7 @@ exports.handleWebhookPayload = async (req) => {
 
                                     console.log(`Auto-replied to ${userNumber} with ${replies.length} message(s).`);
                                 } else {
-                                    console.log(`No auto-reply flow found for: "${userText}"`);
-                                }
-                            } catch (err) {
-                                console.error(`Error during auto-reply for "${userText}":`, err.message);
-                            }
-                            }
-                            // 🔁 AUTO-REPLY END
-
-                            if (io) {
+                                    if (io) {
                                 // Emit to the user/project owner for conversation list updates (left panel)
                                 io.to(project.userId.toString()).emit('newInboundMessage', {
                                     message: messageDoc.toObject(),
@@ -326,6 +320,12 @@ exports.handleWebhookPayload = async (req) => {
                                 });
                                 console.log(`[Inbound Message] Emitted 'newInboundMessage' to user room '${project.userId}' and 'newChatMessage' to conversation room '${conversation._id}'`);
                             }
+                                }
+                            } catch (err) {
+                                console.error(`Error during auto-reply for "${userText}":`, err.message);
+                            }
+                            }
+                            // 🔁 AUTO-REPLY END
                         }
                     }
                 }
