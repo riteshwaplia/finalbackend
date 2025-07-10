@@ -4,7 +4,10 @@ const Contact = require("../models/Contact");
 const Conversation = require("../models/ConversationSchema"); // FIX: Corrected model import (removed 'Schema' suffix)
 const Project = require("../models/project");
 const { statusCode, resMessage } = require('../config/constants');
-const crypto = require('crypto'); // For webhook signature verification (future enhancement)
+const Businessprofile = require("../models/BusinessProfile");
+const Flow = require("../models/Flow");
+const { sendWhatsAppMessage } = require("./messageService");
+const { traverseFlow } = require('../functions/functions');
 
 /**
  * Handles incoming WhatsApp webhook payloads for message status updates and inbound messages.
@@ -14,6 +17,7 @@ const crypto = require('crypto'); // For webhook signature verification (future 
  */
 exports.handleWebhookPayload = async (req) => {
     const io = req.app.get('io'); // Get Socket.IO instance
+    let businessProfileData;
 
     // 1. Webhook Verification Request (GET)
     if (req.method === 'GET') {
@@ -144,6 +148,8 @@ exports.handleWebhookPayload = async (req) => {
                             }
                             console.log(`[Inbound Message] Found Project: ${project.name} (ID: ${project._id})`);
 
+                            businessProfileData = await Businessprofile.findById(project.businessProfileId);
+
                             let contact = await Contact.findOne({
                                 projectId: project._id,
                                 userId: project.userId,
@@ -225,6 +231,85 @@ exports.handleWebhookPayload = async (req) => {
                                 sentAt: timestamp
                             });
                             console.log(`[Inbound Message] Inbound message saved to DB: ${messageDoc._id}`);
+
+                            // 🔁 AUTO-REPLY START
+                            if (messageType === 'text' && messageContent?.body) {
+                            const userText = messageContent.body.trim().toLowerCase();
+                            const phoneNumberId = metaPhoneNumberID;
+                            const accessToken = businessProfileData.metaAccessToken;
+                            const userNumber = fromPhoneNumber;
+
+                            try {
+                                const flow = await Flow.findOne({ entryPoint: userText });
+
+                                if (flow) {
+                                    const replies = await traverseFlow(userText, flow.nodes, flow.edges);
+
+                                    for (const reply of replies) {
+                                        let type = reply.type;
+                                        let messagePayload = {};
+
+                                        if (type === 'text') {
+                                            messagePayload = { text: reply.text };
+                                        } else if (type === 'image') {
+                                            messagePayload = {
+                                                link: reply.link,
+                                                caption: reply.caption || ''
+                                            };
+                                        } else if (type === 'template') {
+                                            messagePayload = {
+                                            name: reply.templateName,
+                                            language: { code: 'en' },
+                                            components: [
+                                            {
+                                                type: 'body',
+                                                parameters: reply.parameters.map(param => ({
+                                                    type: 'text',
+                                                    text: param.value
+                                                }))
+                                            }]
+                                        };
+                                        } else if (type === 'video') {
+                                            messagePayload = {
+                                                link: reply.link,
+                                                caption: reply.caption || ''
+                                            };
+                                        } else {
+                                            console.warn(`Unsupported reply type: ${type}`);
+                                            continue;
+                                        }
+
+                                        const response = await sendWhatsAppMessage({
+                                            to: userNumber,
+                                            type,
+                                            message: messagePayload,
+                                            phoneNumberId,
+                                            accessToken,
+                                            facebookUrl: "https://graph.facebook.com",
+                                            graphVersion: "v16.0"
+                                        });
+
+                                        if (!response.success) {
+                                            console.error(`Failed to send message to ${userNumber}`);
+                                            console.error("Error:", response.error);
+                                        } else {
+                                            console.log(`Message sent to ${userNumber}`);
+                                        }
+
+                                        if (reply.delay && reply.delay > 0) {
+                                            await new Promise(res => setTimeout(res, reply.delay * 1000));
+                                        }
+                                    }
+
+                                    console.log(`Auto-replied to ${userNumber} with ${replies.length} message(s).`);
+                                } else {
+                                    console.log(`No auto-reply flow found for: "${userText}"`);
+                                }
+                            } catch (err) {
+                                console.error(`Error during auto-reply for "${userText}":`, err.message);
+                            }
+                            }
+                            // 🔁 AUTO-REPLY END
 
                             if (io) {
                                 // Emit to the user/project owner for conversation list updates (left panel)

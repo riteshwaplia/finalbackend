@@ -722,3 +722,5 @@ exports.uploadMedia = async (req) => {
     };
   }
 };
+
+module.exports = { sendWhatsAppMessage };
