@@ -108,14 +108,11 @@ const resMessage = {
     Flow_fetched_successfully: 'Flow fetched successfully.',
     Flow_updated_successfully: 'Flow updated successfully.',
     Flow_deleted_successfully: 'Flow deleted successfully.',
-<<<<<<< HEAD
     Flow_name_exists: 'A flow with this name already exists for this project.',
 WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
 WhatsApp_numbers_fetched_successfully : "WhatsApp phone numbers fetched successfully.",
-=======
     Flow_name_exists: 'A flow with this name already exists for this project.'
     
->>>>>>> f363894b281cd14dc2f6432095f1607c96ad1412
 
 };
 

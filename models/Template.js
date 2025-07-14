@@ -74,6 +74,11 @@ TemplateSchema.index(
   { metaTemplateId: 1, businessProfileId: 1 },
   { unique: true, partialFilterExpression: { metaTemplateId: { $type: "string" } } }
 );
+TemplateSchema.index(
+  { businessProfileId: 1, name: 1, language: 1 },
+  { unique: true }
+);
+
 
 // TemplateSchema.index(
 //   { tenantId: 1, businessProfileId: 1, name: 1, language: 1 },

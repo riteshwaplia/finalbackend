@@ -694,7 +694,6 @@ exports.syncTemplatesFromMeta = async (req) => {
     }
 
     const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
-
     const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
     const response = await axios.get(url, {
@@ -707,50 +706,71 @@ exports.syncTemplatesFromMeta = async (req) => {
     const metaTemplates = response.data.data;
     let addedCount = 0;
     let updatedCount = 0;
+    let skippedCount = 0;
 
     for (const metaTemplate of metaTemplates) {
-      let existingTemplate = await Template.findOne({
-        metaTemplateId: metaTemplate.id,
-        tenantId,
-        userId,
-        businessProfileId,
-      });
+      const filter = {
+        $or: [
+          { metaTemplateId: metaTemplate.id },
+          {
+            name: metaTemplate.name,
+            language: metaTemplate.language,
+            businessProfileId,
+          },
+        ],
+      };
+
+      const existingTemplate = await Template.findOne(filter);
 
       if (existingTemplate) {
+        // Update existing
         existingTemplate.name = metaTemplate.name;
         existingTemplate.category = metaTemplate.category;
         existingTemplate.language = metaTemplate.language;
         existingTemplate.components = metaTemplate.components;
+        existingTemplate.metaTemplateId = metaTemplate.id;
         existingTemplate.metaStatus = metaTemplate.status;
+        existingTemplate.metaCategory = metaTemplate.category;
         existingTemplate.isSynced = true;
         existingTemplate.lastSyncedAt = new Date();
-        existingTemplate.metaCategory = metaTemplate.category;
         await existingTemplate.save();
         updatedCount++;
       } else {
-        await Template.create({
-          tenantId,
-          userId,
-          businessProfileId,
-          name: metaTemplate.name,
-          category: metaTemplate.category,
-          language: metaTemplate.language,
-          components: metaTemplate.components,
-          metaTemplateId: metaTemplate.id,
-          metaStatus: metaTemplate.status,
-          metaCategory: metaTemplate.category,
-          isSynced: true,
-          lastSyncedAt: new Date(),
-        });
-        addedCount++;
+        try {
+          await Template.create({
+            tenantId,
+            userId,
+            businessProfileId,
+            name: metaTemplate.name,
+            category: metaTemplate.category,
+            language: metaTemplate.language,
+            components: metaTemplate.components,
+            metaTemplateId: metaTemplate.id,
+            metaStatus: metaTemplate.status,
+            metaCategory: metaTemplate.category,
+            isSynced: true,
+            lastSyncedAt: new Date(),
+          });
+          addedCount++;
+        } catch (err) {
+          // Handle duplicate creation race condition or index error
+          if (err.code === 11000) {
+            console.warn(
+              `Duplicate template skipped: ${metaTemplate.name} (${metaTemplate.language})`
+            );
+            skippedCount++;
+          } else {
+            throw err; // rethrow unexpected errors
+          }
+        }
       }
     }
 
     return {
       status: statusCode.OK,
       success: true,
-      message: `Templates synchronized successfully. Added: ${addedCount}, Updated: ${updatedCount}.`,
-      data: { addedCount, updatedCount },
+      message: `Templates synchronized successfully. Added: ${addedCount}, Updated: ${updatedCount}, Skipped: ${skippedCount}.`,
+      data: { addedCount, updatedCount, skippedCount },
     };
   } catch (error) {
     console.error(
@@ -766,6 +786,7 @@ exports.syncTemplatesFromMeta = async (req) => {
     };
   }
 };
+
 
 
 
