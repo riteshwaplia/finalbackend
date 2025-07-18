@@ -1,7 +1,9 @@
 const Contact = require("../models/Contact");
 const Group = require("../models/Group"); // Needed to validate groupIds
 const { statusCode, resMessage } = require("../config/constants");
-const xlsx = require('xlsx'); // For reading Excel/CSV files
+const XLSX = require("xlsx");
+const path = require("path");
+const fs = require("fs");
 const mongoose = require('mongoose');
 const Project = require("../models/Project");
 
@@ -81,40 +83,42 @@ exports.create = async (req) => {
 // @desc    Upload contacts from an Excel/CSV file
 exports.uploadContact = async (req) => {
     try {
-        const userId = req.auth._id;
+    const userId = req.user._id;
         const tenantId = req.tenant._id;
         const projectId = req.params.projectId;
-
-        // Validate project ownership
+    
         const checkProject = await Project.findOne({ _id: projectId, userId });
         if (!checkProject) {
+            console.warn("❌ Project not found or does not belong to user");
             return {
                 status: statusCode.NOT_FOUND,
                 success: false,
                 message: resMessage.ProjectId_dont_exists,
                 statusCode: statusCode.NOT_FOUND,
-            };
+            };mapping
         }
 
-        // Parse inputs
-        const selectedKeys = JSON.parse(req.body.selectedKeys).map(key => key.toLowerCase());
+        const mapping = JSON.parse(req.body.mapping).map(key => key.toLowerCase());
+        
+
         let groupNames = [];
-
         try {
-            groupNames = JSON.parse(req.body.groupname);
+            groupNames = JSON.parse(req.body.groupName);
         } catch (e) {
-            groupNames = req.body.groupname ? [req.body.groupname] : [];
+            groupNames = req.body.groupName ? [req.body.groupName] : [];
         }
 
-        // File path setup
+        // File processing
         const uploadDir = path.join(__dirname, '..', 'uploads');
-        const filePath = path.join(uploadDir, req.file.filename);
+        const filePath = req.file.path;
+
+
         const workbook = XLSX.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
         const rawData = XLSX.utils.sheet_to_json(worksheet);
 
-        // Normalize header keys to lowercase
+        // Normalize keys to lowercase
         const normalizedData = rawData.map(row => {
             const lowerRow = {};
             for (let key in row) {
@@ -126,57 +130,59 @@ exports.uploadContact = async (req) => {
         const seenMobileNumbers = new Set();
         const filteredData = [];
         const errors = [];
+       for (const [index, row] of normalizedData.entries()) {
+        console.log(`\n🔄 Processing row ${index + 2}:`, row);
 
-        for (const [index, row] of normalizedData.entries()) {
-            const newRow = {
-                tenantId,
-                userId,
-                projectId,
-                groupname: groupNames
-            };
+        const newRow = {
+            tenantId,
+            userId,
+            projectId,
+            groupName: groupNames
+        };
 
-            // Add selected keys
-            for (const key of selectedKeys) {
-                newRow[key] = row[key];
-            }
-
-            // Normalize and validate mobile number
-            let mobileNumber = newRow["mobileNumber"] || newRow["mobilenumber"] || newRow["phone"];
-            if (typeof mobileNumber === 'string') {
-                mobileNumber = mobileNumber.trim();
-            }
-
-            if (!mobileNumber) {
-                errors.push({ rowNumber: index + 2, reason: "Missing mobile number" });
-                continue;
-            }
-
-            // In-file duplicate check
-            const normalizedMobile = mobileNumber.replace(/\D/g, ''); // Only digits
-            if (seenMobileNumbers.has(normalizedMobile)) {
-                errors.push({ rowNumber: index + 2, reason: `Duplicate mobile number in file: ${mobileNumber}` });
-                continue;
-            }
-
-            seenMobileNumbers.add(normalizedMobile);
-            newRow.mobileNumber = mobileNumber;
-
-            // DB duplicate check
-            const exists = await Contact.findOne({ tenantId, userId, projectId, mobileNumber });
-            if (exists) {
-                errors.push({ rowNumber: index + 2, reason: `Duplicate contact in DB with mobile number: ${mobileNumber}` });
-                continue;
-            }
-
-            filteredData.push(newRow);
+        for (const key of mapping) {
+            newRow[key] = row[key];
         }
+
+        // Mobile number extraction
+        let mobileNumber = newRow["mobileNumber"] || newRow["mobilenumber"] || newRow["phone"];
+
+        if (!mobileNumber) {
+            errors.push({ rowNumber: index + 2, reason: "Missing mobile number" });
+            continue;
+        }
+
+        if (typeof mobileNumber === 'string') {
+            mobileNumber = mobileNumber.trim();
+        }
+
+        const normalizedMobile = mobileNumber.replace(/\D/g, '');
+
+        if (seenMobileNumbers.has(normalizedMobile)) {
+            errors.push({ rowNumber: index + 2, reason: `Duplicate in file: ${mobileNumber}` });
+            continue;
+        }
+
+        seenMobileNumbers.add(normalizedMobile);
+        newRow.mobileNumber = mobileNumber;
+
+        const exists = await Contact.findOne({ tenantId, userId, projectId, mobileNumber });
+
+        if (exists) {
+            errors.push({ rowNumber: index + 2, reason: `Duplicate in DB: ${mobileNumber}` });
+            continue;
+        }
+        filteredData.push(newRow);
+    }
 
         // Insert valid contacts
         if (filteredData.length > 0) {
             await Contact.insertMany(filteredData);
+        } else {
+            console.warn("⚠️ No valid contacts to insert");
         }
 
-        // Clean up uploaded file
+        // Delete uploaded file
         fs.unlinkSync(filePath);
 
         return {
@@ -191,11 +197,7 @@ exports.uploadContact = async (req) => {
         };
 
     } catch (error) {
-        console.error("Error in uploadContact service:", error);
-        // Clean up the file even if parsing fails
-        // if (fs.existsSync(filePath)) {
-        //     fs.unlinkSync(filePath);
-        // }
+        console.error("🔥 Error in uploadContact service:", error);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
