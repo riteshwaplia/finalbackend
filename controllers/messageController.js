@@ -1,4 +1,4 @@
-// server/controllers/messageController.js
+const { sendBulkMessageService, getAllBulkSendJobsService, getBulkSendJobDetailsService } = require('../services/messageService');
 const messageService = require("../services/messageService");
 
 exports.sendMessageController = async (req) => {
@@ -6,17 +6,17 @@ exports.sendMessageController = async (req) => {
 };
 
 exports.sendBulkMessageController = async (req) => {
-    return await messageService.sendBulkMessageService(req);
+    return await sendBulkMessageService(req);
 };
+
 exports.uploadMedia = async (req) => {
     return await messageService.uploadMedia(req);
 };
+
 exports.getBulkSendJobDetailsService = async (req) => {
-    return await messageService.getBulkSendJobDetailsService(req);
+    return await getBulkSendJobDetailsService(req);
 };
-exports.getBulkSendJobDetailsService = async (req) => {
-    return await messageService.getBulkSendJobDetailsService(req);
-};
+
 exports.getAllBulkSendJobsService = async (req) => {
-    return await messageService.getAllBulkSendJobsService(req);
+    return await getAllBulkSendJobsService(req);
 };

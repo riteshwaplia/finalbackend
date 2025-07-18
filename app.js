@@ -1,10 +1,12 @@
-require('dotenv').config(); // For environment variables like MONGO_URI, JWT_SECRET
+require('dotenv').config(); 
 const express = require('express');
 const connectDB = require('./config/db');
-const tenantResolver = require('./middleware/tenantResolver'); // Important!
+const tenantResolver = require('./middleware/tenantResolver');
 const cors = require('cors');
-const http = require('http'); // Import http module
-const { Server } = require('socket.io'); // Import Server 
+const http = require('http')
+const { Server } = require('socket.io');
+const path = require("path");
+const fs = require("fs");
 // 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
 
 // Import routes
@@ -111,6 +113,21 @@ app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
+
+const logFile = path.join(__dirname, "server.log");
+const logStream = fs.createWriteStream(logFile, { flags: "a" });
+const originalConsoleLog = console.log;
+console.log = (...args) => {
+  const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' ');
+  const timestamp = new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: false
+  });
+  const timestampedMessage = `[${timestamp}] ${message}\n`;
+
+  logStream.write(timestampedMessage);
+  originalConsoleLog(timestampedMessage);
+};
 
 const PORT = process.env.PORT || 5001;
 // Use the HTTP server (with Socket.IO) to listen instead of app.listen()
