@@ -34,6 +34,7 @@ const resMessage = {
     No_IDs_provided_for_deletion: "No IDs provided for deletion.",
     No_IDs_provided_for_updation: "No IDs provided for updation.",
     Groups_updated_successfully: "Groups updated successfully.",
+    Groups_unarchive_successfully: "Groups unarchive successfully",
 
     Contact_created_successfully: "Contact created successfully.",
     Contact_already_exists: "Contact with this phone number already exists in this project.",

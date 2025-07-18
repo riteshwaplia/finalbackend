@@ -470,3 +470,16 @@ exports.bulkDeleteController = async (req) => {
         }
     }
 }
+
+exports.unarchiveController = async (req) => {
+    try {
+        return await service.unarchive(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        }
+    }
+}

@@ -14,7 +14,8 @@ router.put("/:groupId", protect, groupController.editController);
 router.delete("/:groupId", protect, groupController.deleteController);
 router.put("/archive/:groupId", protect, groupController.updateFalseStatusController);
 router.put("/removeArchive/:groupId", protect, groupController.updateTrueStatusController);
-router.patch("/archive", protect, groupController.multiUpdateController);
 router.post("/bulk-delete", protect, responseHandler(groupController.bulkDeleteController));
+router.post("/unarchive", protect, responseHandler(groupController.unarchiveController));
+router.patch("/multi/archive", protect, groupController.multiUpdateController);
 
 module.exports = router;
