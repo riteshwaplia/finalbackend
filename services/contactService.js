@@ -108,6 +108,18 @@ exports.uploadContact = async (req) => {
             groupNames = req.body.groupName ? [req.body.groupName] : [];
         }
 
+            const groupDocs = await Group.find({
+            userId,
+            tenantId,
+            projectId,
+            title: { $in: groupNames },
+            });
+
+            const groupIds = groupDocs.map(g => g._id);
+            if (groupIds.length === 0 && groupNames.length > 0) {
+            console.warn("⚠️ None of the provided group names matched existing groups:", groupNames);
+        }
+        
         const filePath = req.file.path;
 
 
@@ -129,7 +141,6 @@ exports.uploadContact = async (req) => {
         const errors = [];
 
         // OPTIONAL: resolve group name → groupId here (mocked as same)
-        const groupIds = []; // Replace with actual DB lookup
         for (const [index, row] of normalizedData.entries()) {
             const newRow = {
                 tenantId,
