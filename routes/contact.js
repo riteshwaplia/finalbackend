@@ -43,6 +43,6 @@ router.get("/blackList", protect, responseHandler(contactController.blackListCon
 router.put("/removeBlackListContact/:contactId", protect, responseHandler(contactController.removeBlockContactController));
 
 // Remove contacts in bulk (delete many)
-router.put("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController)); // Note: Original was /bulkContactUpdate
+router.put("/bulkContactUpdate/delete", protect, responseHandler(contactController.removeBulkController)); // Note: Original was /bulkContactUpdate
 
 module.exports = router;

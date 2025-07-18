@@ -14,9 +14,9 @@ exports.uploadMedia = async (req) => {
 exports.getBulkSendJobDetailsService = async (req) => {
     return await messageService.getBulkSendJobDetailsService(req);
 };
-exports.getBulkSendJobDetailsService = async (req) => {
-    return await messageService.getBulkSendJobDetailsService(req);
-};
+// exports.getBulkSendJobDetailsService = async (req) => {
+//     return await messageService.getBulkSendJobDetailsService(req);
+// };
 exports.getAllBulkSendJobsService = async (req) => {
     return await messageService.getAllBulkSendJobsService(req);
 };

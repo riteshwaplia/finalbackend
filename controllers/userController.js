@@ -247,7 +247,7 @@ exports.deleteBusinessProfile = async (req) => {
 const authUser = async (req, res) => {
     const { email, password } = req.body;
     const tenantId = req.tenant._id; // Get tenantId from resolved tenant middleware
-
+    
     try {
         const user = await User.findOne({ email, tenantId });
 

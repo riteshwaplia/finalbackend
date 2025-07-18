@@ -1,8 +1,9 @@
 const Contact = require("../models/Contact");
 const Group = require("../models/Group"); // Needed to validate groupIds
 const { statusCode, resMessage } = require("../config/constants");
-const xlsx = require('xlsx'); // For reading Excel/CSV files
+const XLSX = require('xlsx'); // For reading Excel/CSV files
 const mongoose = require('mongoose');
+const Project = require("../models/Project");
 
 // Utility function to validate Group IDs
 const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
@@ -78,95 +79,248 @@ exports.create = async (req) => {
 };
 
 // @desc    Upload contacts from an Excel/CSV file
+// exports.uploadContact = async (req) => {
+//     const userId = req.user._id;
+//     const tenantId = req.tenant._id;
+//     const projectId = req.params.projectId;
+
+//     if (!req.file) {
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.No_file_uploaded
+//         };
+//     }
+
+//     const filePath = req.file.path;
+//     const importedContacts = [];
+//     const errors = [];
+
+//     try {
+//         const workbook = xlsx.readFile(filePath);
+//         const sheetName = workbook.SheetNames[0];
+//         const sheet = workbook.Sheets[sheetName];
+//         const data = xlsx.utils.sheet_to_json(sheet);
+// console.log("data", data);
+//         for (const row of data) {
+//             const { Name, Email, mobileNumber, Groups } = row; // Assuming column headers in file are Name, Email, mobileNumber, Groups (comma-separated IDs)
+//             let groupIds = [];
+//             if (Groups) {
+//                 groupIds = Groups.split(',').map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
+//             }
+
+//             try {
+//                 // Validate groupIds for each contact
+//                 const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
+//                 if (!isValid) {
+//                     errors.push({ row, reason: `Invalid group IDs: ${invalidGroups.join(', ')}` });
+//                     continue;
+//                 }
+
+//                 // Check for existing contact by mobileNumber number
+//                 let existingContact = null;
+//                 if (mobileNumber) {
+//                     existingContact = await Contact.findOne({ tenantId, userId, projectId, mobileNumber: mobileNumber });
+//                 }
+
+//                 if (existingContact) {
+//                     errors.push({ row, reason: `Contact with mobileNumber ${mobileNumber} already exists.` });
+//                 } else {
+//                     const newContact = await Contact.create({
+//                         tenantId,
+//                         userId,
+//                         projectId,
+//                         name: Name,
+//                         email: Email,
+//                         mobileNumber: mobileNumber,
+//                         groupIds
+//                     });
+//                     importedContacts.push(newContact);
+//                 }
+//             } catch (contactError) {
+//                 console.error("Error processing contact row:", row, contactError);
+//                 errors.push({ row, reason: `Failed to create contact: ${contactError.message}` });
+//             }
+//         }
+
+//         // Clean up the uploaded file
+//         // fs.unlinkSync(filePath);
+
+//         if (errors.length > 0) {
+//             return {
+//                 status: statusCode.OK, // Still 200 even with some errors
+//                 success: true,
+//                 message: `File processed with ${importedContacts.length} contacts imported and ${errors.length} errors.`,
+//                 data: { importedContacts, errors }
+//             };
+//         }
+
+//         return {
+//             status: statusCode.CREATED,
+//             success: true,
+//             message: resMessage.File_upload_successful,
+//             data: { importedContacts }
+//         };
+
+//     } catch (error) {
+//         console.error("Error in uploadContact service:", error);
+//         // Clean up the file even if parsing fails
+//         // if (fs.existsSync(filePath)) {
+//         //     fs.unlinkSync(filePath);
+//         // }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: resMessage.File_upload_failed,
+//             error: error.message
+//         };
+//     }
+// };
+
 exports.uploadContact = async (req) => {
-    const userId = req.user._id;
-    const tenantId = req.tenant._id;
-    const projectId = req.params.projectId;
-
-    if (!req.file) {
-        return {
-            status: statusCode.BAD_REQUEST,
-            success: false,
-            message: resMessage.No_file_uploaded
-        };
-    }
-
-    const filePath = req.file.path;
-    const importedContacts = [];
-    const errors = [];
-
     try {
-        const workbook = xlsx.readFile(filePath);
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const data = xlsx.utils.sheet_to_json(sheet);
-console.log("data", data);
-        for (const row of data) {
-            const { Name, Email, mobileNumber, Groups } = row; // Assuming column headers in file are Name, Email, mobileNumber, Groups (comma-separated IDs)
-            let groupIds = [];
-            if (Groups) {
-                groupIds = Groups.split(',').map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
-            }
-
-            try {
-                // Validate groupIds for each contact
-                const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
-                if (!isValid) {
-                    errors.push({ row, reason: `Invalid group IDs: ${invalidGroups.join(', ')}` });
-                    continue;
-                }
-
-                // Check for existing contact by mobileNumber number
-                let existingContact = null;
-                if (mobileNumber) {
-                    existingContact = await Contact.findOne({ tenantId, userId, projectId, mobileNumber: mobileNumber });
-                }
-
-                if (existingContact) {
-                    errors.push({ row, reason: `Contact with mobileNumber ${mobileNumber} already exists.` });
-                } else {
-                    const newContact = await Contact.create({
-                        tenantId,
-                        userId,
-                        projectId,
-                        name: Name,
-                        email: Email,
-                        mobileNumber: mobileNumber,
-                        groupIds
-                    });
-                    importedContacts.push(newContact);
-                }
-            } catch (contactError) {
-                console.error("Error processing contact row:", row, contactError);
-                errors.push({ row, reason: `Failed to create contact: ${contactError.message}` });
-            }
-        }
-
-        // Clean up the uploaded file
-        // fs.unlinkSync(filePath);
-
-        if (errors.length > 0) {
+    const userId = req.user._id;
+        const tenantId = req.tenant._id;
+        const projectId = req.params.projectId;
+    
+        const checkProject = await Project.findOne({ _id: projectId, userId });
+        if (!checkProject) {
+            console.warn("❌ Project not found or does not belong to user");
             return {
-                status: statusCode.OK, // Still 200 even with some errors
-                success: true,
-                message: `File processed with ${importedContacts.length} contacts imported and ${errors.length} errors.`,
-                data: { importedContacts, errors }
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: resMessage.ProjectId_dont_exists,
+                statusCode: statusCode.NOT_FOUND,
             };
         }
-
+ 
+        const mapping = JSON.parse(req.body.mapping).map(key => key.toLowerCase());
+        
+ 
+        let groupNames = [];
+        try {
+            groupNames = JSON.parse(req.body.groupName);
+        } catch (e) {
+            groupNames = req.body.groupName ? [req.body.groupName] : [];
+        }
+ 
+        const filePath = req.file.path;
+ 
+ 
+        const workbook = XLSX.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const rawData = XLSX.utils.sheet_to_json(worksheet);
+ 
+        const normalizedData = rawData.map(row => {
+            const lowerRow = {};
+            for (let key in row) {
+                lowerRow[key.toLowerCase()] = row[key];
+            }
+            return lowerRow;
+        });
+ 
+        const seenMobileNumbers = new Set();
+        const filteredData = [];
+        const errors = [];
+ 
+        // OPTIONAL: resolve group name → groupId here (mocked as same)
+        const groupIds = []; // Replace with actual DB lookup
+        for (const [index, row] of normalizedData.entries()) {
+            const newRow = {
+                tenantId,
+                userId,
+                projectId,
+                groupIds,
+                tags: [],
+                customFields: {},
+            };
+ 
+            for (const key of mapping) {
+                newRow[key] = row[key];
+            }
+            if (!newRow.mobile) {
+                newRow.mobile =
+                    row["mobile"] ||
+                    row["mobilenumber"] ||
+                    row["mobileNumber"] ||
+                    row["phone"];
+            }
+            
+            let mobileNumber = newRow["mobileNumber"] || newRow["mobilenumber"] || newRow["phone"] || newRow["mobile"];
+            if (!mobileNumber) {
+                errors.push({ rowNumber: index + 2, reason: "Missing mobile number" });
+                continue;
+            }
+ 
+            if (typeof mobileNumber === 'string') {
+                mobileNumber = mobileNumber.trim();
+            }
+ 
+            const normalizedMobile = String(mobileNumber).replace(/\D/g, '');
+ 
+            if (seenMobileNumbers.has(normalizedMobile)) {
+                console.warn(`⚠️ Row ${index + 2} duplicate in file: ${mobileNumber}`);
+                errors.push({ rowNumber: index + 2, reason: `Duplicate in file: ${mobileNumber}` });
+                continue;
+            }
+ 
+            seenMobileNumbers.add(normalizedMobile);
+            newRow.mobileNumber = mobileNumber;
+ 
+            const exists = await Contact.findOne({
+                tenantId,
+                userId,
+                projectId,
+                mobileNumber,
+            });
+ 
+            if (exists) {
+                errors.push({ rowNumber: index + 2, reason: `Duplicate in DB: ${mobileNumber}` });
+                continue;
+            }
+ 
+            // Fill optional schema fields
+            const mobileStr = String(mobileNumber).trim();
+            newRow.name = row["name"] || '';
+            newRow.email = row["email"] || '';
+            newRow.countryCode = row["countrycode"] || (mobileStr ? mobileStr.slice(0, 2) : '');
+            newRow.profileName = row["profilename"] || mobileStr || '';
+            newRow.whatsappId = row["whatsappid"] || mobileStr || '';
+ 
+            // Collect customFields
+            const schemaFields = [
+                "name", "email", "mobileNumber", "mobilenumber", "phone",
+                "countrycode", "profilename", "whatsappid", ...mapping
+            ];
+            Object.keys(row).forEach(key => {
+                if (!schemaFields.includes(key)) {
+                    newRow.customFields[key] = row[key];
+                }
+            });
+            filteredData.push(newRow);
+        }
+        if (filteredData.length > 0) {
+            await Contact.insertMany(filteredData);
+        } else {
+            console.warn("⚠️ No valid contacts to insert");
+        }
+ 
+        fs.unlinkSync(filePath);
+ 
         return {
             status: statusCode.CREATED,
             success: true,
             message: resMessage.File_upload_successful,
-            data: { importedContacts }
+            data: {
+                importedContacts: filteredData.length,
+                failedContacts: errors.length,
+                errors
+            }
         };
-
+ 
     } catch (error) {
-        console.error("Error in uploadContact service:", error);
-        // Clean up the file even if parsing fails
-        // if (fs.existsSync(filePath)) {
-        //     fs.unlinkSync(filePath);
-        // }
+        console.error("🔥 Error in uploadContact service:", error);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
@@ -175,6 +329,7 @@ console.log("data", data);
         };
     }
 };
+ 
 
 // @desc    Get contact list
 exports.contactList = async (req) => {
@@ -632,6 +787,7 @@ exports.removeBlackListContact = async (req) => {
 // @desc    Remove contacts in bulk (delete many)
 exports.removeBulkContact = async (req) => {
     const { ids } = req.body;
+    console.log("Bulk delete request for contact IDs:", ids);
     const userId = req.user._id;
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;

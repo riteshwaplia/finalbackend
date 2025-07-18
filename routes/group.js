@@ -27,7 +27,7 @@ router.put("/removeArchive/:groupId", protect, groupController.updateTrueStatusC
 // router.get("/archiveList", protect, groupController.archiveListController); // Renamed for clarity: was archiveGroup
 
 // Multi-archive groups (PATCH with IDs in body)
-router.patch("/archive", protect, groupController.multiUpdateController); // Original route was /project/:id/archiveGroup
+router.patch("/multi/archive", protect, groupController.multiUpdateController); // Original route was /project/:id/archiveGroup
 
 
 module.exports = router;
