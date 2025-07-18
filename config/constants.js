@@ -7,7 +7,7 @@ const statusCode = {
     NOT_FOUND: 404,
     CONFLICT: 409,
     INTERNAL_SERVER_ERROR: 500,
-    SUCCESS: 200 // Often used for GET success, though OK is more standard
+    SUCCESS: 200
 };
 
 const resMessage = {
@@ -22,6 +22,7 @@ const resMessage = {
     Unauthorized_access: "Unauthorized access.",
     Forbidden_access: "Forbidden access.",
     Server_error: "Internal server error.",
+    ProjectId_dont_exists: "Prohject id not found",
 
     Group_already_exists: "Group with this title already exists for this project.",
     Group_created: "Group created successfully.",
@@ -82,26 +83,22 @@ const resMessage = {
     Team_member_deleted_successfully: "Team member deleted successfully.",
     Unauthorized_action: "Unauthorized action.",
 
-
    // NEW WhatsApp Number Registration messages (updated for direct input)
     WhatsApp_numbers_fetched_successfully: "WhatsApp phone numbers fetched successfully.",
     No_whatsapp_numbers_found: "No WhatsApp phone numbers found for the provided WABA ID. Please ensure the WABA ID and Access Token are correct.",
     Failed_to_fetch_whatsapp_numbers: "Failed to fetch WhatsApp phone numbers from Meta API. Check WABA ID and Access Token.",
     WABA_ID_and_ACCESS_TOKEN_REQUIRED: "WABA ID and Access Token are required to fetch WhatsApp numbers.",
 
+    No_valid_contacts_for_bulk_send: "No valid contacts found in the file for bulk sending.",
+    Bulk_messages_sent_successfully: "Bulk messages sent successfully.",
+    Bulk_send_completed_with_errors: "Bulk send completed with errors for some contacts.",
+    Bulk_send_job_created: "Bulk send job created and started.",
+    Bulk_send_job_updated: "Bulk send job updated successfully.",
+    Bulk_send_job_not_found: "Bulk send job not found.",
+    Bulk_send_job_detail_fetched: "Bulk send job details fetched successfully.",
+    Bulk_send_jobs_fetched: "Bulk send jobs fetched successfully.",
 
-     No_valid_contacts_for_bulk_send: "No valid contacts found in the file for bulk sending.",
-        Bulk_messages_sent_successfully: "Bulk messages sent successfully.",
-        Bulk_send_completed_with_errors: "Bulk send completed with errors for some contacts.",
-        Bulk_send_job_created: "Bulk send job created and started.",
-        Bulk_send_job_updated: "Bulk send job updated successfully.",
-        Bulk_send_job_not_found: "Bulk send job not found.",
-        Bulk_send_job_detail_fetched: "Bulk send job details fetched successfully.",
-        Bulk_send_jobs_fetched: "Bulk send jobs fetched successfully.",
-
-
-            Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
-
+    Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
 
     Flow_created_successfully: 'Flow created successfully.',
     Flows_fetched_successfully: 'Flows fetched successfully.',
@@ -109,11 +106,9 @@ const resMessage = {
     Flow_updated_successfully: 'Flow updated successfully.',
     Flow_deleted_successfully: 'Flow deleted successfully.',
     Flow_name_exists: 'A flow with this name already exists for this project.',
-WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
-WhatsApp_numbers_fetched_successfully : "WhatsApp phone numbers fetched successfully.",
+    WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
+    WhatsApp_numbers_fetched_successfully : "WhatsApp phone numbers fetched successfully.",
     Flow_name_exists: 'A flow with this name already exists for this project.'
-    
-
 };
 
 module.exports = {
