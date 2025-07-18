@@ -95,7 +95,7 @@ exports.uploadContact = async (req) => {
                 success: false,
                 message: resMessage.ProjectId_dont_exists,
                 statusCode: statusCode.NOT_FOUND,
-            };mapping
+            };
         }
 
         const mapping = JSON.parse(req.body.mapping).map(key => key.toLowerCase());
@@ -108,8 +108,6 @@ exports.uploadContact = async (req) => {
             groupNames = req.body.groupName ? [req.body.groupName] : [];
         }
 
-        // File processing
-        const uploadDir = path.join(__dirname, '..', 'uploads');
         const filePath = req.file.path;
 
 
@@ -118,7 +116,6 @@ exports.uploadContact = async (req) => {
         const worksheet = workbook.Sheets[sheetName];
         const rawData = XLSX.utils.sheet_to_json(worksheet);
 
-        // Normalize keys to lowercase
         const normalizedData = rawData.map(row => {
             const lowerRow = {};
             for (let key in row) {
@@ -130,59 +127,88 @@ exports.uploadContact = async (req) => {
         const seenMobileNumbers = new Set();
         const filteredData = [];
         const errors = [];
-       for (const [index, row] of normalizedData.entries()) {
-        console.log(`\n🔄 Processing row ${index + 2}:`, row);
 
-        const newRow = {
-            tenantId,
-            userId,
-            projectId,
-            groupName: groupNames
-        };
+        // OPTIONAL: resolve group name → groupId here (mocked as same)
+        const groupIds = []; // Replace with actual DB lookup
+        for (const [index, row] of normalizedData.entries()) {
+            const newRow = {
+                tenantId,
+                userId,
+                projectId,
+                groupIds,
+                tags: [],
+                customFields: {},
+            };
 
-        for (const key of mapping) {
-            newRow[key] = row[key];
+            for (const key of mapping) {
+                newRow[key] = row[key];
+            }
+            if (!newRow.mobile) {
+                newRow.mobile =
+                    row["mobile"] ||
+                    row["mobilenumber"] ||
+                    row["mobileNumber"] ||
+                    row["phone"];
+            }
+            
+            let mobileNumber = newRow["mobileNumber"] || newRow["mobilenumber"] || newRow["phone"] || newRow["mobile"];
+            if (!mobileNumber) {
+                errors.push({ rowNumber: index + 2, reason: "Missing mobile number" });
+                continue;
+            }
+
+            if (typeof mobileNumber === 'string') {
+                mobileNumber = mobileNumber.trim();
+            }
+
+            const normalizedMobile = String(mobileNumber).replace(/\D/g, '');
+
+            if (seenMobileNumbers.has(normalizedMobile)) {
+                console.warn(`⚠️ Row ${index + 2} duplicate in file: ${mobileNumber}`);
+                errors.push({ rowNumber: index + 2, reason: `Duplicate in file: ${mobileNumber}` });
+                continue;
+            }
+
+            seenMobileNumbers.add(normalizedMobile);
+            newRow.mobileNumber = mobileNumber;
+
+            const exists = await Contact.findOne({
+                tenantId,
+                userId,
+                projectId,
+                mobileNumber,
+            });
+
+            if (exists) {
+                errors.push({ rowNumber: index + 2, reason: `Duplicate in DB: ${mobileNumber}` });
+                continue;
+            }
+
+            // Fill optional schema fields
+            newRow.name = row["name"] || '';
+            newRow.email = row["email"] || '';
+            newRow.countryCode = row["countrycode"] || '';
+            newRow.profileName = row["profilename"] || '';
+            newRow.whatsappId = row["whatsappid"] || undefined;
+
+            // Collect customFields
+            const schemaFields = [
+                "name", "email", "mobileNumber", "mobilenumber", "phone",
+                "countrycode", "profilename", "whatsappid", ...mapping
+            ];
+            Object.keys(row).forEach(key => {
+                if (!schemaFields.includes(key)) {
+                    newRow.customFields[key] = row[key];
+                }
+            });
+            filteredData.push(newRow);
         }
-
-        // Mobile number extraction
-        let mobileNumber = newRow["mobileNumber"] || newRow["mobilenumber"] || newRow["phone"];
-
-        if (!mobileNumber) {
-            errors.push({ rowNumber: index + 2, reason: "Missing mobile number" });
-            continue;
-        }
-
-        if (typeof mobileNumber === 'string') {
-            mobileNumber = mobileNumber.trim();
-        }
-
-        const normalizedMobile = mobileNumber.replace(/\D/g, '');
-
-        if (seenMobileNumbers.has(normalizedMobile)) {
-            errors.push({ rowNumber: index + 2, reason: `Duplicate in file: ${mobileNumber}` });
-            continue;
-        }
-
-        seenMobileNumbers.add(normalizedMobile);
-        newRow.mobileNumber = mobileNumber;
-
-        const exists = await Contact.findOne({ tenantId, userId, projectId, mobileNumber });
-
-        if (exists) {
-            errors.push({ rowNumber: index + 2, reason: `Duplicate in DB: ${mobileNumber}` });
-            continue;
-        }
-        filteredData.push(newRow);
-    }
-
-        // Insert valid contacts
         if (filteredData.length > 0) {
             await Contact.insertMany(filteredData);
         } else {
             console.warn("⚠️ No valid contacts to insert");
         }
 
-        // Delete uploaded file
         fs.unlinkSync(filePath);
 
         return {
