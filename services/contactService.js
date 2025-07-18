@@ -3,6 +3,7 @@ const Group = require("../models/Group"); // Needed to validate groupIds
 const { statusCode, resMessage } = require("../config/constants");
 const xlsx = require('xlsx'); // For reading Excel/CSV files
 const mongoose = require('mongoose');
+const Project = require("../models/Project");
 
 // Utility function to validate Group IDs
 const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
@@ -79,86 +80,114 @@ exports.create = async (req) => {
 
 // @desc    Upload contacts from an Excel/CSV file
 exports.uploadContact = async (req) => {
-    const userId = req.user._id;
-    const tenantId = req.tenant._id;
-    const projectId = req.params.projectId;
-
-    if (!req.file) {
-        return {
-            status: statusCode.BAD_REQUEST,
-            success: false,
-            message: resMessage.No_file_uploaded
-        };
-    }
-
-    const filePath = req.file.path;
-    const importedContacts = [];
-    const errors = [];
-
     try {
-        const workbook = xlsx.readFile(filePath);
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const data = xlsx.utils.sheet_to_json(sheet);
-console.log("data", data);
-        for (const row of data) {
-            const { Name, Email, mobileNumber, Groups } = row; // Assuming column headers in file are Name, Email, mobileNumber, Groups (comma-separated IDs)
-            let groupIds = [];
-            if (Groups) {
-                groupIds = Groups.split(',').map(id => id.trim()).filter(id => mongoose.Types.ObjectId.isValid(id));
-            }
+        const userId = req.auth._id;
+        const tenantId = req.tenant._id;
+        const projectId = req.params.projectId;
 
-            try {
-                // Validate groupIds for each contact
-                const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
-                if (!isValid) {
-                    errors.push({ row, reason: `Invalid group IDs: ${invalidGroups.join(', ')}` });
-                    continue;
-                }
-
-                // Check for existing contact by mobileNumber number
-                let existingContact = null;
-                if (mobileNumber) {
-                    existingContact = await Contact.findOne({ tenantId, userId, projectId, mobileNumber: mobileNumber });
-                }
-
-                if (existingContact) {
-                    errors.push({ row, reason: `Contact with mobileNumber ${mobileNumber} already exists.` });
-                } else {
-                    const newContact = await Contact.create({
-                        tenantId,
-                        userId,
-                        projectId,
-                        name: Name,
-                        email: Email,
-                        mobileNumber: mobileNumber,
-                        groupIds
-                    });
-                    importedContacts.push(newContact);
-                }
-            } catch (contactError) {
-                console.error("Error processing contact row:", row, contactError);
-                errors.push({ row, reason: `Failed to create contact: ${contactError.message}` });
-            }
-        }
-
-        // Clean up the uploaded file
-        // fs.unlinkSync(filePath);
-
-        if (errors.length > 0) {
+        // Validate project ownership
+        const checkProject = await Project.findOne({ _id: projectId, userId });
+        if (!checkProject) {
             return {
-                status: statusCode.OK, // Still 200 even with some errors
-                success: true,
-                message: `File processed with ${importedContacts.length} contacts imported and ${errors.length} errors.`,
-                data: { importedContacts, errors }
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: resMessage.ProjectId_dont_exists,
+                statusCode: statusCode.NOT_FOUND,
             };
         }
+
+        // Parse inputs
+        const selectedKeys = JSON.parse(req.body.selectedKeys).map(key => key.toLowerCase());
+        let groupNames = [];
+
+        try {
+            groupNames = JSON.parse(req.body.groupname);
+        } catch (e) {
+            groupNames = req.body.groupname ? [req.body.groupname] : [];
+        }
+
+        // File path setup
+        const uploadDir = path.join(__dirname, '..', 'uploads');
+        const filePath = path.join(uploadDir, req.file.filename);
+        const workbook = XLSX.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[sheetName];
+        const rawData = XLSX.utils.sheet_to_json(worksheet);
+
+        // Normalize header keys to lowercase
+        const normalizedData = rawData.map(row => {
+            const lowerRow = {};
+            for (let key in row) {
+                lowerRow[key.toLowerCase()] = row[key];
+            }
+            return lowerRow;
+        });
+
+        const seenMobileNumbers = new Set();
+        const filteredData = [];
+        const errors = [];
+
+        for (const [index, row] of normalizedData.entries()) {
+            const newRow = {
+                tenantId,
+                userId,
+                projectId,
+                groupname: groupNames
+            };
+
+            // Add selected keys
+            for (const key of selectedKeys) {
+                newRow[key] = row[key];
+            }
+
+            // Normalize and validate mobile number
+            let mobileNumber = newRow["mobileNumber"] || newRow["mobilenumber"] || newRow["phone"];
+            if (typeof mobileNumber === 'string') {
+                mobileNumber = mobileNumber.trim();
+            }
+
+            if (!mobileNumber) {
+                errors.push({ rowNumber: index + 2, reason: "Missing mobile number" });
+                continue;
+            }
+
+            // In-file duplicate check
+            const normalizedMobile = mobileNumber.replace(/\D/g, ''); // Only digits
+            if (seenMobileNumbers.has(normalizedMobile)) {
+                errors.push({ rowNumber: index + 2, reason: `Duplicate mobile number in file: ${mobileNumber}` });
+                continue;
+            }
+
+            seenMobileNumbers.add(normalizedMobile);
+            newRow.mobileNumber = mobileNumber;
+
+            // DB duplicate check
+            const exists = await Contact.findOne({ tenantId, userId, projectId, mobileNumber });
+            if (exists) {
+                errors.push({ rowNumber: index + 2, reason: `Duplicate contact in DB with mobile number: ${mobileNumber}` });
+                continue;
+            }
+
+            filteredData.push(newRow);
+        }
+
+        // Insert valid contacts
+        if (filteredData.length > 0) {
+            await Contact.insertMany(filteredData);
+        }
+
+        // Clean up uploaded file
+        fs.unlinkSync(filePath);
 
         return {
             status: statusCode.CREATED,
             success: true,
             message: resMessage.File_upload_successful,
-            data: { importedContacts }
+            data: {
+                importedContacts: filteredData.length,
+                failedContacts: errors.length,
+                errors
+            }
         };
 
     } catch (error) {
