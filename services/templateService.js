@@ -300,7 +300,9 @@ exports.createTemplate = async (req) => {
 
     console.log("Meta API response for template creation:", metaResponse.data);
 
-    // 7. Save template details to local database after successful Meta creation
+    const templateType = components?.some(c => c.type === "CAROUSEL") ? "CAROUSEL" : "TEMPLATE";
+
+    // 8. Save template details to local database after successful Meta creation
     const newTemplate = await Template.create({
       name,
       category,
@@ -314,6 +316,7 @@ exports.createTemplate = async (req) => {
       metaCategory: metaResponse.data.category, // Meta's category
       isSynced: true, // Mark as synced
       lastSyncedAt: new Date(),
+      type: templateType 
     });
 
     return {
