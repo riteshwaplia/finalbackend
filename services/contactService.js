@@ -185,11 +185,12 @@ exports.uploadContact = async (req) => {
             }
 
             // Fill optional schema fields
+            const mobileStr = String(mobileNumber).trim();
             newRow.name = row["name"] || '';
             newRow.email = row["email"] || '';
-            newRow.countryCode = row["countrycode"] || '';
-            newRow.profileName = row["profilename"] || '';
-            newRow.whatsappId = row["whatsappid"] || undefined;
+            newRow.countryCode = row["countrycode"] || (mobileStr ? mobileStr.slice(0, 2) : '');
+            newRow.profileName = row["profilename"] || mobileStr || '';
+            newRow.whatsappId = row["whatsappid"] || mobileStr || '';
 
             // Collect customFields
             const schemaFields = [

@@ -19,6 +19,11 @@ const TemplateSchema = new mongoose.Schema({
         required: true,
         index: true
     },
+    type: { 
+        type: String,
+        enum: ['TEMPLATE', 'CAROUSEL'],
+        default: 'TEMPLATE',
+    },
     name: { // Template name from Meta
         type: String,
         required: true,
