@@ -99,7 +99,7 @@ exports.verifyOtp = async (req) => {
   try {
     const { email, otp } = req.body;
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email, isEmailVerified: false });
     if (!user) {
       return {
         status: statusCode.NOT_FOUND,
