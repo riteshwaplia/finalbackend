@@ -114,6 +114,9 @@ const resMessage = {
     USER_EXISTS: "User with that email already exists for this tenant.",
     OTP_SENT_SUCCESSFULLY_TO_EMAIL: "OTP sent successfully to email.",
     Invalid_user_data: "Invalid user data provided.",
+    EMAIL_NOT_FOUND: "Email not registered.",
+    Invalid_otp: "Invalid OTP provided.",
+    otp_verified_successfully: "OTP verified successfully.",
 };
 
 module.exports = {

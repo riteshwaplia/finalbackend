@@ -6,6 +6,7 @@ const responseHandler = require('../middleware/responseHandler');
 const router = express.Router();
 
 router.post('/register', responseHandler(userController.registerController));
+router.post("/verifyOtp", responseHandler(userController.verifyOtpController));
 router.post('/login', userController.authUser);
 router.get('/profile', protect, userController.getUserProfile);
 router.put('/profile', protect, userController.updateUserProfile);

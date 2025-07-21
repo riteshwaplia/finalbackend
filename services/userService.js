@@ -71,3 +71,47 @@ exports.register = async (req) => {
         };
     }
 };
+
+exports.verifyOtp = async (req) => {
+  try {
+    const { email, otp } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.EMAIL_NOT_FOUND,
+        statusCode: statusCode.NOT_FOUND
+      };
+    }
+
+    if (user.otp !== otp) {
+      return {
+        status: statusCode.UNAUTHORIZED,
+        success: false,
+        message: resMessage.Invalid_otp,
+        statusCode: statusCode.UNAUTHORIZED
+      };
+    }
+
+    user.otp = null;
+    await user.save();
+
+    return {
+      id: user._id,
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.otp_verified_successfully,
+      statusCode: statusCode.OK
+    };
+
+  } catch (err) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: err.message,
+      statusCode: statusCode.INTERNAL_SERVER_ERROR
+    };
+  }
+};

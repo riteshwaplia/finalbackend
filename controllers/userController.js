@@ -18,6 +18,18 @@ const registerController = async (req) => {
     }
 };
 
+const verifyOtpController = async (req) => {
+    try {
+        return await userService.verifyOtp(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+};
+
 const createBusinessProfileLogic = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -347,4 +359,5 @@ module.exports = {
     deleteBusinessProfile,
     getAllBusinessProfilesForUser,
     registerController,
+    verifyOtpController
 };
