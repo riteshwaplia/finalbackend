@@ -23,7 +23,7 @@ router.get('/bulk-send-jobs', protect, responseHandler(messageController.getAllB
 // NEW: Route to get details of a specific bulk send job
 router.get('/bulk-send-jobs/:bulkSendJobId', protect, responseHandler(messageController.getBulkSendJobDetailsService));
 
-router.post('/bulk-send-group', protect, responseHandler(messageController.BulkSendGroupService));
+router.post('/bulk-send-group', protect, responseHandler(messageController.BulkSendGroupController));
 
 // You might add routes for message history, delivery reports later
 

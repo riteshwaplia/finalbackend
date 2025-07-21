@@ -20,6 +20,6 @@ exports.getBulkSendJobDetailsService = async (req) => {
 exports.getAllBulkSendJobsService = async (req) => {
     return await messageService.getAllBulkSendJobsService(req);
 };
-exports.BulkSendGroupService = async (req) => {
+exports.BulkSendGroupController = async (req) => {
     return await messageService.BulkSendGroupService(req);
 };

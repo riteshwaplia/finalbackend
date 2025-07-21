@@ -540,7 +540,9 @@ console.log("--------------------------------------");
   };
 };
 
-exports.BulkSendGroupService = async (req) => {
+// @desc    Send bulk messages from an group
+// @access  Private
+const BulkSendGroupService = async (req) => {
   const { templateName, message = {}, groupId } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -723,12 +725,7 @@ exports.BulkSendGroupService = async (req) => {
         components,
       };
 
-      console.log("----- 📤 Sending Template Message -----");
-      console.log("To:", to);
-      console.log("Final Message Payload:", JSON.stringify(templateMessage, null, 2));
-      console.log("Phone Number ID:", phoneNumberId);
-      console.log("Access Token (masked):", accessToken?.slice(0, 6) + "...(hidden)");
-      console.log("--------------------------------------");
+      console.log(`📨 Sending message to ${to}`);
 
       try {
         const sendResult = await sendWhatsAppMessage({
@@ -762,8 +759,9 @@ exports.BulkSendGroupService = async (req) => {
         }
         await messageLog.save();
 
-        if (sendResult.success) totalSent++;
-        else {
+        if (sendResult.success) {
+          totalSent++;
+        } else {
           totalFailed++;
           errorsSummary.push({
             to,
@@ -788,7 +786,9 @@ exports.BulkSendGroupService = async (req) => {
   return {
     status: statusCode.OK,
     success: true,
-    message: totalFailed > 0 ? resMessage.Bulk_send_completed_with_errors : resMessage.Bulk_messages_sent_successfully,
+    message: totalFailed > 0
+      ? resMessage.Bulk_send_completed_with_errors
+      : resMessage.Bulk_messages_sent_successfully,
     data: {
       bulkSendJobId: bulkSendJob._id,
       totalSent,
@@ -1067,4 +1067,6 @@ console.log("favebookUrl:", FACEBOOK_URL);
 };
 
 module.exports = {
-  sendWhatsAppMessages}
+  sendWhatsAppMessages,
+  BulkSendGroupService
+}
