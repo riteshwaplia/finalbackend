@@ -109,7 +109,11 @@ const resMessage = {
     Flow_name_exists: 'A flow with this name already exists for this project.',
     WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
     WhatsApp_numbers_fetched_successfully : "WhatsApp phone numbers fetched successfully.",
-    Flow_name_exists: 'A flow with this name already exists for this project.'
+    Flow_name_exists: 'A flow with this name already exists for this project.',
+
+    USER_EXISTS: "User with that email already exists for this tenant.",
+    OTP_SENT_SUCCESSFULLY_TO_EMAIL: "OTP sent successfully to email.",
+    Invalid_user_data: "Invalid user data provided.",
 };
 
 module.exports = {

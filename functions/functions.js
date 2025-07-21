@@ -1,17 +1,16 @@
+const nodemailer = require('nodemailer');
+
 exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
   const messages = [];
 
-  // 1. Find the entry node (skip replying it)
   const entryNode = nodes.find(
     n => n.data?.message?.toLowerCase() === entryPointMessage.toLowerCase()
   );
   if (!entryNode) return [];
 
-  // 2. Start traversal from the node connected to entry node
   let current = nodeMap.get(edges.find(e => e.source === entryNode.id)?.target);
 
-  // 3. Traverse the flow chain
   while (current) {
     const type = current.type;
     const delay = current.data?.meta?.delay || 0;
@@ -65,7 +64,6 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
       }
     }
 
-    // Move to next connected node
     const nextEdge = edges.find(e => e.source === current.id);
     if (!nextEdge) break;
 
@@ -73,4 +71,31 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
   }
 
   return messages;
+};
+
+exports.sendEmail = async (to, subject, text, html) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.USER_EMAIL,   
+        pass: process.env.PASS_EMAIL      
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const mailOptions = {
+      from: '"Devesh Kumar" <deveshtesting9672@gmail.com>',
+      to,
+      subject,
+      text,
+      html
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Error sending email:', error);
+  }
 };
