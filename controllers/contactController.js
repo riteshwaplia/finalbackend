@@ -53,3 +53,7 @@ exports.removeBlockContactController = async (req) => {
 exports.removeBulkController = async (req) => {
     return await contactService.removeBulkContact(req);
 };
+
+exports.addCustomFieldToContactsController = async (req) => {
+    return await contactService.addCustomFieldToContacts(req);
+};

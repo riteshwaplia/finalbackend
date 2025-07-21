@@ -45,4 +45,6 @@ router.put("/removeBlackListContact/:contactId", protect, responseHandler(contac
 // Remove contacts in bulk (delete many)
 router.put("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController)); // Note: Original was /bulkContactUpdate
 
+router.put("/contact-add-customField", protect, responseHandler(contactController.addCustomFieldToContactsController)); 
+
 module.exports = router;

@@ -745,3 +745,64 @@ exports.removeBulkContact = async (req) => {
         };
     }
 };
+
+// services/contactService.js
+exports.addCustomFieldToContacts = async (req, res) => {
+  try {
+    const { key, type } = req.body;
+    const tenantId = req.tenant._id;
+    const projectId = req.params.projectId;
+
+    const allowedTypes = ["text", "number", "date", "boolean", "enum"];
+
+    if (!key || !type) {
+      return res.status(400).json({ success: false, message: "Key and type are required" });
+    }
+
+    if (!allowedTypes.includes(type)) {
+      return res.status(400).json({
+        success: false,
+        message: `Type '${type}' is not allowed. Allowed types: ${allowedTypes.join(", ")}`,
+      });
+    }
+
+    // Check if any contact for this tenant+project already has the key
+    const existingField = await Contact.findOne({
+      tenantId,
+      projectId,
+      [`customFields.${key}`]: { $exists: true },
+    });
+
+    if (existingField) {
+      return res.status(400).json({
+        success: false,
+        message: `Custom field '${key}' already exists for this tenant/project`,
+      });
+    }
+
+    // Determine default value based on type
+    let defaultValue = null;
+    if (type === "text") defaultValue = "";
+    else if (type === "number") defaultValue = 0;
+    else if (type === "boolean") defaultValue = false;
+    else if (type === "enum") defaultValue = null;
+    else if (type === "date") defaultValue = null;
+
+    // Update all matching contacts to add this field if not present
+    await Contact.updateMany(
+      { tenantId, projectId, [`customFields.${key}`]: { $exists: false } },
+      { $set: { [`customFields.${key}`]: { value: defaultValue, type } } }
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Custom field '${key}' added to all contacts for the tenant`,
+    });
+  } catch (err) {
+    console.error("Error adding custom field:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Server error while adding custom field",
+    });
+  }
+};
