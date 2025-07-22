@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const axios = require('axios');
 
 exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
@@ -99,3 +100,51 @@ exports.sendEmail = async (to, subject, text, html) => {
     console.error('Error sending email:', error);
   }
 };
+
+exports.createAuthTemplate = async (templateName, otp_type, language, wabaId, accessToken) => {
+  const url = `https://graph.facebook.com/v19.0/${wabaId}/message_templates`;
+
+  const payload = {
+    name: templateName,
+    language: language,
+    category: 'AUTHENTICATION',
+    components: [
+      {
+        type: 'BODY',
+        example: {
+          body_text: [['123456']]
+        }
+      },
+      {
+        type: 'BUTTONS',
+        buttons: [
+          {
+            type: 'OTP',
+            otp_type: otp_type
+          }
+        ]
+      }
+    ]
+  };
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  };
+
+  try {
+    const response = await axios.post(url, payload, { headers });
+    return response.data;
+  } catch (error) {
+      if (error.response) {
+        console.error('Meta API Error Response:', {
+          status: error.response.status,
+          data: error.response.data,
+        });
+      } else {
+        console.error('Error making request:', error.message);
+      }
+
+      throw new Error(error?.response?.data?.error?.message || 'Failed to create template on Meta');
+    }
+}

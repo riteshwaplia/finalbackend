@@ -1,4 +1,3 @@
-// server/models/Template.js
 const mongoose = require('mongoose');
 
 const TemplateSchema = new mongoose.Schema({
@@ -7,57 +6,57 @@ const TemplateSchema = new mongoose.Schema({
         ref: 'Tenant',
         required: true
     },
-    userId: { // The user who created/owns this template (or imported it)
+    userId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
     },
-    // projectId is removed as templates will now be global for the user/tenant
- businessProfileId: { // NEW: Link to the specific BusinessProfile (WABA) this template belongs to
+    businessProfileId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'BusinessProfile',
         required: true,
         index: true
     },
-    name: { // Template name from Meta
+    name: {
         type: String,
         required: true,
         trim: true
     },
-    category: { // e.g., AUTHENTICATION, MARKETING, UTILITY
+    category: {
         type: String,
         trim: true
     },
-    language: { // e.g., en_US
+    language: {
         type: String,
         required: true,
         trim: true
     },
-    components: { // Structure of the template (e.g., HEADER, BODY, FOOTER, BUTTONS)
+    components: {
         type: mongoose.Schema.Types.Mixed,
         default: []
     },
-    // Meta API specific fields for synchronization
-    metaTemplateId: { // This is the 'id' field from Meta API response for a template
+    metaTemplateId: {
         type: String,
-        unique: true, // Should be unique globally across all tenants for robust sync
-        sparse: true // Allows null values, so templates created locally before Meta submission don't need this
+        unique: true,
+        sparse: true
     },
-    metaStatus: { // Status from Meta: e.g., APPROVED, PENDING, REJECTED
+    metaStatus: {
         type: String,
-        default: 'PENDING_REVIEW' // Initial status if created locally
+        default: 'PENDING_REVIEW'
     },
-    metaCategory: { // Category from Meta, might differ from local 'category' for flexibility
+    metaCategory: {
         type: String,
         trim: true
     },
-    // Local tracking fields
-    isSynced: { // True if it exists on Meta, false if local-only
+    isSynced: {
         type: Boolean,
         default: false
     },
     lastSyncedAt: {
         type: Date
+    },
+    otp_type: {
+        type: String,
     },
     createdAt: {
         type: Date,
@@ -69,7 +68,6 @@ const TemplateSchema = new mongoose.Schema({
     }
 });
 
-// Compound index for efficient lookup by name and language within a tenant for a user
 TemplateSchema.index(
   { metaTemplateId: 1, businessProfileId: 1 },
   { unique: true, partialFilterExpression: { metaTemplateId: { $type: "string" } } }
@@ -79,16 +77,9 @@ TemplateSchema.index(
   { unique: true }
 );
 
-
-// TemplateSchema.index(
-//   { tenantId: 1, businessProfileId: 1, name: 1, language: 1 },
-//   { unique: true }
-// );
-// Ensure updatedAt is updated on save
 TemplateSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     next();
 });
 
 module.exports = mongoose.model('Template', TemplateSchema);
-

@@ -242,7 +242,7 @@ const authUser = async (req, res) => {
     const tenantId = req.tenant._id;
 
     try {
-        const user = await User.findOne({ email, tenantId });
+        const user = await User.findOne({ email, tenantId, isEmailVerified: true });
 
         if (user && (await user.matchPassword(password))) {
             return res.json({
