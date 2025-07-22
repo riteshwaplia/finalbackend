@@ -49,15 +49,6 @@ exports.removeBulkController = async (req) => {
     return await contactService.removeBulkContact(req);
 };
 
-exports.bulkBlockContactController = async (req) => {
-    try {
-        return await contactService.bulkBlockContact(req);
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message,
-            statusCode: statusCode.INTERNAL_SERVER_ERROR
-        }
-    }
-}
+exports.addCustomFieldToContactsController = async (req) => {
+    return await contactService.addCustomFieldToContacts(req);
+};

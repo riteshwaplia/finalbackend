@@ -23,4 +23,6 @@ router.put("/bulkContactUpdate/delete", protect, responseHandler(contactControll
 router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
 router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
 
+router.put("/contact-add-customField", protect, responseHandler(contactController.addCustomFieldToContactsController)); 
+
 module.exports = router;

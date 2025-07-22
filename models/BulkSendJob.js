@@ -20,6 +20,12 @@ const BulkSendJobSchema = new mongoose.Schema({
         required: true,
         index: true // Index for project-specific filtering
     },
+      groupId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Group',
+        default: null,
+        index: true
+    },
     templateName: {
         type: String,
         required: true,
