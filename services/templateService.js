@@ -1,38 +1,57 @@
 // server/services/whatsappService.js
-const axios = require('axios');
-const fs = require('fs');
-const path = require('path');
-const FormData = require('form-data'); // Ensure you have installed this: npm install form-data
+const axios = require("axios");
+const fs = require("fs");
+const path = require("path");
+const FormData = require("form-data"); // Ensure you have installed this: npm install form-data
 
-const BusinessProfile = require('../models/BusinessProfile');
-const Project = require('../models/Project');
-const { statusCode, resMessage } = require('../config/constants');
+const BusinessProfile = require("../models/BusinessProfile");
+const Project = require("../models/Project");
+const { statusCode, resMessage } = require("../config/constants");
 const Template = require("../models/Template");
-const sharp = require('sharp'); // NEW: Import sharp
-const   facebookUrl=  'https://graph.facebook.com'
-        const    graphVersion= 'v19.0'; // Use default if not 
+const sharp = require("sharp"); // NEW: Import sharp
+const facebookUrl = "https://graph.facebook.com";
+const graphVersion = "v19.0"; // Use default if not
 // Helper function to get Meta API credentials from Business Profile
-const getBusinessProfileMetaApiCredentials = async (businessProfileId, userId, tenantId) => {
-    try {
-        const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
-        if (!businessProfile) {
-            return { success: false, message: "Business profile not found or unauthorized." };
-        }
-        if (!businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
-            return { success: false, message: resMessage.Meta_API_credentials_not_configured + " for Business Profile. Please ensure Access Token and WABA ID are set." };
-        }
-        return {
-            success: true,
-            accessToken: businessProfile.metaAccessToken,
-            appId: businessProfile.metaAppId, // This is the App ID, not used in uploads but can be useful for other Meta API calls
-            wabaId: businessProfile.metaBusinessId, // This is the WABA ID
-            facebookUrl: businessProfile.facebookUrl || 'https://graph.facebook.com', // Use default if not set
-            graphVersion: businessProfile.graphVersion || 'v19.0', // Use default if not set
-        };
-    } catch (error) {
-        console.error("Error fetching Meta API credentials:", error);
-        return { success: false, message: error.message || resMessage.Server_error };
+const getBusinessProfileMetaApiCredentials = async (
+  businessProfileId,
+  userId,
+  tenantId
+) => {
+  try {
+    const businessProfile = await BusinessProfile.findOne({
+      _id: businessProfileId,
+      userId,
+      tenantId,
+    });
+    if (!businessProfile) {
+      return {
+        success: false,
+        message: "Business profile not found or unauthorized.",
+      };
     }
+    if (!businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
+      return {
+        success: false,
+        message:
+          resMessage.Meta_API_credentials_not_configured +
+          " for Business Profile. Please ensure Access Token and WABA ID are set.",
+      };
+    }
+    return {
+      success: true,
+      accessToken: businessProfile.metaAccessToken,
+      appId: businessProfile.metaAppId, // This is the App ID, not used in uploads but can be useful for other Meta API calls
+      wabaId: businessProfile.metaBusinessId, // This is the WABA ID
+      facebookUrl: businessProfile.facebookUrl || "https://graph.facebook.com", // Use default if not set
+      graphVersion: businessProfile.graphVersion || "v19.0", // Use default if not set
+    };
+  } catch (error) {
+    console.error("Error fetching Meta API credentials:", error);
+    return {
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
 };
 
 /**
@@ -43,27 +62,26 @@ const getBusinessProfileMetaApiCredentials = async (businessProfileId, userId, t
  * @returns {Array} A deep copy of the components array with 'mediaHandle' and 'format' from parameters removed.
  */
 const cleanComponentsForMeta = (components) => {
-    if (!components) return [];
-    const cleaned = JSON.parse(JSON.stringify(components)); // Deep copy
+  if (!components) return [];
+  const cleaned = JSON.parse(JSON.stringify(components)); // Deep copy
 
-    cleaned.forEach(component => {
-        // Remove mediaHandle - this is for local tracking, not for Meta template submission
-        if (component.mediaHandle !== undefined) {
-            delete component.mediaHandle;
-        }
+  cleaned.forEach((component) => {
+    // Remove mediaHandle - this is for local tracking, not for Meta template submission
+    if (component.mediaHandle !== undefined) {
+      delete component.mediaHandle;
+    }
 
-        // Ensure 'format' is not on individual 'parameters' within components
-        if (component.parameters && Array.isArray(component.parameters)) {
-            component.parameters.forEach(param => {
-                if (param.format !== undefined) {
-                    delete param.format;
-                }
-            });
+    // Ensure 'format' is not on individual 'parameters' within components
+    if (component.parameters && Array.isArray(component.parameters)) {
+      component.parameters.forEach((param) => {
+        if (param.format !== undefined) {
+          delete param.format;
         }
-    });
-    return cleaned;
+      });
+    }
+  });
+  return cleaned;
 };
-
 
 // @desc    Upload media (image, document, video) to Meta Graph API using resumable upload
 //          This uses the WABA ID in the URL for the /uploads endpoint.
@@ -86,7 +104,9 @@ exports.uploadMedia = async (req) => {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
-      message: resMessage.Missing_required_fields + " (projectId and businessProfileId are required).",
+      message:
+        resMessage.Missing_required_fields +
+        " (projectId and businessProfileId are required).",
     };
   }
 
@@ -106,11 +126,12 @@ exports.uploadMedia = async (req) => {
       };
     }
 
-    const { accessToken, wabaId, facebookUrl, graphVersion,appId } = metaCredentials; // wabaId will be used as 'APP_ID' for /uploads
+    const { accessToken, wabaId, facebookUrl, graphVersion, appId } =
+      metaCredentials; // wabaId will be used as 'APP_ID' for /uploads
     const filePath = file.path;
     const fileSize = file.size;
     const mimeType = file.mimetype;
-
+    // console.log(first)
     console.log("🟡 Resumable Upload params:", {
       facebookUrl,
       graphVersion,
@@ -129,13 +150,13 @@ exports.uploadMedia = async (req) => {
       {
         file_length: fileSize,
         file_type: mimeType,
-        messaging_product: 'whatsapp', // Required by Meta for WhatsApp-related uploads
+        messaging_product: "whatsapp", // Required by Meta for WhatsApp-related uploads
       },
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        }
+          "Content-Type": "application/json",
+        },
       }
     );
 
@@ -143,7 +164,9 @@ exports.uploadMedia = async (req) => {
 
     const uploadId = initResponse.data?.id; // This is the upload session ID
     if (!uploadId) {
-      throw new Error("Upload session ID not received from Meta during initialization.");
+      throw new Error(
+        "Upload session ID not received from Meta during initialization."
+      );
     }
 
     // Step 3: Upload the actual file using the session ID (POST /{upload_session_id})
@@ -157,25 +180,23 @@ exports.uploadMedia = async (req) => {
     const uploadUrl = `${facebookUrl}/${graphVersion}/${uploadId}`;
     console.log("Resumable Upload File URL:", uploadUrl);
 
-    const uploadResponse = await axios.post(
-      uploadUrl,
-      form,
-      {
-        headers: {
-          ...form.getHeaders(), // CRITICAL for multipart/form-data
-          Authorization: `Bearer ${accessToken}`,
-        },
-        maxContentLength: Infinity,
-        maxBodyLength: Infinity,
-      }
-    );
+    const uploadResponse = await axios.post(uploadUrl, form, {
+      headers: {
+        ...form.getHeaders(), // CRITICAL for multipart/form-data
+        Authorization: `Bearer ${accessToken}`,
+      },
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+    });
 
     console.log("✅ Media uploaded to Meta:", uploadResponse.data);
 
     // The 'h' value (handle) is returned here for resumable uploads
     const hValue = uploadResponse.data?.h;
     if (!hValue) {
-      throw new Error("Media handle ('h' value) not returned from Meta after resumable upload.");
+      throw new Error(
+        "Media handle ('h' value) not returned from Meta after resumable upload."
+      );
     }
 
     // Cleanup: Delete the local temporary file
@@ -200,7 +221,10 @@ exports.uploadMedia = async (req) => {
 
     const metaError = error.response?.data?.error || error.message;
     console.error("❌ Resumable Media upload error:", metaError);
-    console.error("❌ Full error response:", JSON.stringify(error.response?.data || {}));
+    console.error(
+      "❌ Full error response:",
+      JSON.stringify(error.response?.data || {})
+    );
 
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
@@ -381,7 +405,6 @@ exports.uploadMedia = async (req) => {
 //   }
 // };
 
-
 // @desc    Create a new template (locally first)
 // @access  Private (User/Team Member)
 exports.createTemplate = async (req) => {
@@ -461,7 +484,10 @@ exports.createTemplate = async (req) => {
       components: componentsForMeta,
     };
 
-    console.log("Attempting to create template on Meta API with payload:", JSON.stringify(metaPayload, null, 2));
+    console.log(
+      "Attempting to create template on Meta API with payload:",
+      JSON.stringify(metaPayload, null, 2)
+    );
 
     // 6. Send request to Meta API to create the template
     const metaResponse = await axios.post(metaApiUrl, metaPayload, {
@@ -492,17 +518,149 @@ exports.createTemplate = async (req) => {
     return {
       status: statusCode.CREATED,
       success: true,
-      message: resMessage.Template_submitted + " to Meta for approval and saved locally.",
+      message:
+        resMessage.Template_submitted +
+        " to Meta for approval and saved locally.",
       data: newTemplate,
     };
   } catch (error) {
-    console.error("Error creating template (Meta API or DB save):", error.response?.data || error.message);
+    console.error(
+      "Error creating template (Meta API or DB save):",
+      error.response?.data || error.message
+    );
     const metaError = error.response?.data?.error?.message || error.message;
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: `Failed to create template: ${metaError}. Please check Meta API response for details.`,
       metaError: error.response?.data || null,
+    };
+  }
+};
+
+/**
+ * @desc    Create a new WhatsApp Carousel Message Template on Meta Graph API.
+ * This is a specialized function for CAROUSEL type templates.
+ * @route   POST /api/whatsapp/carousel-templates (new route)
+ * @access  Private (User/Project Owner)
+ * @param {Object} req - The request object containing template data, user, and tenant info.
+ * @returns {Object} Success status and the created template data.
+ */
+exports.createCarouselTemplate = async (req) => {
+  const { name, language, category, components, businessProfileId, projectId } =
+    req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+
+  if (
+    !name ||
+    !language ||
+    !category ||
+    !components ||
+    !businessProfileId ||
+    !projectId
+  ) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message:
+        resMessage.Missing_required_fields +
+        " (name, language, category, components, businessProfileId, projectId are required for carousel template).",
+    };
+  }
+
+  // Validate that the main component is of type CAROUSEL and has cards
+  const carouselComponent = components.find((comp) => comp.type === "CAROUSEL");
+  if (
+    !carouselComponent ||
+    !carouselComponent.cards ||
+    carouselComponent.cards.length === 0
+  ) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message:
+        "Carousel template must have a 'CAROUSEL' component with at least one card.",
+    };
+  }
+
+  try {
+    const metaCredentials = await getBusinessProfileMetaApiCredentials(
+      businessProfileId,
+      userId,
+      tenantId
+    );
+    if (!metaCredentials.success) {
+      return {
+        status: metaCredentials.status || statusCode.BAD_REQUEST,
+        success: false,
+        message: metaCredentials.message,
+      };
+    }
+
+    const { accessToken, wabaId } = metaCredentials;
+    const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
+
+    // The components for carousel templates are structured differently.
+    // Meta expects the 'CAROUSEL' component at the top level,
+    // and each card has its own 'components' array.
+    // Ensure the payload matches the exact structure provided by Meta.
+    const payload = {
+      name,
+      language,
+      category,
+      components: components, // Assuming the frontend sends the components in the correct Meta carousel format
+    };
+
+    console.log(
+      "Sending carousel template creation request to Meta:",
+      JSON.stringify(payload, null, 2)
+    );
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log("Meta API carousel template creation response:", response.data);
+
+    // Save template to your database
+    const newTemplate = await Template.create({
+      name,
+      category,
+      language,
+      components: components || [], // Store original components (including mediaHandle) locally
+      tenantId,
+      userId,
+      businessProfileId,
+      metaTemplateId: response.data.id, // Meta's template ID
+      metaStatus: response.data.status, // Meta's status (e.g., PENDING, APPROVED)
+      metaCategory: response.data.category, // Meta's category
+      isSynced: true, // Mark as synced
+      lastSyncedAt: new Date(),
+      type: "CAROUSEL", // Explicitly mark as carousel type
+    });
+
+    return {
+      status: statusCode.CREATED,
+      success: true,
+      message: resMessage.Template_submitted + " (Carousel)",
+      data: newTemplate,
+    };
+  } catch (error) {
+    console.error(
+      "Error creating carousel template on Meta:",
+      error.response?.data || error.message
+    );
+    return {
+      status: error.response?.status || statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: `Failed to create carousel template: ${
+        error.response?.data?.error?.message || error.message
+      }`,
+      metaError: error.response?.data?.error || null,
     };
   }
 };
@@ -568,8 +726,10 @@ exports.submitTemplateToMeta = async (req) => {
       components: componentsForMeta, // Use cleaned components for Meta API
     };
 
-    console.log("Payload sent to Meta for template submission:", JSON.stringify(payload, null, 2));
-
+    console.log(
+      "Payload sent to Meta for template submission:",
+      JSON.stringify(payload, null, 2)
+    );
 
     const response = await axios.post(url, payload, {
       headers: {
@@ -661,11 +821,13 @@ exports.getAllTemplates = async (req) => {
   try {
     const [templates, totalCount] = await Promise.all([
       Template.find(query).skip(skip).limit(parseInt(limit)).lean(),
-      Template.countDocuments(query)
+      Template.countDocuments(query),
     ]);
 
     const totalPages = Math.ceil(totalCount / limit);
-console.log(`Fetched ${templates.length} templates for page ${page} of ${totalPages}`);
+    console.log(
+      `Fetched ${templates.length} templates for page ${page} of ${totalPages}`
+    );
     if (templates.length === 0) {
       return {
         status: statusCode.OK,
@@ -702,7 +864,6 @@ console.log(`Fetched ${templates.length} templates for page ${page} of ${totalPa
     };
   }
 };
-
 
 // @desc    Get a single template by ID
 // @access  Private (User/Team Member)
@@ -946,7 +1107,10 @@ exports.deleteTemplate = async (req) => {
           // Optional: continue even if Meta deletion fails
         }
       } else {
-        console.warn("⚠️ Skipping Meta deletion due to missing credentials:", metaCredentials.message);
+        console.warn(
+          "⚠️ Skipping Meta deletion due to missing credentials:",
+          metaCredentials.message
+        );
       }
     }
 
@@ -1098,8 +1262,3 @@ exports.syncTemplatesFromMeta = async (req) => {
     };
   }
 };
-
-
-
-
-

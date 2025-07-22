@@ -6,10 +6,10 @@ const responseHandler = require('../middleware/responseHandler');
 const router = express.Router();
 
 // User registration for the current tenant (public)
-router.post('/register', userController.registerUser);
+router.post('/register', responseHandler(userController.registerUser));
 
 // User login for the current tenant (public)
-router.post('/login', userController.authUser);
+router.post('/login', responseHandler(userController.authUser));
 
 // Get user profile (protected, tenant-specific)
 router.get('/profile', protect, userController.getUserProfile);

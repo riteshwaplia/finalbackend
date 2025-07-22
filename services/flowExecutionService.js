@@ -164,7 +164,7 @@ const executeNode = async (session, flow, node, metaCredentials, parsedMessageDa
                         templateMessage.components.push(metaComp);
                     });
                 }
-
+console.log(`[Flow Execution] Sending template message: ${templateMessage} with components:`, JSON.stringify(templateMessage, null, 2));
                 const templateSendResult = await sendWhatsAppMessageInternal({
                     to: whatsappContactId,
                     type: 'template',
@@ -390,7 +390,7 @@ const executeNode = async (session, flow, node, metaCredentials, parsedMessageDa
                 console.warn(`[Flow Execution] Deprecated node type 'template' encountered. Please update your flows to use 'sendTemplateNode'.`);
                 const legacyTemplateMessage = {
                     name: node.data.selectedTemplateName, // Assuming this field holds the template name
-                    language: { code: 'en_US' }, // Assuming default 'en' for older templates
+                    language: { code: node.data.templateLanguage }, // Assuming default 'en' for older templates
                     components: [] // You might need to infer/construct components if old flows don't store them explicitly
                 };
 

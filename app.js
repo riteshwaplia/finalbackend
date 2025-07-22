@@ -33,7 +33,8 @@ const allowedOrigins = [
   'https://wachatfinal.onrender.com',
   'https://c1d2faae5baf.ngrok-free.app',
   "http://192.168.1.86:5173/",
-  "http://172.16.0.2:5173/"
+  "http://172.16.0.2:5173/",
+  "https://sabnode.netlify.app"
 ];
 
 app.use(cors({

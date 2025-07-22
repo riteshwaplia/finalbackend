@@ -12,6 +12,7 @@ const router = express.Router(); // No mergeParams as it's no longer project-nes
 // Create a new template (locally)
 router.post("/", protect, responseHandler(templateController.createController));
 router.post('/upload-media', protect, mediaUpload.single('file'), responseHandler(templateController.uploadMedia));
+router.post('/carousel-templates', protect, responseHandler(templateController.createCarouselTemplateController));
 
 // Submit a locally created template to Meta for approval
 router.post("/:id/submit-to-meta", protect, responseHandler(templateController.submitToMetaController));

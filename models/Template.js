@@ -59,6 +59,11 @@ const TemplateSchema = new mongoose.Schema({
     lastSyncedAt: {
         type: Date
     },
+     type: {
+        type: String,
+        enum: ['STANDARD', 'CAROUSEL'], // Or other types like 'FLOW' if you add them
+        default: 'STANDARD',
+    },
     createdAt: {
         type: Date,
         default: Date.now

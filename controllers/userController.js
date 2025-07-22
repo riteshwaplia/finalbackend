@@ -6,39 +6,49 @@ const generateToken = require('../utils/generateToken');
 // @desc    Register a new user for the current tenant
 // @route   POST /api/users/register
 // @access  Public
-const registerUser = async (req, res) => {
+const registerUser = async (req) => {
     const { username, email, password } = req.body;
-    const tenantId = req.tenant._id; // Get tenantId from resolved tenant middleware
+    const tenantId = req.tenant._id;
 
-    try {
-        const userExists = await User.findOne({ email, tenantId });
-        if (userExists) {
-            return res.status(400).json({ message: 'User with that email already exists for this tenant.' });
-        }
-
-        const user = await User.create({
-            tenantId,
-            username,
-            email,
-            password,
-            role: 'user' // Default role for public registration
-        });
-
-        if (user) {
-            res.status(201).json({
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-                token: generateToken(user._id)
-            });
-        } else {
-            res.status(400).json({ message: 'Invalid user data' });
-        }
-    } catch (error) {
-        console.error('Error during user registration:', error);
-        res.status(500).json({ message: 'Server error' });
+    const userExists = await User.findOne({ email, tenantId });
+    if (userExists) {
+        return {
+            statusCode: 400,
+            success: false,
+            message: 'User with that email already exists for this tenant.',
+            data: null
+        };
     }
+
+    const user = await User.create({
+        tenantId,
+        username,
+        email,
+        password,
+        role: 'user' // default role
+    });
+
+    if (!user) {
+        return {
+            statusCode: 400,
+            success: false,
+            message: 'Invalid user data',
+            data: null
+        };
+    }
+
+    return {
+        statusCode: 201,
+        success: true,
+        message: 'User registered successfully',
+        data: {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id)
+        }
+    };
 };
 exports.createBusinessProfile = async (req) => {
     const userId = req.user._id;
@@ -244,30 +254,45 @@ exports.deleteBusinessProfile = async (req) => {
 // @desc    Auth user & get token (login) for the current tenant
 // @route   POST /api/users/login
 // @access  Public
-const authUser = async (req, res) => {
-    const { email, password } = req.body;
-    const tenantId = req.tenant._id; // Get tenantId from resolved tenant middleware
-    
-    try {
-        const user = await User.findOne({ email, tenantId });
+const authUser = async (req) => {
+  const { email, password } = req.body;
+  const tenantId = req.tenant?._id;
 
-        if (user && (await user.matchPassword(password))) {
-            res.json({
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-                token: generateToken(user._id)
-            });
-            
-        } else {
-            res.status(401).json({ message: 'Invalid email or password for this tenant' });
-        }
-    } catch (error) {
-        console.error('Error during user authentication:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
+  if (!tenantId) {
+    return {
+      success: false,
+      message: 'Tenant not found in request',
+      status: 400
+    };
+  }
+
+  const user = await User.findOne({ email, tenantId });
+console.log(`[Auth] Attempting login for user: ${email} in tenant: ${tenantId}`);
+  if (user && await user.matchPassword(password)) {
+    return {
+      success: true,
+      message: 'Login successful',
+      data: {
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email,
+          role: user.role
+        },
+        token: generateToken(user._id)
+      }
+    };
+  }
+
+  return {
+    success: false,
+    message: 'Invalid email or password',
+    status: 401
+  };
 };
+
+
+
 
 // @desc    Get user profile for the current tenant
 // @route   GET /api/users/profile
