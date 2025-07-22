@@ -1,9 +1,7 @@
 const Group = require("../models/Group");
 const { statusCode, resMessage } = require("../config/constants");
+const service = require('../services/groupService');
 
-// @desc    Create a new group for a specific project
-// @route   POST /api/projects/:projectId/group
-// @access  Private (Authenticated User)
 exports.createController = async (req, res) => {
     try {
         const userId = req.user._id; // From protect middleware
@@ -459,3 +457,29 @@ exports.multiUpdateController = async (req, res) => {
         });
     }
 };
+
+exports.bulkDeleteController = async (req) => {
+    try {
+        return await service.multiDelete(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        }
+    }
+}
+
+exports.unarchiveController = async (req) => {
+    try {
+        return await service.unarchive(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        }
+    }
+}

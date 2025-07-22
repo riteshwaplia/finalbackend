@@ -1,15 +1,12 @@
 // server/services/whatsappService.js
 const axios = require('axios');
 const fs = require('fs');
-const path = require('path');
-const FormData = require('form-data'); // Ensure you have installed this: npm install form-data
-
+const FormData = require('form-data');
 const BusinessProfile = require('../models/BusinessProfile');
-const Project = require('../models/project');
 const { statusCode, resMessage } = require('../config/constants');
 const Template = require("../models/Template");
+const { createAuthTemplate } = require("../functions/functions")
 
-// Helper function to get Meta API credentials from Business Profile
 const getBusinessProfileMetaApiCredentials = async (businessProfileId, userId, tenantId) => {
     try {
         const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
@@ -22,10 +19,10 @@ const getBusinessProfileMetaApiCredentials = async (businessProfileId, userId, t
         return {
             success: true,
             accessToken: businessProfile.metaAccessToken,
-            appId: businessProfile.metaAppId, // This is the App ID, not used in uploads but can be useful for other Meta API calls
-            wabaId: businessProfile.metaBusinessId, // This is the WABA ID
-            facebookUrl: businessProfile.facebookUrl || 'https://graph.facebook.com', // Use default if not set
-            graphVersion: businessProfile.graphVersion || 'v19.0', // Use default if not set
+            appId: businessProfile.metaAppId,
+            wabaId: businessProfile.metaBusinessId,
+            facebookUrl: businessProfile.facebookUrl || 'https://graph.facebook.com',
+            graphVersion: businessProfile.graphVersion || 'v19.0',
         };
     } catch (error) {
         console.error("Error fetching Meta API credentials:", error);
@@ -33,24 +30,15 @@ const getBusinessProfileMetaApiCredentials = async (businessProfileId, userId, t
     }
 };
 
-/**
- * Helper function to clean template components before sending to Meta API.
- * Specifically removes the 'mediaHandle' property from components as Meta does not expect it
- * in the template definition payload. Also ensures 'format' is not on individual 'parameters'.
- * @param {Array} components - The template components array.
- * @returns {Array} A deep copy of the components array with 'mediaHandle' and 'format' from parameters removed.
- */
 const cleanComponentsForMeta = (components) => {
     if (!components) return [];
-    const cleaned = JSON.parse(JSON.stringify(components)); // Deep copy
+    const cleaned = JSON.parse(JSON.stringify(components));
 
     cleaned.forEach(component => {
-        // Remove mediaHandle - this is for local tracking, not for Meta template submission
         if (component.mediaHandle !== undefined) {
             delete component.mediaHandle;
         }
 
-        // Ensure 'format' is not on individual 'parameters' within components
         if (component.parameters && Array.isArray(component.parameters)) {
             component.parameters.forEach(param => {
                 if (param.format !== undefined) {
@@ -62,13 +50,8 @@ const cleanComponentsForMeta = (components) => {
     return cleaned;
 };
 
-
-// @desc    Upload media (image, document, video) to Meta Graph API using resumable upload
-//          This uses the WABA ID in the URL for the /uploads endpoint.
-// @route   POST /api/whatsapp/upload-media
-// @access  Private (User/Project Owner)
 exports.uploadMedia = async (req) => {
-  const { projectId, businessProfileId } = req.body; // Expect businessProfileId here for credentials
+  const { projectId, businessProfileId } = req.body; 
   const file = req.file;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -89,7 +72,6 @@ exports.uploadMedia = async (req) => {
   }
 
   try {
-    // 🔍 Step 1: Get Meta API credentials from Business Profile
     const metaCredentials = await getBusinessProfileMetaApiCredentials(
       businessProfileId,
       userId,
@@ -104,7 +86,7 @@ exports.uploadMedia = async (req) => {
       };
     }
 
-    const { accessToken, wabaId, facebookUrl, graphVersion,appId } = metaCredentials; // wabaId will be used as 'APP_ID' for /uploads
+    const { accessToken, wabaId, facebookUrl, graphVersion,appId } = metaCredentials;
     const filePath = file.path;
     const fileSize = file.size;
     const mimeType = file.mimetype;
@@ -112,14 +94,13 @@ exports.uploadMedia = async (req) => {
     console.log("🟡 Resumable Upload params:", {
       facebookUrl,
       graphVersion,
-      appIdUsedForUploads: wabaId, // Logging WABA ID as the 'APP_ID' in this context
+      appIdUsedForUploads: wabaId,
       accessToken: !!accessToken,
       mimeType,
       fileSize,
     });
 
-    // Step 2: Initialize the upload session (POST /{APP_ID}/uploads)
-    const initUrl = `${facebookUrl}/${graphVersion}/${appId}/uploads`; // Using WABA ID for /uploads endpoint
+    const initUrl = `${facebookUrl}/${graphVersion}/${appId}/uploads`; 
     console.log("Resumable Upload Init URL:", initUrl);
 
     const initResponse = await axios.post(
@@ -127,7 +108,7 @@ exports.uploadMedia = async (req) => {
       {
         file_length: fileSize,
         file_type: mimeType,
-        messaging_product: 'whatsapp', // Required by Meta for WhatsApp-related uploads
+        messaging_product: 'whatsapp',
       },
       {
         headers: {
@@ -139,18 +120,17 @@ exports.uploadMedia = async (req) => {
 
     console.log("✅ Init upload session response:", initResponse.data);
 
-    const uploadId = initResponse.data?.id; // This is the upload session ID
+    const uploadId = initResponse.data?.id; 
     if (!uploadId) {
       throw new Error("Upload session ID not received from Meta during initialization.");
     }
 
-    // Step 3: Upload the actual file using the session ID (POST /{upload_session_id})
     const form = new FormData();
     form.append("file", fs.createReadStream(filePath), {
       filename: file.originalname,
       contentType: mimeType,
     });
-    form.append("type", mimeType); // Meta API documentation sometimes shows this on the second step as well
+    form.append("type", mimeType);
 
     const uploadUrl = `${facebookUrl}/${graphVersion}/${uploadId}`;
     console.log("Resumable Upload File URL:", uploadUrl);
@@ -160,7 +140,7 @@ exports.uploadMedia = async (req) => {
       form,
       {
         headers: {
-          ...form.getHeaders(), // CRITICAL for multipart/form-data
+          ...form.getHeaders(),
           Authorization: `Bearer ${accessToken}`,
         },
         maxContentLength: Infinity,
@@ -170,13 +150,11 @@ exports.uploadMedia = async (req) => {
 
     console.log("✅ Media uploaded to Meta:", uploadResponse.data);
 
-    // The 'h' value (handle) is returned here for resumable uploads
     const hValue = uploadResponse.data?.h;
     if (!hValue) {
       throw new Error("Media handle ('h' value) not returned from Meta after resumable upload.");
     }
 
-    // Cleanup: Delete the local temporary file
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath);
     }
@@ -186,7 +164,7 @@ exports.uploadMedia = async (req) => {
       success: true,
       message: resMessage.Media_uploaded,
       data: {
-        id: hValue, // Return the 'h' handle as 'id' for consistency with frontend expectation
+        id: hValue, 
         mimeType,
         fileSize,
       },
@@ -209,8 +187,6 @@ exports.uploadMedia = async (req) => {
   }
 };
 
-// @desc    Create a new template (locally first)
-// @access  Private (User/Team Member)
 exports.createTemplate = async (req) => {
   const { name, category, language, components, businessProfileId } = req.body;
   const tenantId = req.tenant._id;
@@ -227,7 +203,6 @@ exports.createTemplate = async (req) => {
   }
 
   try {
-    // 1. Validate business profile locally
     const businessProfile = await BusinessProfile.findOne({
       _id: businessProfileId,
       userId,
@@ -242,8 +217,6 @@ exports.createTemplate = async (req) => {
       };
     }
 
-    // 2. Check for duplicate template name/language locally BEFORE sending to Meta
-    // This prevents unnecessary Meta API calls for known duplicates
     const templateExistsLocally = await Template.findOne({
       name,
       language,
@@ -260,7 +233,6 @@ exports.createTemplate = async (req) => {
       };
     }
 
-    // 3. Get Meta API credentials for the business profile
     const metaCredentials = await getBusinessProfileMetaApiCredentials(
       businessProfileId,
       userId,
@@ -277,10 +249,8 @@ exports.createTemplate = async (req) => {
     const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
     const metaApiUrl = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
-    // 4. Clean components for Meta API submission (remove local-only fields like mediaHandle)
     const componentsForMeta = cleanComponentsForMeta(components);
 
-    // 5. Prepare payload for Meta API
     const metaPayload = {
       name: name,
       category: category,
@@ -290,7 +260,6 @@ exports.createTemplate = async (req) => {
 
     console.log("Attempting to create template on Meta API with payload:", JSON.stringify(metaPayload, null, 2));
 
-    // 6. Send request to Meta API to create the template
     const metaResponse = await axios.post(metaApiUrl, metaPayload, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -307,14 +276,14 @@ exports.createTemplate = async (req) => {
       name,
       category,
       language,
-      components: components || [], // Store original components (including mediaHandle) locally
+      components: components || [], 
       tenantId,
       userId,
       businessProfileId,
-      metaTemplateId: metaResponse.data.id, // Meta's template ID
-      metaStatus: metaResponse.data.status, // Meta's status (e.g., PENDING, APPROVED)
-      metaCategory: metaResponse.data.category, // Meta's category
-      isSynced: true, // Mark as synced
+      metaTemplateId: metaResponse.data.id,
+      metaStatus: metaResponse.data.status,
+      metaCategory: metaResponse.data.category,
+      isSynced: true,
       lastSyncedAt: new Date(),
       type: templateType 
     });
@@ -337,10 +306,8 @@ exports.createTemplate = async (req) => {
   }
 };
 
-// @desc    Submit a template to Meta for approval
-// @access  Private (User/Team Member)
 exports.submitTemplateToMeta = async (req) => {
-  const templateId = req.params.id; // Local template ID
+  const templateId = req.params.id;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const { businessProfileId } = req.body;
@@ -387,15 +354,13 @@ exports.submitTemplateToMeta = async (req) => {
 
     const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
-    // CRITICAL FIX: Clean components before sending to Meta
-    // This removes 'mediaHandle' and 'format' from parameters.
     const componentsForMeta = cleanComponentsForMeta(template.components);
 
     const payload = {
       name: template.name,
       category: template.category,
       language: template.language,
-      components: componentsForMeta, // Use cleaned components for Meta API
+      components: componentsForMeta,
     };
 
     console.log("Payload sent to Meta for template submission:", JSON.stringify(payload, null, 2));
@@ -436,13 +401,10 @@ exports.submitTemplateToMeta = async (req) => {
   }
 };
 
-// @desc    Get all templates for the authenticated user, optionally filtered by businessProfileId
-// @access  Private (User/Team Member)
 exports.getAllTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
-  const { businessProfileId } = req.query; // Allow filtering by businessProfileId
-
+  const { businessProfileId } = req.query;
   let query = { tenantId, userId };
   if (businessProfileId) {
     query.businessProfileId = businessProfileId;
@@ -476,8 +438,6 @@ exports.getAllTemplates = async (req) => {
   }
 };
 
-// @desc    Get a single template by ID
-// @access  Private (User/Team Member)
 exports.getTemplateById = async (req) => {
   const templateId = req.params.id;
   const tenantId = req.tenant._id;
@@ -519,8 +479,6 @@ exports.getTemplateById = async (req) => {
   }
 };
 
-// @desc    Update a template
-// @access  Private (User/Team Member)
 exports.updateTemplate = async (req) => {
   const templateId = req.params.id;
   const tenantId = req.tenant._id;
@@ -618,8 +576,6 @@ exports.updateTemplate = async (req) => {
   }
 };
 
-// @desc    Delete a template
-// @access  Private (User/Team Member)
 exports.deleteTemplate = async (req) => {
   const templateId = req.params.id;
   const tenantId = req.tenant._id;
@@ -665,8 +621,6 @@ exports.deleteTemplate = async (req) => {
   }
 };
 
-// NEW: @desc    Synchronize templates from Meta API for the current user's specified business profile
-// @access  Private (User/Team Member)
 exports.syncTemplatesFromMeta = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -726,7 +680,6 @@ exports.syncTemplatesFromMeta = async (req) => {
       const existingTemplate = await Template.findOne(filter);
 
       if (existingTemplate) {
-        // Update existing
         existingTemplate.name = metaTemplate.name;
         existingTemplate.category = metaTemplate.category;
         existingTemplate.language = metaTemplate.language;
@@ -756,14 +709,13 @@ exports.syncTemplatesFromMeta = async (req) => {
           });
           addedCount++;
         } catch (err) {
-          // Handle duplicate creation race condition or index error
           if (err.code === 11000) {
             console.warn(
               `Duplicate template skipped: ${metaTemplate.name} (${metaTemplate.language})`
             );
             skippedCount++;
           } else {
-            throw err; // rethrow unexpected errors
+            throw err;
           }
         }
       }
@@ -790,7 +742,77 @@ exports.syncTemplatesFromMeta = async (req) => {
   }
 };
 
+exports.authTemplate = async (req) => {
+  try {
+    const { templateName, language, otp_type, businessProfileId } = req.body;
+    const tenantId = req.tenant._id;
+    const userId = req.user._id;
 
+    const businessProfile = await BusinessProfile.findOne({
+      _id: businessProfileId,
+      userId,
+      tenantId,
+    });
+    
+     const metaCredentials = await getBusinessProfileMetaApiCredentials(
+      businessProfileId,
+      userId,
+      tenantId
+    );
 
+    if (!businessProfile) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Business_profile_not_found,
+        statusCode: statusCode.NOT_FOUND,
+      };
+    }
+    const {accessToken, wabaId} = metaCredentials;
 
+    const templateExistsLocally = await Template.findOne({
+      name: templateName,
+      language,
+      otp_type,
+      tenantId,
+      userId,
+      businessProfileId
+    });
 
+    if (templateExistsLocally) {
+      return {
+        status: statusCode.CONFLICT,
+        success: false,
+        message: resMessage.Template_already_exists,
+        statusCode: statusCode.CONFLICT,
+      };
+    }
+
+    const result = await createAuthTemplate(templateName, otp_type, language, wabaId, accessToken);
+
+    await Template.create({
+      name: templateName,
+      category: result?.category,
+      language,
+      otp_type,
+      tenantId,
+      userId,
+      businessProfileId: businessProfileId,
+      metaStatus: result?.status,
+    });
+
+    return {
+      data: result,
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Template_submitted + " for authentication.",
+    }
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: resMessage.Server_error,
+      error: error.message
+    };
+  }
+}

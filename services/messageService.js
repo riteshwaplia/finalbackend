@@ -244,7 +244,7 @@ exports.sendMessageService = async (req) => {
 
 // @desc    Send bulk messages from an Excel file
 // @access  Private
-exports.sendBulkMessageService = async (req) => {
+const sendBulkMessageService = async (req) => {
   const { templateName, message = {} } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -802,7 +802,7 @@ const BulkSendGroupService = async (req) => {
  * @desc    Get details of a specific bulk send job, including individual message statuses.
  * @access  Private
  */
-exports.getBulkSendJobDetailsService = async (req) => {
+const getBulkSendJobDetailsService = async (req) => {
   const { bulkSendJobId } = req.params;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -867,7 +867,7 @@ exports.getBulkSendJobDetailsService = async (req) => {
  * @desc    Get a list of all bulk send jobs for a project.
  * @access  Private
  */
-exports.getAllBulkSendJobsService = async (req) => {
+const getAllBulkSendJobsService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
@@ -1068,5 +1068,8 @@ console.log("favebookUrl:", FACEBOOK_URL);
 
 module.exports = {
   sendWhatsAppMessages,
-  BulkSendGroupService
+  BulkSendGroupService,
+  sendBulkMessageService,
+  getAllBulkSendJobsService,
+  getBulkSendJobDetailsService
 }

@@ -1,33 +1,34 @@
-require('dotenv').config(); // For environment variables like MONGO_URI, JWT_SECRET
+require('dotenv').config(); 
 const express = require('express');
 const connectDB = require('./config/db');
-const tenantResolver = require('./middleware/tenantResolver'); // Important!
+const tenantResolver = require('./middleware/tenantResolver');
 const cors = require('cors');
-const http = require('http'); // Import http module
-const { Server } = require('socket.io'); // Import Server 
+const http = require('http')
+const { Server } = require('socket.io');
+const path = require("path");
+const fs = require("fs");
 // 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
 
-// Import routes
 const tenantRoutes = require('./routes/tenant');
-const userRoutes = require('./routes/user'); // For tenant-specific user management
-const siteRoutes = require('./routes/site'); // For public site config
-const projectRoutes = require('./routes/project'); // NEW: Import Project routes
-const groupRoutes = require('./routes/group'); // NEW: Import Group routes
-const conntactRoutes = require('./routes/contact'); // NEW: Import Group routes
-const templateRoutes = require('./routes/template'); // NEW: Import Group routes
-const messageRoutes = require('./routes/message'); // NEW: Import Group routes
-const webhookRoutes = require('./routes/webhook'); // NEW: Import Group routes
-const teamMemberRoutes = require('./routes/teamMember'); // NEW: Import Group routes
-const whatsappRoutes = require('./routes/whatsapp'); // NEW: Import Group routes
-const conversationRoutes = require('./routes/conversation'); // NEW: Import Group routes
-const dashboardRoutes = require('./routes/dashboardRoutes'); // NEW: Import Group routes
-const projectDashboardRoutes = require('./routes/projectDashboard'); // NEW: Import Group routes
-const flowRoutes = require('./routes/flowRoutes'); // NEW: Import Group routes
+const userRoutes = require('./routes/user');
+const siteRoutes = require('./routes/site');
+const projectRoutes = require('./routes/project');
+const groupRoutes = require('./routes/group');
+const conntactRoutes = require('./routes/contact');
+const templateRoutes = require('./routes/template');
+const messageRoutes = require('./routes/message');
+const webhookRoutes = require('./routes/webhook');
+const teamMemberRoutes = require('./routes/teamMember'); 
+const whatsappRoutes = require('./routes/whatsapp'); 
+const conversationRoutes = require('./routes/conversation');
+const dashboardRoutes = require('./routes/dashboardRoutes');
+const projectDashboardRoutes = require('./routes/projectDashboard');
+const flowRoutes = require('./routes/flowRoutes');
 
-connectDB(); // Connect to MongoDB
+connectDB();
 const app = express();
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json()); // Body parser
+app.use(express.json());
 const allowedOrigins = [
   'http://localhost:5173',
   'https://wachatfinal.onrender.com',
@@ -37,65 +38,54 @@ const allowedOrigins = [
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, origin); // ✅ Echo the actual origin back
+      callback(null, origin);
     } else {
       callback(new Error('CORS not allowed for this origin: ' + origin));
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: [
     'Origin',
     'X-Requested-With',
     'Content-Type',
     'Accept',
     'Authorization',
-    'X-Tenant-Domain' // ✅ Add any custom headers you're using
+    'X-Tenant-Domain'
   ]
 }));
 
 
-app.use('/api/webhook', webhookRoutes); // This is crucial
-
-// Public site configuration route - resolve tenant first
+app.use('/api/webhook', webhookRoutes);
 app.use('/api/site', siteRoutes);
-
-// Apply tenant resolution for all other API routes that depend on tenant context
-app.use('/api', tenantResolver); // This middleware will run for all subsequent routes
-
-// Authenticated and authorized routes
-app.use('/api/tenants', tenantRoutes); // Super admin routes
-app.use('/api/users', userRoutes); // Tenant admin/user routes (needs protect middleware in routes/user.js)
-app.use('/api/project', projectRoutes); // NEW: Use Project routes
+app.use('/api', tenantResolver);
+app.use('/api/tenants', tenantRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/project', projectRoutes);
 app.use('/api/whatsapp/', whatsappRoutes); 
 app.use('/api/templates', templateRoutes);
-app.use('/api/dashboard', dashboardRoutes); // NEW: Use dashboard routes
+app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/projects/:projectId/groups', groupRoutes);
 app.use('/api/projects/:projectId/contacts', conntactRoutes);
 app.use('/api/projects/:projectId/conversations', conversationRoutes);
-app.use('/api/projects/:projectId/flows', flowRoutes); // NEW: Use flow routes
+app.use('/api/projects/:projectId/flows', flowRoutes);
 app.use('/api/projects/', projectDashboardRoutes);
-// api/projects/686b7112dd16c62f0b63105e/dashboard/stats
-// app.use('/api/projects/:projectId/templates', templateRoutes);
 app.use('/api/projects/:projectId/messages', messageRoutes);
 app.use('/api/projects/:projectId/team-member', teamMemberRoutes);
-// api/whatsapp/phone-numbers
-// Create HTTP server from your Express app
+
 const server = http.createServer(app); 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000", // Your frontend URL
+        origin: "http://localhost:3000",
         methods: ["GET", "POST"]
     }
 });
 
-// Make io instance available throughout your app via req.app.get('io')
 app.set('io', io);
 
 io.on('connection', (socket) => {
     console.log('A user connected:', socket.id);
 
-    // A user might join a "room" based on their userId or projectId to receive specific updates
     socket.on('joinRoom', (roomName) => {
         socket.join(roomName);
         console.log(`Socket ${socket.id} joined room: ${roomName}`);
@@ -106,12 +96,25 @@ io.on('connection', (socket) => {
     });
 });
 
-// Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).send('Something broke!');
 });
 
+const logFile = path.join(__dirname, "server.log");
+const logStream = fs.createWriteStream(logFile, { flags: "a" });
+const originalConsoleLog = console.log;
+console.log = (...args) => {
+  const message = args.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : arg)).join(' ');
+  const timestamp = new Date().toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    hour12: false
+  });
+  const timestampedMessage = `[${timestamp}] ${message}\n`;
+
+  logStream.write(timestampedMessage);
+  originalConsoleLog(timestampedMessage);
+};
+
 const PORT = process.env.PORT || 5001;
-// Use the HTTP server (with Socket.IO) to listen instead of app.listen()
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
