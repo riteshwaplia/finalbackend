@@ -109,7 +109,7 @@ exports.verifyOtp = async (req) => {
       };
     }
 
-    if (user.otp !== otp) {
+    if (String(user.otp) !== String(otp)) {
       return {
         status: statusCode.UNAUTHORIZED,
         success: false,
