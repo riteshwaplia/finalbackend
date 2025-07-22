@@ -5,7 +5,6 @@ const XLSX = require('xlsx'); // For reading Excel/CSV files
 const mongoose = require('mongoose');
 const Project = require("../models/Project");
 
-// Utility function to validate Group IDs
 const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
     if (!groupIds || groupIds.length === 0) {
         return { isValid: true, invalidGroups: [] };
@@ -21,8 +20,6 @@ const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
     return { isValid: invalidGroups.length === 0, invalidGroups };
 };
 
-
-// @desc    Create a new contact
 exports.create = async (req) => {
     const { name, email, mobileNumber, groupIds } = req.body;
     const userId = req.user._id;
@@ -38,7 +35,6 @@ exports.create = async (req) => {
     }
 
     try {
-        // Check for existing contact by mobileNumber number (if provided)
         if (mobileNumber) {
             const existingContact = await Contact.findOne({ tenantId, userId, projectId, mobileNumber });
             if (existingContact) {
@@ -50,7 +46,6 @@ exports.create = async (req) => {
             }
         }
 
-        // Validate groupIds
         const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
         if (!isValid) {
             return {
@@ -331,7 +326,6 @@ exports.uploadContact = async (req) => {
 };
  
 
-// @desc    Get contact list
 exports.contactList = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -340,14 +334,14 @@ exports.contactList = async (req) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const searchText = req.query.search || "";
-    const groupId = req.query.groupId; // Filter by group
+    const groupId = req.query.groupId; 
 
     try {
         const searchCondition = {
             tenantId,
             userId,
             projectId,
-            isBlocked: false // Only active contacts by default
+            isBlocked: false
         };
 
         if (searchText) {
@@ -398,7 +392,6 @@ exports.contactList = async (req) => {
     }
 };
 
-// @desc    Block a contact (set isBlocked to true)
 exports.blockContact = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -438,8 +431,6 @@ exports.blockContact = async (req) => {
     }
 };
 
-// @desc    Get list of groups (for dropdowns, etc.) - This might be redundant if groupListController in groups already exists
-//          Re-using groupController.getController for fetching groups within a project
 exports.groupList = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -472,8 +463,6 @@ exports.groupList = async (req) => {
     }
 };
 
-
-// @desc    Get contact by ID
 exports.contactById = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -509,7 +498,6 @@ exports.contactById = async (req) => {
     }
 };
 
-// @desc    Update a contact
 exports.updateContact = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -527,7 +515,6 @@ exports.updateContact = async (req) => {
             };
         }
 
-        // Check if new mobileNumber number conflicts with another contact (excluding itself)
         if (mobileNumber && mobileNumber !== contact.mobileNumber) {
             const existingPhoneContact = await Contact.findOne({
                 tenantId,
@@ -545,7 +532,6 @@ exports.updateContact = async (req) => {
             }
         }
 
-        // Validate groupIds
         const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
         if (!isValid) {
             return {
@@ -582,7 +568,6 @@ exports.updateContact = async (req) => {
     }
 };
 
-// @desc    Delete a contact
 exports.deleteContact = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -617,9 +602,8 @@ exports.deleteContact = async (req) => {
     }
 };
 
-// @desc    Bulk update contacts (e.g., assign to group, block/unblock, etc.)
 exports.multiUpdate = async (req) => {
-    const { ids, updateFields } = req.body; // updateFields could be { groupIds: [...], isBlocked: true, etc. }
+    const { ids, updateFields } = req.body; 
     const userId = req.user._id;
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
@@ -640,7 +624,6 @@ exports.multiUpdate = async (req) => {
     }
 
     try {
-        // Validate groupIds if they are being updated
         if (updateFields.groupIds !== undefined) {
             const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, updateFields.groupIds);
             if (!isValid) {
@@ -661,7 +644,7 @@ exports.multiUpdate = async (req) => {
             return {
                 status: statusCode.NOT_FOUND,
                 success: false,
-                message: resMessage.No_contacts_found // Or a more specific message
+                message: resMessage.No_contacts_found
             };
         }
 
@@ -682,7 +665,6 @@ exports.multiUpdate = async (req) => {
     }
 };
 
-// @desc    Get blacklisted contacts
 exports.blackList = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -697,7 +679,7 @@ exports.blackList = async (req) => {
             tenantId,
             userId,
             projectId,
-            isBlocked: true // Only blacklisted contacts
+            isBlocked: true
         };
 
         if (searchText) {
@@ -744,7 +726,6 @@ exports.blackList = async (req) => {
     }
 };
 
-// @desc    Remove a contact from blacklist (set isBlocked to false)
 exports.removeBlackListContact = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -784,7 +765,6 @@ exports.removeBlackListContact = async (req) => {
     }
 };
 
-// @desc    Remove contacts in bulk (delete many)
 exports.removeBulkContact = async (req) => {
     const { ids } = req.body;
     console.log("Bulk delete request for contact IDs:", ids);
@@ -824,6 +804,64 @@ exports.removeBulkContact = async (req) => {
         };
     } catch (error) {
         console.error("Error in removeBulkContact service:", error);
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: resMessage.Server_error,
+            error: error.message
+        };
+    }
+};
+
+exports.bulkBlockContact = async (req) => {
+    const { ids } = req.body;
+    const userId = req.user._id;
+    const tenantId = req.tenant._id;
+    const projectId = req.params.projectId;
+
+    const checkProject = await Project.findOne({ _id: req.params.projectId, userId: req.user._id, tenantId: req.tenant._id });
+    if (!checkProject) {
+        return {
+            status: statusCode.NOT_FOUND,
+            success: false,
+            message: resMessage.ProjectId_dont_exists,
+            statusCode: statusCode.NOT_FOUND,
+        }
+    }
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+        return {
+            status: statusCode.BAD_REQUEST,
+            success: false,
+            message: resMessage.No_IDs_provided_for_updation,
+            statusCode: statusCode.BAD_REQUEST
+        };
+    }
+
+    try {
+        const result = await Contact.updateMany({
+            _id: { $in: ids },
+            tenantId,
+            userId,
+            projectId
+        }, { $set: { isBlocked: true } });
+
+        if (result.matchedCount === 0) {
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: resMessage?.No_contacts_found,
+                statusCode: statusCode.NOT_FOUND
+            };
+        }
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Bulk_update_successful,
+            statusCode: statusCode.OK
+        };
+    } catch (error) {
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,

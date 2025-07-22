@@ -7,7 +7,7 @@ const statusCode = {
     NOT_FOUND: 404,
     CONFLICT: 409,
     INTERNAL_SERVER_ERROR: 500,
-    SUCCESS: 200 // Often used for GET success, though OK is more standard
+    SUCCESS: 200
 };
 
 const resMessage = {
@@ -22,6 +22,7 @@ const resMessage = {
     Unauthorized_access: "Unauthorized access.",
     Forbidden_access: "Forbidden access.",
     Server_error: "Internal server error.",
+    ProjectId_dont_exists: "Prohject id not found",
 
     Group_already_exists: "Group with this title already exists for this project.",
     Group_created: "Group created successfully.",
@@ -33,6 +34,7 @@ const resMessage = {
     No_IDs_provided_for_deletion: "No IDs provided for deletion.",
     No_IDs_provided_for_updation: "No IDs provided for updation.",
     Groups_updated_successfully: "Groups updated successfully.",
+    Groups_unarchive_successfully: "Groups unarchive successfully",
 
     Contact_created_successfully: "Contact created successfully.",
     Contact_already_exists: "Contact with this phone number already exists in this project.",
@@ -57,8 +59,9 @@ const resMessage = {
     template_view_successfully: "Template view successfully.",
     Template_deleted_successfully: "Template deleted successfully.",
     hsm_id_and_name_is_required: "HSM ID (template_id) and name are required.",
-    Missing_required_fields: "Required fields are missing.", // General message for missing fields
+    Missing_required_fields: "Required fields are missing.",
     Media_required: "Media file is required for this template type.",
+    Template_already_exists: "Template with this name and language already exists locally for this business profile. Please use a different name or language.",
 
     Message_sent_successfully: "Message sent successfully.",
     Message_send_failed: "Message failed to send.",
@@ -82,26 +85,22 @@ const resMessage = {
     Team_member_deleted_successfully: "Team member deleted successfully.",
     Unauthorized_action: "Unauthorized action.",
 
-
    // NEW WhatsApp Number Registration messages (updated for direct input)
     WhatsApp_numbers_fetched_successfully: "WhatsApp phone numbers fetched successfully.",
     No_whatsapp_numbers_found: "No WhatsApp phone numbers found for the provided WABA ID. Please ensure the WABA ID and Access Token are correct.",
     Failed_to_fetch_whatsapp_numbers: "Failed to fetch WhatsApp phone numbers from Meta API. Check WABA ID and Access Token.",
     WABA_ID_and_ACCESS_TOKEN_REQUIRED: "WABA ID and Access Token are required to fetch WhatsApp numbers.",
 
+    No_valid_contacts_for_bulk_send: "No valid contacts found in the file for bulk sending.",
+    Bulk_messages_sent_successfully: "Bulk messages sent successfully.",
+    Bulk_send_completed_with_errors: "Bulk send completed with errors for some contacts.",
+    Bulk_send_job_created: "Bulk send job created and started.",
+    Bulk_send_job_updated: "Bulk send job updated successfully.",
+    Bulk_send_job_not_found: "Bulk send job not found.",
+    Bulk_send_job_detail_fetched: "Bulk send job details fetched successfully.",
+    Bulk_send_jobs_fetched: "Bulk send jobs fetched successfully.",
 
-     No_valid_contacts_for_bulk_send: "No valid contacts found in the file for bulk sending.",
-        Bulk_messages_sent_successfully: "Bulk messages sent successfully.",
-        Bulk_send_completed_with_errors: "Bulk send completed with errors for some contacts.",
-        Bulk_send_job_created: "Bulk send job created and started.",
-        Bulk_send_job_updated: "Bulk send job updated successfully.",
-        Bulk_send_job_not_found: "Bulk send job not found.",
-        Bulk_send_job_detail_fetched: "Bulk send job details fetched successfully.",
-        Bulk_send_jobs_fetched: "Bulk send jobs fetched successfully.",
-
-
-            Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
-
+    Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
 
 Flow_created_successfully: 'Flow created successfully.',
     Flows_fetched_successfully: 'Flows fetched successfully.',
@@ -115,7 +114,18 @@ Flow_created_successfully: 'Flow created successfully.',
     No_valid_entry_point: 'Flow must have a valid trigger keyword.', // Renamed for clarity
     
     WhatsApp_Business_Profile_updated_successfully: 'WhatsApp Business Profile updated successfully on Meta.',
+    WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
+    WhatsApp_numbers_fetched_successfully : "WhatsApp phone numbers fetched successfully.",
+    Flow_name_exists: 'A flow with this name already exists for this project.',
 
+    USER_EXISTS: "User with that email already exists for this tenant.",
+    OTP_SENT_SUCCESSFULLY_TO_EMAIL: "OTP sent successfully to email.",
+    Invalid_user_data: "Invalid user data provided.",
+    EMAIL_NOT_FOUND: "Email not registered.",
+    Invalid_otp: "Invalid OTP provided.",
+    otp_verified_successfully: "OTP verified successfully.",
+
+    Business_profile_not_found: "Selected Business Profile not found or does not belong to your account."
 };
 
 module.exports = {
