@@ -1,52 +1,46 @@
 // server/services/webhookService.js
 const Message = require("../models/Message");
 const Contact = require("../models/Contact");
-const Conversation = require("../models/ConversationSchema"); // FIX: Corrected model import (removed 'Schema' suffix)
+const Conversation = require("../models/ConversationSchema");
 const Project = require("../models/project");
 const { statusCode, resMessage } = require('../config/constants');
 const Businessprofile = require("../models/BusinessProfile");
 const Flow = require("../models/Flow");
-const { sendWhatsAppMessage } = require("./messageService");
 const { traverseFlow } = require('../functions/functions');
 const {sendWhatsAppMessages} = require("../services/messageService");
+const ConversationSession = require('../models/ConversationSchema');
 
-/**
- * Handles incoming WhatsApp webhook payloads for message status updates and inbound messages.
- * This is the main entry point for Meta's webhooks.
- * @param {Object} req - The request object from Express (contains params, body, io instance).
- * @returns {Object} Success status and message.
- */
 exports.handleWebhookPayload = async (req) => {
-    const io = req.app.get('io'); // Get Socket.IO instance
+    const io = req.app.get('io');
     let businessProfileData;
 
-    // 1. Webhook Verification Request (GET)
     if (req.method === 'GET') {
-        const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN; // Get from environment variables
+        const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+        console.log("token", VERIFY_TOKEN);
         const mode = req.query['hub.mode'];
         const token = req.query['hub.verify_token'];
         const challenge = req.query['hub.challenge'];
-
+ 
         console.log("Webhook GET request received for verification.");
         console.log("Mode:", mode, "Token:", token ? '[REDACTED]' : 'N/A', "Challenge:", challenge); // Mask token in logs
-
+ 
         if (mode && token) {
+            console.log("44444444", token);
             if (mode === 'subscribe' && token === VERIFY_TOKEN) {
                 console.log('WEBHOOK_VERIFIED: Successfully subscribed to webhook.');
                 return { status: statusCode.OK, raw: true, body: challenge }; // Send raw challenge back
             } else {
                 console.error('Webhook verification failed: Invalid verify token or mode.');
-                return { status: statusCode.FORBIDDEN, success: false, message: resMessage.WEBHOOK_INVALID_VERIFY_TOKEN };
+                return { status: statusCode.FORBIDDEN, success: false, message: resMessage.Webhook_verification_failed || "Webhook verification failed." }; // Use a constant if available
             }
         }
         console.warn("Invalid verification request: Missing mode or token in query parameters.");
         return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid verification request." };
     }
 
-    // 2. Incoming Webhook Event (POST)
     const payload = req.body;
     console.log("--- Incoming WhatsApp Webhook POST Payload ---");
-    console.log(JSON.stringify(payload, null, 2)); // Log the entire payload for inspection
+    console.log(JSON.stringify(payload, null, 2));
     console.log("----------------------------------------------");
 
     try {
@@ -69,7 +63,6 @@ exports.handleWebhookPayload = async (req) => {
                 if (change.field === 'messages') {
                     const value = change.value;
 
-                    // Message Status Updates (for outbound messages sent by us)
                     if (value.statuses) {
                         for (const statusUpdate of value.statuses) {
                             const metaMessageId = statusUpdate.id;
@@ -121,7 +114,6 @@ exports.handleWebhookPayload = async (req) => {
                         }
                     }
 
-                    // Inbound Messages (messages coming from WhatsApp users to our WABA number)
                     if (value.messages) {
                         for (const inboundMessage of value.messages) {
                             const fromPhoneNumber = inboundMessage.from;
@@ -233,7 +225,6 @@ exports.handleWebhookPayload = async (req) => {
                             });
                             console.log(`[Inbound Message] Inbound message saved to DB: ${messageDoc._id}`);
 
-                            // 🔁 AUTO-REPLY START
                             if (messageType === 'text' && messageContent?.body) {
                             const userText = messageContent.body.trim().toLowerCase();
                             const phoneNumberId = metaPhoneNumberID;
@@ -250,32 +241,35 @@ exports.handleWebhookPayload = async (req) => {
                                         let type = reply.type;
                                         let messagePayload = {};
 
-                                        if (type === 'text') {
+                                        switch (type) {
+                                            case 'text':
                                             messagePayload = { text: reply.text };
-                                        } else if (type === 'image') {
+                                            break;
+
+                                            case 'image':
+                                            case 'video':
                                             messagePayload = {
                                                 link: reply.link,
                                                 caption: reply.caption || ''
                                             };
-                                        } else if (type === 'template') {
+                                            break;
+
+                                            case 'template':
                                             messagePayload = {
-                                            name: reply.templateName,
-                                            language: { code: 'en' },
-                                            components: [
-                                            {
-                                                type: 'body',
-                                                parameters: reply.parameters.map(param => ({
-                                                    type: 'text',
-                                                    text: param.value
-                                                }))
-                                            }]
-                                        };
-                                        } else if (type === 'video') {
-                                            messagePayload = {
-                                                link: reply.link,
-                                                caption: reply.caption || ''
+                                                name: reply.templateName,
+                                                language: { code: 'en' },
+                                                components: [
+                                                {
+                                                    type: 'body',
+                                                    parameters: reply.parameters.map(param => ({
+                                                        type: 'text',
+                                                        text: param.value
+                                                    }))
+                                                }]
                                             };
-                                        } else {
+                                            break;
+
+                                            default:
                                             console.warn(`Unsupported reply type: ${type}`);
                                             continue;
                                         }
@@ -289,6 +283,14 @@ exports.handleWebhookPayload = async (req) => {
                                             phoneNumberId,
                                             accessToken,
                                             FACEBOOK_URL: "https://graph.facebook.com/v22.0"
+                                        });
+
+                                        await ConversationSession.create({
+                                            whatsappContactId: userNumber,
+                                            whatsappPhoneNumberId: phoneNumberId,
+                                            projectId: project._id,
+                                            userId: project.userId,
+                                            tenantId: project.tenantId,
                                         });
 
                                         if (!response.success) {
@@ -306,13 +308,11 @@ exports.handleWebhookPayload = async (req) => {
                                     console.log(`Auto-replied to ${userNumber} with ${replies.length} message(s).`);
                                 } else {
                                     if (io) {
-                                // Emit to the user/project owner for conversation list updates (left panel)
                                 io.to(project.userId.toString()).emit('newInboundMessage', {
                                     message: messageDoc.toObject(),
                                     conversation: conversation.toObject(),
                                     contact: contact.toObject()
                                 });
-                                // Emit to the specific conversation room for active chat window updates (right panel)
                                 io.to(conversation._id.toString()).emit('newChatMessage', {
                                     message: messageDoc.toObject(),
                                     contact: contact.toObject(),
@@ -325,7 +325,6 @@ exports.handleWebhookPayload = async (req) => {
                                 console.error(`Error during auto-reply for "${userText}":`, err.message);
                             }
                             }
-                            // 🔁 AUTO-REPLY END
                         }
                     }
                 }
