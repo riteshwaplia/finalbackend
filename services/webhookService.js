@@ -1,32 +1,31 @@
-// server/services/whatsappWebhookService.js
+// server/services/webhookService.js
 const Message = require("../models/Message");
 const Contact = require("../models/Contact");
-const Conversation = require("../models/ConversationSchema"); // Corrected model import
-const Project = require("../models/Project");
-const flowExecutionService = require("./flowExecutionService"); // Import flow execution service
+const Conversation = require("../models/ConversationSchema");
+const Project = require("../models/project");
 const { statusCode, resMessage } = require('../config/constants');
-// Removed unused imports: Businessprofile, Flow, sendWhatsAppMessage, traverseFlow, sendWhatsAppMessages
-
-/**
- * Handles incoming WhatsApp webhook payloads for message status updates and inbound messages.
- * This is the main entry point for Meta's webhooks.
- * @param {Object} req - The request object from Express (contains params, body, io instance).
- * @returns {Object} Success status and message.
- */
+const Businessprofile = require("../models/BusinessProfile");
+const Flow = require("../models/Flow");
+const { traverseFlow } = require('../functions/functions');
+const {sendWhatsAppMessages} = require("../services/messageService");
+const ConversationSession = require('../models/ConversationSchema');
+ 
 exports.handleWebhookPayload = async (req) => {
-    const io = req.app.get('io'); // Get Socket.IO instance
-
-    // 1. Webhook Verification Request (GET)
+    const io = req.app.get('io');
+    let businessProfileData;
+ 
     if (req.method === 'GET') {
-        const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN; // Use META_VERIFY_TOKEN for consistency
+        const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
+        console.log("token", VERIFY_TOKEN);
         const mode = req.query['hub.mode'];
         const token = req.query['hub.verify_token'];
         const challenge = req.query['hub.challenge'];
-
+ 
         console.log("Webhook GET request received for verification.");
         console.log("Mode:", mode, "Token:", token ? '[REDACTED]' : 'N/A', "Challenge:", challenge); // Mask token in logs
-
+ 
         if (mode && token) {
+            console.log("44444444", token);
             if (mode === 'subscribe' && token === VERIFY_TOKEN) {
                 console.log('WEBHOOK_VERIFIED: Successfully subscribed to webhook.');
                 return { status: statusCode.OK, raw: true, body: challenge }; // Send raw challenge back
@@ -38,44 +37,42 @@ exports.handleWebhookPayload = async (req) => {
         console.warn("Invalid verification request: Missing mode or token in query parameters.");
         return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid verification request." };
     }
-
-    // 2. Incoming Webhook Event (POST)
+ 
     const payload = req.body;
     console.log("--- Incoming WhatsApp Webhook POST Payload ---");
-    console.log(JSON.stringify(payload, null, 2)); // Log the entire payload for inspection
+    console.log(JSON.stringify(payload, null, 2));
     console.log("----------------------------------------------");
-
+ 
     try {
         if (!payload || !payload.object || payload.object !== 'whatsapp_business_account') {
             console.warn("Webhook payload not for 'whatsapp_business_account' or invalid object type. Payload:", JSON.stringify(payload));
             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid webhook object type." };
         }
-
+ 
         for (const entry of payload.entry) {
             const metaPhoneNumberID = entry.changes?.[0]?.value?.metadata?.phone_number_id;
-
+ 
             if (!metaPhoneNumberID) {
                 console.warn(`[Webhook] Could not extract Meta Phone Number ID from entry. Skipping entry. Entry: ${JSON.stringify(entry)}`);
                 continue;
             }
-
+ 
             console.log(`[Webhook] Processing events for Meta Phone Number ID: ${metaPhoneNumberID}`);
-
+ 
             for (const change of entry.changes) {
                 if (change.field === 'messages') {
                     const value = change.value;
-
-                    // Message Status Updates (for outbound messages sent by us)
+ 
                     if (value.statuses) {
                         for (const statusUpdate of value.statuses) {
                             const metaMessageId = statusUpdate.id;
                             const newStatus = statusUpdate.status;
                             const timestamp = new Date(parseInt(statusUpdate.timestamp) * 1000);
-
+ 
                             console.log(`[Webhook Status Update] Meta Message ID: ${metaMessageId}, New Status: ${newStatus}, Time: ${timestamp.toISOString()}`);
-
+ 
                             const messageDoc = await Message.findOne({ metaMessageId: metaMessageId, metaPhoneNumberID: metaPhoneNumberID });
-
+ 
                             if (messageDoc) {
                                 messageDoc.status = newStatus;
                                 messageDoc.updatedAt = new Date();
@@ -86,7 +83,7 @@ exports.handleWebhookPayload = async (req) => {
                                 }
                                 await messageDoc.save();
                                 console.log(`[Webhook Status Update] Message DB ID ${messageDoc._id} status updated to ${newStatus}.`);
-
+ 
                                 if (io) {
                                     io.to(messageDoc.userId.toString()).emit('messageStatusUpdate', {
                                         messageDbId: messageDoc._id,
@@ -116,8 +113,7 @@ exports.handleWebhookPayload = async (req) => {
                             }
                         }
                     }
-
-                    // Inbound Messages (messages coming from WhatsApp users to our WABA number)
+ 
                     if (value.messages) {
                         for (const inboundMessage of value.messages) {
                             const fromPhoneNumber = inboundMessage.from;
@@ -127,7 +123,7 @@ exports.handleWebhookPayload = async (req) => {
                             const metaMessageId = inboundMessage.id;
                             const timestamp = new Date(parseInt(inboundMessage.timestamp) * 1000);
                             const profileName = inboundMessage.contacts?.[0]?.profile?.name || fromPhoneNumber;
-
+ 
                             console.log(`\n--- Processing Inbound Message ---`);
                             console.log(`From: ${fromPhoneNumber}`);
                             console.log(`Meta Phone Number ID (Our Number): ${metaPhoneNumberID}`);
@@ -136,23 +132,23 @@ exports.handleWebhookPayload = async (req) => {
                             console.log(`Content: ${JSON.stringify(messageContent)}`);
                             console.log(`Timestamp: ${timestamp.toISOString()}`);
                             console.log(`----------------------------------`);
-
-                            // Populate businessProfileId to ensure metaAccessToken is available for flowExecutionService
-                            const project = await Project.findOne({ metaPhoneNumberID: metaPhoneNumberID })
-                                                         .populate('businessProfileId');
-
+ 
+                            const project = await Project.findOne({ metaPhoneNumberID: metaPhoneNumberID });
+ 
                             if (!project) {
                                 console.warn(`[Inbound Message] No project found for Meta Phone Number ID: ${metaPhoneNumberID}. Cannot process inbound message.`);
                                 continue;
                             }
                             console.log(`[Inbound Message] Found Project: ${project.name} (ID: ${project._id})`);
-
+ 
+                            businessProfileData = await Businessprofile.findById(project.businessProfileId);
+ 
                             let contact = await Contact.findOne({
                                 projectId: project._id,
                                 userId: project.userId,
                                 whatsappId: whatsappId
                             });
-
+ 
                             if (!contact) {
                                 const parsedPhoneNumber = fromPhoneNumber.replace(/^\+/, '');
                                 let defaultCountryCode = '';
@@ -161,7 +157,7 @@ exports.handleWebhookPayload = async (req) => {
                                     defaultCountryCode = parsedPhoneNumber.substring(0, parsedPhoneNumber.length - 10);
                                     defaultMobileNumber = parsedPhoneNumber.substring(parsedPhoneNumber.length - 10);
                                 }
-
+ 
                                 console.log(`[Inbound Message] Creating new contact for ${fromPhoneNumber} (WhatsApp ID: ${whatsappId}) in project ${project._id}`);
                                 contact = await Contact.create({
                                     tenantId: project.tenantId,
@@ -182,13 +178,13 @@ exports.handleWebhookPayload = async (req) => {
                             } else {
                                 console.log(`[Inbound Message] Existing contact found: ${contact._id}`);
                             }
-
+ 
                             let conversation = await Conversation.findOne({
                                 projectId: project._id,
                                 contactId: contact._id,
                                 metaPhoneNumberID: metaPhoneNumberID
                             });
-
+ 
                             if (!conversation) {
                                 console.log(`[Inbound Message] Creating new conversation for project ${project._id} with contact ${contact._id} via phone ID ${metaPhoneNumberID}`);
                                 conversation = await Conversation.create({
@@ -200,8 +196,7 @@ exports.handleWebhookPayload = async (req) => {
                                     latestMessage: messageContent.body || messageType,
                                     latestMessageType: messageType,
                                     lastActivityAt: timestamp,
-                                    unreadCount: 1,
-                                    isActive: true
+                                    unreadCount: 1
                                 });
                                 console.log(`[Inbound Message] New conversation created: ${conversation._id}`);
                             } else {
@@ -213,32 +208,111 @@ exports.handleWebhookPayload = async (req) => {
                                 conversation.isActive = true;
                                 await conversation.save();
                             }
-
+ 
                             const messageDoc = await Message.create({
                                 tenantId: project.tenantId,
                                 userId: project.userId,
                                 projectId: project._id,
                                 conversationId: conversation._id,
                                 metaPhoneNumberID: metaPhoneNumberID,
-                                from: fromPhoneNumber, // Sender's number
-                                to: metaPhoneNumberID, // Our number
+                                from: fromPhoneNumber,
                                 direction: 'inbound',
                                 type: messageType,
-                                message: inboundMessage, // Store full inbound message object
+                                message: messageContent,
                                 metaMessageId: metaMessageId,
-                                status: 'received', // Initial status for inbound
+                                status: 'received',
                                 sentAt: timestamp
                             });
                             console.log(`[Inbound Message] Inbound message saved to DB: ${messageDoc._id}`);
-
-                            if (io) {
-                                // Emit to the user/project owner for conversation list updates (left panel)
+ 
+                            if (messageType === 'text' && messageContent?.body) {
+                            const userText = messageContent.body.trim().toLowerCase();
+                            const phoneNumberId = metaPhoneNumberID;
+                            const accessToken = businessProfileData.metaAccessToken;
+                            const userNumber = fromPhoneNumber;
+ 
+                            try {
+                                const flow = await Flow.findOne({ entryPoint: userText });
+ 
+                                if (flow) {
+                                    const replies = await traverseFlow(userText, flow.nodes, flow.edges);
+ 
+                                    for (const reply of replies) {
+                                        let type = reply.type;
+                                        let messagePayload = {};
+ 
+                                        switch (type) {
+                                            case 'text':
+                                            messagePayload = { text: reply.text };
+                                            break;
+ 
+                                            case 'image':
+                                            case 'video':
+                                            messagePayload = {
+                                                link: reply.link,
+                                                caption: reply.caption || ''
+                                            };
+                                            break;
+ 
+                                            case 'template':
+                                            messagePayload = {
+                                                name: reply.templateName,
+                                                language: { code: 'en' },
+                                                components: [
+                                                {
+                                                    type: 'body',
+                                                    parameters: reply.parameters.map(param => ({
+                                                        type: 'text',
+                                                        text: param.value
+                                                    }))
+                                                }]
+                                            };
+                                            break;
+ 
+                                            default:
+                                            console.warn(`Unsupported reply type: ${type}`);
+                                            continue;
+                                        }
+ 
+                                        console.log("messagePayload=======", messagePayload);
+ 
+                                        const response = await sendWhatsAppMessages({
+                                            to: userNumber,
+                                            type,
+                                            message: messagePayload,
+                                            phoneNumberId,
+                                            accessToken,
+                                            FACEBOOK_URL: "https://graph.facebook.com/v22.0"
+                                        });
+ 
+                                        await ConversationSession.create({
+                                            whatsappContactId: userNumber,
+                                            whatsappPhoneNumberId: phoneNumberId,
+                                            projectId: project._id,
+                                            userId: project.userId,
+                                            tenantId: project.tenantId,
+                                        });
+ 
+                                        if (!response.success) {
+                                            console.error(`Failed to send message to ${userNumber}`);
+                                            console.error("Error:", response.error);
+                                        } else {
+                                            console.log(`Message sent to ${userNumber}`);
+                                        }
+ 
+                                        if (reply.delay && reply.delay > 0) {
+                                            await new Promise(res => setTimeout(res, reply.delay * 1000));
+                                        }
+                                    }
+ 
+                                    console.log(`Auto-replied to ${userNumber} with ${replies.length} message(s).`);
+                                } else {
+                                    if (io) {
                                 io.to(project.userId.toString()).emit('newInboundMessage', {
                                     message: messageDoc.toObject(),
                                     conversation: conversation.toObject(),
                                     contact: contact.toObject()
                                 });
-                                // Emit to the specific conversation room for active chat window updates (right panel)
                                 io.to(conversation._id.toString()).emit('newChatMessage', {
                                     message: messageDoc.toObject(),
                                     contact: contact.toObject(),
@@ -246,50 +320,23 @@ exports.handleWebhookPayload = async (req) => {
                                 });
                                 console.log(`[Inbound Message] Emitted 'newInboundMessage' to user room '${project.userId}' and 'newChatMessage' to conversation room '${conversation._id}'`);
                             }
-
-                            // --- Delegate to Flow Execution Service for Auto-Reply ---
-                            let userInputText = '';
-                            let interactiveResponseId = '';
-
-                            if (messageType === 'text') {
-                                userInputText = messageContent.body;
-                            } else if (messageType === 'interactive') {
-                                if (messageContent.type === 'button_reply') {
-                                    userInputText = messageContent.button_reply.title; // Text of the button
-                                    interactiveResponseId = messageContent.button_reply.id; // ID of the button (payload)
-                                } else if (messageContent.type === 'list_reply') {
-                                    userInputText = messageContent.list_reply.title;
-                                    interactiveResponseId = messageContent.list_reply.id;
                                 }
+                            } catch (err) {
+                                console.error(`Error during auto-reply for "${userText}":`, err.message);
                             }
-                            // Add other message types if they should trigger flows (e.g., image caption, location)
-
-                            const parsedMessageForFlow = {
-                                from: fromPhoneNumber,
-                                whatsappPhoneNumberId: metaPhoneNumberID,
-                                messageType: messageType,
-                                userInput: userInputText,
-                                interactiveResponseId: interactiveResponseId,
-                                metaMessageId: metaMessageId,
-                                timestamp: timestamp,
-                                profileName: profileName,
-                                originalMessageContent: inboundMessage // Pass the full Meta message object
-                            };
-
-                            console.log(`[Webhook] Passing message to flowExecutionService for auto-reply...`);
-                            await flowExecutionService.handleIncomingMessageForFlow(parsedMessageForFlow, project, contact, conversation);
-                            // The flowExecutionService will handle sending the auto-reply and updating ConversationSession
+                            }
                         }
                     }
                 }
             }
         }
         console.log("--- Webhook Payload Processing Complete ---");
-        return { status: statusCode.OK, success: true, message: resMessage.Webhook_received_successfully };
+        return { status: statusCode.OK, success: true, message: resMessage.WEBHOOK_RECEIVE_SUCCESS };
     } catch (error) {
         console.error("--- Error processing webhook payload ---");
         console.error("Error details:", error.message);
         console.error("Stack trace:", error.stack);
+        console.error("---------------------------------------");
         return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
     }
 };
