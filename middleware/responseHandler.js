@@ -1,4 +1,4 @@
-const responseHandler = (fn) => async (req, res, next) => {
+exports.responseHandler = (fn) => async (req, res, next) => {
     try {
         const result = await fn(req);
  
@@ -27,5 +27,3 @@ const responseHandler = (fn) => async (req, res, next) => {
         });
     }
 };
- 
-module.exports = responseHandler;
