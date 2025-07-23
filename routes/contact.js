@@ -17,6 +17,9 @@ router.delete("/deleteContact/:contactId", protect, responseHandler(contactContr
 router.put("/bulkUpdate", protect, responseHandler(contactController.multiContactUpdateController));
 router.get("/blackList", protect, responseHandler(contactController.blackListController));
 router.put("/removeBlackListContact/:contactId", protect, responseHandler(contactController.removeBlockContactController));
+
+// Remove contacts in bulk (delete many)
+router.put("/bulkContactUpdate/delete", protect, responseHandler(contactController.removeBulkController)); // Note: Original was /bulkContactUpdate
 router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
 router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
 router.get("/fields", protect, responseHandler(contactController.fieldListController));

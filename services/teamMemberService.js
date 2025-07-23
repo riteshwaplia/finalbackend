@@ -1,6 +1,6 @@
 // server/services/teamMemberService.js
 const User = require('../models/User');
-const Project = require('../models/project'); // To ensure project exists
+const Project = require('../models/Project'); // To ensure project exists
 const { statusCode, resMessage } = require('../config/constants');
 
 // @desc    Create a new team member for a specific project

@@ -255,250 +255,315 @@
 // server/services/projectService.js
 // server/services/projectService.js
 // server/services/projectService.js
-const Project = require('../models/project');
-const BusinessProfile = require('../models/BusinessProfile');
+// const Project = require('../models/project');
+// const BusinessProfile = require('../models/BusinessProfile');
+// const { statusCode, resMessage } = require('../config/constants');
+
+// // @desc    Create a new project
+// // @access  Private (Tenant Admin or regular User)
+// exports.createProject = async (req) => {
+//     // Removed 'type' and 'providerType' from destructuring
+//     const { name, description, businessProfileId, isWhatsappVerified, assistantName, metaPhoneNumberID, whatsappNumber, activePlan, planDuration } = req.body;
+//     const tenantId = req.tenant._id;
+//     const userId = req.user._id;
+//  console.log("businessProfileId:", businessProfileId, "metaPhoneNumberID:", metaPhoneNumberID, "whatsappNumber:", whatsappNumber);
+//     if (!name || !businessProfileId || !metaPhoneNumberID || !whatsappNumber) { // metaPhoneNumberID and whatsappNumber are now required for project creation
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.Missing_required_fields + " (name, businessProfileId, metaPhoneNumberID, and whatsappNumber are required)."
+//         };
+//     }
+
+//     try {
+//         const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
+//         if (!businessProfile) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: "Selected Business Profile not found or does not belong to your account."
+//             };
+//         }
+
+//         const projectExists = await Project.findOne({ name, tenantId, userId, businessProfileId });
+//         if (projectExists) {
+//             return {
+//                 status: statusCode.CONFLICT,
+//                 success: false,
+//                 message: resMessage.Project_already_exists
+//             };
+//         }
+
+//         const project = await Project.create({
+//             name,
+//             description,
+//             tenantId,
+//             userId,
+//             businessProfileId,
+//             isWhatsappVerified: isWhatsappVerified !== undefined ? isWhatsappVerified : false,
+//             assistantName,
+//             metaPhoneNumberID, // NEW
+//             whatsappNumber,    // NEW
+//             activePlan,
+//             planDuration
+//         });
+// console.log("project created:", project);
+//         return {
+//             status: statusCode.CREATED,
+//             success: true,
+//             message: resMessage.Project_created_successfully,
+//             data: project
+//         };
+//     } catch (error) {
+//         console.error("Error creating project:", error);
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: error.message || resMessage.Server_error
+//         };
+//     }
+// };
+
+// // @desc    Get all projects for the authenticated user within their tenant
+// // @access  Private
+// exports.getAllProjects = async (req) => {
+//     const tenantId = req.tenant._id;
+//     const userId = req.user._id;
+// console.log("getAllProjects called with tenantId:", tenantId, "userId:", userId);
+//     try {
+//         const projects = await Project.find({ tenantId, userId }).populate('businessProfileId', 'name metaBusinessId');
+//         if (projects.length === 0) {
+//             return {
+//                 status: statusCode.OK,
+//                 success: true,
+//                 message: resMessage.No_data_found,
+//                 data: []
+//             };
+//         }
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Projects_fetch_successfully,
+//             data: projects
+//         };
+//     } catch (error) {
+//         console.error("Error fetching projects:", error);
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: error.message || resMessage.Server_error
+//         };
+//     }
+// };
+
+// // @desc    Get a single project by ID
+// // @access  Private
+// exports.getProjectById = async (req) => {
+//     const projectId = req.params.id;
+//     const tenantId = req.tenant._id;
+//     const userId = req.user._id;
+
+//     try {
+//         const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate('businessProfileId', 'name metaBusinessId');
+
+//         if (!project) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: resMessage.No_data_found
+//             };
+//         }
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Projects_fetch_successfully,
+//             data: project
+//         };
+//     } catch (error) {
+//         console.error("Error fetching project by ID:", error);
+//         if (error.name === 'CastError') {
+//             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid Project ID format." };
+//         }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: error.message || resMessage.Server_error
+//         };
+//     }
+// };
+
+// // @desc    Update a project
+// // @access  Private
+// exports.updateProject = async (req) => {
+//     const projectId = req.params.projectId;
+//     const tenantId = req.tenant._id;
+//     const userId = req.user._id;
+//     // Removed 'type' and 'providerType' from destructuring
+//     const { name, description, businessProfileId, isWhatsappVerified, assistantName, metaPhoneNumberID, whatsappNumber, activePlan, planDuration } = req.body;
+
+//     try {
+//         const project = await Project.findOne({ _id: projectId, tenantId, userId });
+//         if (!project) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: resMessage.No_data_found
+//             };
+//         }
+
+//         if (businessProfileId && businessProfileId.toString() !== project.businessProfileId.toString()) {
+//             const newBusinessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
+//             if (!newBusinessProfile) {
+//                 return {
+//                     status: statusCode.BAD_REQUEST,
+//                     success: false,
+//                     message: "New Business Profile not found or does not belong to your account."
+//                 };
+//             }
+//             project.businessProfileId = businessProfileId;
+//         }
+
+//         if (name && name !== project.name) {
+//             const nameConflict = await Project.findOne({ name, tenantId, userId, businessProfileId: project.businessProfileId, _id: { $ne: projectId } });
+//             if (nameConflict) {
+//                 return {
+//                     status: statusCode.CONFLICT,
+//                     success: false,
+//                     message: resMessage.Project_already_exists
+//                 };
+//             }
+//         }
+
+//         project.name = name || project.name;
+//         project.description = description !== undefined ? description : project.description;
+//         project.isWhatsappVerified = isWhatsappVerified !== undefined ? isWhatsappVerified : project.isWhatsappVerified;
+//         project.assistantName = assistantName !== undefined ? assistantName : project.assistantName;
+//         project.metaPhoneNumberID = metaPhoneNumberID !== undefined ? metaPhoneNumberID : project.metaPhoneNumberID; // NEW
+//         project.whatsappNumber = whatsappNumber !== undefined ? whatsappNumber : project.whatsappNumber;       // NEW
+//         project.activePlan = activePlan !== undefined ? activePlan : project.activePlan;
+//         project.planDuration = planDuration !== undefined ? planDuration : project.planDuration;
+
+//         await project.save();
+
+//         const updatedProject = await Project.findById(projectId).populate('businessProfileId', 'name metaBusinessId');
+
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Project_updated_successfully || "Project updated successfully.",
+//             data: updatedProject
+//         };
+//     } catch (error) {
+//         console.error("Error updating project:", error);
+//         if (error.name === 'CastError') {
+//             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid Project ID format." };
+//         }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: error.message || resMessage.Server_error
+//         };
+//     }
+// };
+
+// // @desc    Delete a project
+// // @access  Private
+// exports.deleteProject = async (req) => {
+//     const projectId = req.params.projectId;
+//     const tenantId = req.tenant._id;
+//     const userId = req.user._id;
+
+//     try {
+//         const project = await Project.findOne({ _id: projectId, tenantId, userId });
+//         if (!project) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: resMessage.No_data_found
+//             };
+//         }
+
+//         await project.deleteOne();
+
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Project_deleted_successfully || "Project deleted successfully."
+//         };
+//     } catch (error) {
+//         console.error("Error deleting project:", error);
+//         if (error.name === 'CastError') {
+//             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid Project ID format." };
+//         }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: error.message || resMessage.Server_error
+//         };
+//     }
+// };
+
+
+
+const projectService = require('../services/projectService');
 const { statusCode, resMessage } = require('../config/constants');
 
 // @desc    Create a new project
 // @access  Private (Tenant Admin or regular User)
-exports.createProject = async (req) => {
-    // Removed 'type' and 'providerType' from destructuring
-    const { name, description, businessProfileId, isWhatsappVerified, assistantName, metaPhoneNumberID, whatsappNumber, activePlan, planDuration } = req.body;
-    const tenantId = req.tenant._id;
-    const userId = req.user._id;
- console.log("businessProfileId:", businessProfileId, "metaPhoneNumberID:", metaPhoneNumberID, "whatsappNumber:", whatsappNumber);
-    if (!name || !businessProfileId || !metaPhoneNumberID || !whatsappNumber) { // metaPhoneNumberID and whatsappNumber are now required for project creation
-        return {
-            status: statusCode.BAD_REQUEST,
-            success: false,
-            message: resMessage.Missing_required_fields + " (name, businessProfileId, metaPhoneNumberID, and whatsappNumber are required)."
-        };
-    }
-
-    try {
-        const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
-        if (!businessProfile) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: "Selected Business Profile not found or does not belong to your account."
-            };
-        }
-
-        const projectExists = await Project.findOne({ name, tenantId, userId, businessProfileId });
-        if (projectExists) {
-            return {
-                status: statusCode.CONFLICT,
-                success: false,
-                message: resMessage.Project_already_exists
-            };
-        }
-
-        const project = await Project.create({
-            name,
-            description,
-            tenantId,
-            userId,
-            businessProfileId,
-            isWhatsappVerified: isWhatsappVerified !== undefined ? isWhatsappVerified : false,
-            assistantName,
-            metaPhoneNumberID, // NEW
-            whatsappNumber,    // NEW
-            activePlan,
-            planDuration
-        });
-console.log("project created:", project);
-        return {
-            status: statusCode.CREATED,
-            success: true,
-            message: resMessage.Project_created_successfully,
-            data: project
-        };
-    } catch (error) {
-        console.error("Error creating project:", error);
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message || resMessage.Server_error
-        };
-    }
+exports.createProjectController = async (req) => {
+    return await projectService.createProject(req);
 };
 
 // @desc    Get all projects for the authenticated user within their tenant
 // @access  Private
-exports.getAllProjects = async (req) => {
-    const tenantId = req.tenant._id;
-    const userId = req.user._id;
-console.log("getAllProjects called with tenantId:", tenantId, "userId:", userId);
-    try {
-        const projects = await Project.find({ tenantId, userId }).populate('businessProfileId', 'name metaBusinessId');
-        if (projects.length === 0) {
-            return {
-                status: statusCode.OK,
-                success: true,
-                message: resMessage.No_data_found,
-                data: []
-            };
-        }
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Projects_fetch_successfully,
-            data: projects
-        };
-    } catch (error) {
-        console.error("Error fetching projects:", error);
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message || resMessage.Server_error
-        };
-    }
+exports.getAllProjectsController = async (req) => {
+    return await projectService.getAllProjects(req);
 };
 
 // @desc    Get a single project by ID
 // @access  Private
-exports.getProjectById = async (req) => {
-    const projectId = req.params.id;
-    const tenantId = req.tenant._id;
-    const userId = req.user._id;
-
-    try {
-        const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate('businessProfileId', 'name metaBusinessId');
-
-        if (!project) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.No_data_found
-            };
-        }
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Projects_fetch_successfully,
-            data: project
-        };
-    } catch (error) {
-        console.error("Error fetching project by ID:", error);
-        if (error.name === 'CastError') {
-            return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid Project ID format." };
-        }
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message || resMessage.Server_error
-        };
-    }
+exports.getProjectByIdController = async (req) => {
+    return await projectService.getProjectById(req);
 };
 
 // @desc    Update a project
 // @access  Private
-exports.updateProject = async (req) => {
-    const projectId = req.params.projectId;
-    const tenantId = req.tenant._id;
-    const userId = req.user._id;
-    // Removed 'type' and 'providerType' from destructuring
-    const { name, description, businessProfileId, isWhatsappVerified, assistantName, metaPhoneNumberID, whatsappNumber, activePlan, planDuration } = req.body;
-
-    try {
-        const project = await Project.findOne({ _id: projectId, tenantId, userId });
-        if (!project) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.No_data_found
-            };
-        }
-
-        if (businessProfileId && businessProfileId.toString() !== project.businessProfileId.toString()) {
-            const newBusinessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
-            if (!newBusinessProfile) {
-                return {
-                    status: statusCode.BAD_REQUEST,
-                    success: false,
-                    message: "New Business Profile not found or does not belong to your account."
-                };
-            }
-            project.businessProfileId = businessProfileId;
-        }
-
-        if (name && name !== project.name) {
-            const nameConflict = await Project.findOne({ name, tenantId, userId, businessProfileId: project.businessProfileId, _id: { $ne: projectId } });
-            if (nameConflict) {
-                return {
-                    status: statusCode.CONFLICT,
-                    success: false,
-                    message: resMessage.Project_already_exists
-                };
-            }
-        }
-
-        project.name = name || project.name;
-        project.description = description !== undefined ? description : project.description;
-        project.isWhatsappVerified = isWhatsappVerified !== undefined ? isWhatsappVerified : project.isWhatsappVerified;
-        project.assistantName = assistantName !== undefined ? assistantName : project.assistantName;
-        project.metaPhoneNumberID = metaPhoneNumberID !== undefined ? metaPhoneNumberID : project.metaPhoneNumberID; // NEW
-        project.whatsappNumber = whatsappNumber !== undefined ? whatsappNumber : project.whatsappNumber;       // NEW
-        project.activePlan = activePlan !== undefined ? activePlan : project.activePlan;
-        project.planDuration = planDuration !== undefined ? planDuration : project.planDuration;
-
-        await project.save();
-
-        const updatedProject = await Project.findById(projectId).populate('businessProfileId', 'name metaBusinessId');
-
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Project_updated_successfully || "Project updated successfully.",
-            data: updatedProject
-        };
-    } catch (error) {
-        console.error("Error updating project:", error);
-        if (error.name === 'CastError') {
-            return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid Project ID format." };
-        }
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message || resMessage.Server_error
-        };
-    }
+exports.updateProjectController = async (req) => {
+    // projectId is expected to be in req.params.projectId
+    return await projectService.updateProject(req);
 };
 
 // @desc    Delete a project
 // @access  Private
-exports.deleteProject = async (req) => {
-    const projectId = req.params.projectId;
-    const tenantId = req.tenant._id;
+exports.deleteProjectController = async (req) => {
+    // projectId is expected to be in req.params.projectId
+    return await projectService.deleteProject(req);
+};
+
+/**
+ * @desc    Update the WhatsApp Business Profile details on Meta for a project's phone number.
+ * @route   PUT /api/projects/:projectId/whatsapp-business-profile
+ * @access  Private (User/Team Member)
+ */
+exports.updateWhatsappBusinessProfileController = async (req) => {
+    const { projectId } = req.params;
     const userId = req.user._id;
+    const tenantId = req.tenant._id;
+    const profileData = req.body; // Contains fields like about, address, email, websites, vertical, profile_picture_handle
 
-    try {
-        const project = await Project.findOne({ _id: projectId, tenantId, userId });
-        if (!project) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.No_data_found
-            };
-        }
-
-        await project.deleteOne();
-
+    // Basic validation for required profile fields if needed, or let service handle
+    if (Object.keys(profileData).length === 0) {
         return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Project_deleted_successfully || "Project deleted successfully."
-        };
-    } catch (error) {
-        console.error("Error deleting project:", error);
-        if (error.name === 'CastError') {
-            return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid Project ID format." };
-        }
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
+            status: statusCode.BAD_REQUEST,
             success: false,
-            message: error.message || resMessage.Server_error
+            message: resMessage.Missing_required_fields + " (Profile data is required for update)."
         };
     }
+
+    return await projectService.updateWhatsappBusinessProfileOnMeta({
+        projectId,
+        userId,
+        tenantId,
+        profileData
+    });
 };

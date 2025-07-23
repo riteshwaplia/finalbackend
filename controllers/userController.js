@@ -1,7 +1,7 @@
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 const User = require('../models/User');
-const Project = require('../models/project');
+const Project = require('../models/Project');
 const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
@@ -16,6 +16,36 @@ const registerController = async (req) => {
             message: error.message,
         };
     }
+
+    const user = await User.create({
+        tenantId,
+        username,
+        email,
+        password,
+        role: 'user' // default role
+    });
+
+    if (!user) {
+        return {
+            statusCode: 400,
+            success: false,
+            message: 'Invalid user data',
+            data: null
+        };
+    }
+
+    return {
+        statusCode: 201,
+        success: true,
+        message: 'User registered successfully',
+        data: {
+            _id: user._id,
+            username: user.username,
+            email: user.email,
+            role: user.role,
+            token: generateToken(user._id)
+        }
+    };
 };
 
 const verifyOtpController = async (req) => {

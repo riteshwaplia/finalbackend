@@ -17,6 +17,10 @@ exports.getAllController = async (req) => {
     return await templateService.getAllTemplates(req);
 };
 
+exports.createCarouselTemplateController = async (req) => {
+    return await templateService.createCarouselTemplate(req);
+};
+
 exports.getByIdController = async (req) => {
     return await templateService.getTemplateById(req);
 };

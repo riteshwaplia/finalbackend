@@ -32,7 +32,10 @@ app.use(express.json());
 const allowedOrigins = [
   'http://localhost:5173',
   'https://wachatfinal.onrender.com',
-  'https://c1d2faae5baf.ngrok-free.app'
+  'https://c1d2faae5baf.ngrok-free.app',
+  "http://192.168.1.86:5173/",
+  "http://172.16.0.2:5173/",
+  "https://sabnode.netlify.app"
 ];
 
 app.use(cors({
@@ -44,7 +47,7 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
   allowedHeaders: [
     'Origin',
     'X-Requested-With',
@@ -76,8 +79,8 @@ app.use('/api/projects/:projectId/team-member', teamMemberRoutes);
 const server = http.createServer(app); 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
-        methods: ["GET", "POST"]
+        origin: ["http://localhost:3000", "http://localhost:5173"], // Your frontend URL
+        methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     }
 });
 

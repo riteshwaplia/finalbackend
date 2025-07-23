@@ -17,11 +17,6 @@ const TemplateSchema = new mongoose.Schema({
         required: true,
         index: true
     },
-    type: { 
-        type: String,
-        enum: ['TEMPLATE', 'CAROUSEL'],
-        default: 'TEMPLATE',
-    },
     name: {
         type: String,
         required: true,
@@ -60,6 +55,11 @@ const TemplateSchema = new mongoose.Schema({
     lastSyncedAt: {
         type: Date
     },
+    type: {
+        type: String,
+        enum: ['STANDARD', 'CAROUSEL'],
+        default: 'STANDARD',
+    },
     otp_type: {
         type: String,
     },
@@ -73,16 +73,19 @@ const TemplateSchema = new mongoose.Schema({
     }
 });
 
+// ✅ Define indexes AFTER schema creation
 TemplateSchema.index(
-  { metaTemplateId: 1, businessProfileId: 1 },
-  { unique: true, partialFilterExpression: { metaTemplateId: { $type: "string" } } }
-);
-TemplateSchema.index(
-  { businessProfileId: 1, name: 1, language: 1 },
-  { unique: true }
+    { metaTemplateId: 1, businessProfileId: 1 },
+    { unique: true, partialFilterExpression: { metaTemplateId: { $type: "string" } } }
 );
 
-TemplateSchema.pre('save', function(next) {
+TemplateSchema.index(
+    { businessProfileId: 1, name: 1, language: 1 },
+    { unique: true }
+);
+
+// ✅ Middleware to auto-update updatedAt
+TemplateSchema.pre('save', function (next) {
     this.updatedAt = Date.now();
     next();
 });
