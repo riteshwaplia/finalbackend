@@ -542,11 +542,271 @@ console.log("--------------------------------------");
 
 // @desc    Send bulk messages from an group
 // @access  Private
+
+
+// const BulkSendGroupService = async (req) => {
+//   const { templateName, message = {}, groupId } = req.body;
+//   const userId = req.user._id;
+//   const tenantId = req.tenant._id;
+//   const projectId = req.params.projectId;
+
+//   if (!templateName || !groupId) {
+//     return {
+//       status: statusCode.BAD_REQUEST,
+//       success: false,
+//       message: resMessage.Missing_required_fields + " (templateName and groupId are required for group bulk send).",
+//     };
+//   }
+
+//   const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+//   if (!project) {
+//     return {
+//       status: statusCode.NOT_FOUND,
+//       success: false,
+//       message: resMessage.No_data_found + " (Project not found or does not belong to you).",
+//     };
+//   }
+
+//   if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
+//     return {
+//       status: statusCode.BAD_REQUEST,
+//       success: false,
+//       message: resMessage.Project_whatsapp_number_not_configured,
+//     };
+//   }
+//   const phoneNumberId = project.metaPhoneNumberID;
+
+//   const businessProfile = project.businessProfileId;
+//   if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
+//     return {
+//       status: statusCode.BAD_REQUEST,
+//       success: false,
+//       message: resMessage.Meta_API_credentials_not_configured,
+//     };
+//   }
+//   const accessToken = businessProfile.metaAccessToken;
+//   const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
+//   const graphVersion = businessProfile.graphVersion || "v16.0";
+
+//   let contacts = await Contact.find({
+//     groupIds: groupId,
+//     userId,
+//     tenantId,
+//     projectId,
+//     isBlocked: false,
+//   });
+
+//   if (!contacts.length) {
+//     return {
+//       status: statusCode.BAD_REQUEST,
+//       success: false,
+//       message: resMessage.No_valid_contacts_for_bulk_send + " (No contacts found for the group).",
+//     };
+//   }
+
+//   let parsedMessage = message;
+//   if (typeof message === "string") {
+//     try {
+//       parsedMessage = JSON.parse(message);
+//     } catch (err) {
+//       return {
+//         status: statusCode.BAD_REQUEST,
+//         success: false,
+//         message: "Invalid JSON format in 'message' field.",
+//       };
+//     }
+//   }
+
+//   let templateComponents = parsedMessage.components;
+//   let templateLanguageCode = parsedMessage.language?.code || "en_US";
+//   console.log("Template components:", templateComponents);
+//   if (!templateComponents || templateComponents.length === 0) {
+//     const localTemplate = await Template.findOne({
+//       tenantId,
+//       userId,
+//       businessProfileId: project.businessProfileId,
+//       name: templateName,
+//       metaStatus: "APPROVED",
+//     });
+//     if (localTemplate) {
+//       templateComponents = localTemplate.components;
+//       templateLanguageCode = localTemplate.language;
+//     } else {
+//       return {
+//         status: statusCode.BAD_REQUEST,
+//         success: false,
+//         message: `Template '${templateName}' not found or not approved.`,
+//       };
+//     }
+//   }
+
+//   const bulkSendJob = await BulkSendJob.create({
+//     tenantId,
+//     userId,
+//     projectId,
+//     templateName,
+//     groupId,
+//     totalContacts: contacts.length,
+//     status: "in_progress",
+//     startTime: new Date(),
+//     templateDetails: {
+//       components: templateComponents,
+//       language: templateLanguageCode,
+//     },
+//   });
+
+//   const baseMessage = {
+//     name: templateName,
+//     language: { code: templateLanguageCode },
+//   };
+
+//   const contactBatches = chunkArray(contacts, BATCH_SIZE);
+//   let totalSent = 0;
+//   let totalFailed = 0;
+//   const errorsSummary = [];
+
+//   for (const batch of contactBatches) {
+//     const sendPromises = batch.map(async (contact) => {
+//       const mobileNumber = String(contact.mobileNumber || "");
+//       const countryCode = String(contact.countryCode || "");
+//       const to = `${countryCode}${mobileNumber}`;
+
+//       if (!mobileNumber || mobileNumber.length < 5) {
+//         totalFailed++;
+//         errorsSummary.push({
+//           to: mobileNumber,
+//           error: "Invalid mobile number format in group contacts.",
+//         });
+//         return;
+//       }
+
+//       const components = [];
+
+//       templateComponents.forEach((component) => {
+//         if (component.type === "HEADER" && component.format === "IMAGE") {
+//           const imageLink = component.example?.header_handle?.[0];
+//           if (imageLink) {
+//             components.push({
+//               type: "HEADER",
+//               parameters: [{ type: "image", image: { link: imageLink } }],
+//             });
+//           }
+//         }
+//       });
+
+//       if (contact.customFields?.header_text) {
+//         const headerIndex = components.findIndex((c) => c.type === "HEADER");
+//         const headerComponent = {
+//           type: "HEADER",
+//           parameters: [{ type: "text", text: contact.customFields.header_text }],
+//         };
+//         if (headerIndex >= 0) {
+//           components[headerIndex] = headerComponent;
+//         } else {
+//           components.push(headerComponent);
+//         }
+//       }
+
+//       const bodyParams = [];
+//       for (const key in contact.customFields || {}) {
+//         if (key.startsWith("body_") && contact.customFields[key]) {
+//           bodyParams.push({ type: "text", text: contact.customFields[key] });
+//         }
+//       }
+
+//       if (bodyParams.length > 0) {
+//         components.push({
+//           type: "BODY",
+//           parameters: bodyParams,
+//         });
+//       }
+
+//       const templateMessage = {
+//         name: baseMessage.name,
+//         language: baseMessage.language,
+//         components,
+//       };
+
+//       console.log(`📨 Sending message to ${to}`);
+
+//       try {
+//         const sendResult = await sendWhatsAppMessage({
+//           to,
+//           type: "template",
+//           message: templateMessage,
+//           phoneNumberId,
+//           accessToken,
+//           facebookUrl,
+//           graphVersion,
+//         });
+
+//         const messageLog = new Message({
+//           to,
+//           type: "template",
+//           message: templateMessage,
+//           status: sendResult.success ? "sent" : "failed",
+//           name: contact.name || "",
+//           metaResponse: sendResult.data,
+//           userId,
+//           tenantId,
+//           projectId,
+//           metaPhoneNumberID: phoneNumberId,
+//           direction: "outbound",
+//           bulkSendJobId: bulkSendJob._id,
+//           templateName,
+//           templateLanguage: templateLanguageCode,
+//         });
+//         if (!sendResult.success && sendResult.error) {
+//           messageLog.errorDetails = sendResult.error;
+//         }
+//         await messageLog.save();
+
+//         if (sendResult.success) {
+//           totalSent++;
+//         } else {
+//           totalFailed++;
+//           errorsSummary.push({
+//             to,
+//             error: sendResult.error || "Unknown error",
+//           });
+//         }
+//       } catch (err) {
+//         totalFailed++;
+//         errorsSummary.push({ to, error: err.message || "Unhandled exception" });
+//       }
+//     });
+//     await Promise.allSettled(sendPromises);
+//   }
+
+//   bulkSendJob.totalSent = totalSent;
+//   bulkSendJob.totalFailed = totalFailed;
+//   bulkSendJob.errorsSummary = errorsSummary;
+//   bulkSendJob.endTime = new Date();
+//   bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
+//   await bulkSendJob.save();
+
+//   return {
+//     status: statusCode.OK,
+//     success: true,
+//     message: totalFailed > 0
+//       ? resMessage.Bulk_send_completed_with_errors
+//       : resMessage.Bulk_messages_sent_successfully,
+//     data: {
+//       bulkSendJobId: bulkSendJob._id,
+//       totalSent,
+//       totalFailed,
+//       errorsSummary,
+//     },
+//   };
+// };
+
 const BulkSendGroupService = async (req) => {
-  const { templateName, message = {}, groupId } = req.body;
+  const { templateName, message = {}, groupId, contactfields = [] } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
+
+  console.log("📥 Incoming Bulk Send Request:", { templateName, groupId, contactfields });
 
   if (!templateName || !groupId) {
     return {
@@ -557,6 +817,8 @@ const BulkSendGroupService = async (req) => {
   }
 
   const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+  console.log("📁 Project loaded:", project ? project._id : null);
+
   if (!project) {
     return {
       status: statusCode.NOT_FOUND,
@@ -573,8 +835,8 @@ const BulkSendGroupService = async (req) => {
     };
   }
   const phoneNumberId = project.metaPhoneNumberID;
-
   const businessProfile = project.businessProfileId;
+
   if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -582,6 +844,7 @@ const BulkSendGroupService = async (req) => {
       message: resMessage.Meta_API_credentials_not_configured,
     };
   }
+
   const accessToken = businessProfile.metaAccessToken;
   const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
   const graphVersion = businessProfile.graphVersion || "v16.0";
@@ -593,6 +856,8 @@ const BulkSendGroupService = async (req) => {
     projectId,
     isBlocked: false,
   });
+
+  console.log("👥 Contacts fetched:", contacts.length);
 
   if (!contacts.length) {
     return {
@@ -617,7 +882,9 @@ const BulkSendGroupService = async (req) => {
 
   let templateComponents = parsedMessage.components;
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
-  console.log("Template components:", templateComponents);
+
+  console.log("🧩 Template components from input:", templateComponents);
+
   if (!templateComponents || templateComponents.length === 0) {
     const localTemplate = await Template.findOne({
       tenantId,
@@ -626,6 +893,8 @@ const BulkSendGroupService = async (req) => {
       name: templateName,
       metaStatus: "APPROVED",
     });
+    console.log("📄 Fallback template loaded:", localTemplate ? localTemplate._id : null);
+
     if (localTemplate) {
       templateComponents = localTemplate.components;
       templateLanguageCode = localTemplate.language;
@@ -678,41 +947,39 @@ const BulkSendGroupService = async (req) => {
         return;
       }
 
+      console.log("📦 Preparing message for:", to);
+
       const components = [];
 
-      templateComponents.forEach((component) => {
-        if (component.type === "HEADER" && component.format === "IMAGE") {
-          const imageLink = component.example?.header_handle?.[0];
+      // HEADER (text or image)
+      const headerTemplate = templateComponents.find(c => c.type === "HEADER");
+      if (headerTemplate) {
+        if (headerTemplate.format === "IMAGE") {
+          const imageLink = headerTemplate.example?.header_handle?.[0];
           if (imageLink) {
             components.push({
               type: "HEADER",
               parameters: [{ type: "image", image: { link: imageLink } }],
             });
           }
-        }
-      });
-
-      if (contact.customFields?.header_text) {
-        const headerIndex = components.findIndex((c) => c.type === "HEADER");
-        const headerComponent = {
-          type: "HEADER",
-          parameters: [{ type: "text", text: contact.customFields.header_text }],
-        };
-        if (headerIndex >= 0) {
-          components[headerIndex] = headerComponent;
-        } else {
-          components.push(headerComponent);
+        } else if (contactfields[0]) {
+          const headerValue = contact.customFields?.[contactfields[0]] || "";
+          console.log(`🧠 HEADER placeholder [${contactfields[0]}] →`, headerValue);
+          components.push({
+            type: "HEADER",
+            parameters: [{ type: "text", text: headerValue }],
+          });
         }
       }
 
-      const bodyParams = [];
-      for (const key in contact.customFields || {}) {
-        if (key.startsWith("body_") && contact.customFields[key]) {
-          bodyParams.push({ type: "text", text: contact.customFields[key] });
-        }
-      }
-
-      if (bodyParams.length > 0) {
+      // BODY
+      const bodyTemplate = templateComponents.find(c => c.type === "BODY");
+      if (bodyTemplate && contactfields.length > 1) {
+        const bodyParams = contactfields.slice(1).map((key, index) => {
+          const value = contact.customFields?.[key] || "";
+          console.log(`🧠 BODY var {{${index + 1}}} [${key}] →`, value);
+          return { type: "text", text: value };
+        });
         components.push({
           type: "BODY",
           parameters: bodyParams,
@@ -725,7 +992,7 @@ const BulkSendGroupService = async (req) => {
         components,
       };
 
-      console.log(`📨 Sending message to ${to}`);
+      console.log(`📨 Sending to ${to} with message:`, JSON.stringify(templateMessage));
 
       try {
         const sendResult = await sendWhatsAppMessage({
@@ -754,9 +1021,11 @@ const BulkSendGroupService = async (req) => {
           templateName,
           templateLanguage: templateLanguageCode,
         });
+
         if (!sendResult.success && sendResult.error) {
           messageLog.errorDetails = sendResult.error;
         }
+
         await messageLog.save();
 
         if (sendResult.success) {
@@ -770,9 +1039,11 @@ const BulkSendGroupService = async (req) => {
         }
       } catch (err) {
         totalFailed++;
+        console.log("❌ Error sending to", to, "→", err.message);
         errorsSummary.push({ to, error: err.message || "Unhandled exception" });
       }
     });
+
     await Promise.allSettled(sendPromises);
   }
 
@@ -782,6 +1053,12 @@ const BulkSendGroupService = async (req) => {
   bulkSendJob.endTime = new Date();
   bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
   await bulkSendJob.save();
+
+  console.log("✅ Bulk Send Job Completed:", {
+    jobId: bulkSendJob._id,
+    totalSent,
+    totalFailed,
+  });
 
   return {
     status: statusCode.OK,
@@ -797,6 +1074,7 @@ const BulkSendGroupService = async (req) => {
     },
   };
 };
+
 
 /**
  * @desc    Get details of a specific bulk send job, including individual message statuses.
