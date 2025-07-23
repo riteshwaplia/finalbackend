@@ -782,3 +782,81 @@ exports.bulkBlockContact = async (req) => {
         };
     }
 };
+
+// services/contactService.js
+// services/contactService.js
+exports.addCustomFieldToContacts = async (req) => {
+  const { key, type } = req.body;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+
+  const allowedTypes = ["text", "number", "date", "boolean", "enum"];
+
+  if (!key || !type) {
+    return {
+      status: 400,
+      success: false,
+      message: "Key and type are required",
+    };
+  }
+
+  if (!allowedTypes.includes(type)) {
+    return {
+      status: 400,
+      success: false,
+      message: `Type '${type}' is not allowed. Allowed types: ${allowedTypes.join(", ")}`,
+    };
+  }
+
+  const duplicate = await Contact.findOne({
+    tenantId,
+    projectId,
+    [`customFields.${key}`]: { $exists: true },
+  });
+
+
+  if (duplicate) {
+    return {
+      status: 400,
+      success: false,
+      message: `Custom field '${key}' already exists in a contact under this tenant/project.`,
+    };
+  }
+  
+  let defaultValue = null;
+  switch (type) {
+    case "text":
+      defaultValue = "";
+      break;
+    case "number":
+      defaultValue = 0;
+      break;
+    case "boolean":
+      defaultValue = false;
+      break;
+    case "enum":
+    case "date":
+      defaultValue = null;
+      break;
+  }
+
+
+  const updateResult = await Contact.updateMany(
+    {
+      tenantId,
+      projectId,
+      [`customFields.${key}`]: { $exists: false },
+    },
+    {
+      $set: {
+        [`customFields.${key}`]: { value: defaultValue, type },
+      },
+    }
+  );
+
+  return {
+    status: 200,
+    success: true,
+    message: `Custom field '${key}' added to all matching contacts.`,
+  };
+};
