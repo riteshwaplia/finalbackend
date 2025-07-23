@@ -28,12 +28,7 @@ exports.create = async (req) => {
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
 
-    console.log("🚀 Starting contact creation process");
-    console.log("📥 Incoming request body:", req.body);
-    console.log("👤 User ID:", userId, "🏢 Tenant ID:", tenantId, "📁 Project ID:", projectId);
-
     if (!name || (!email && !mobileNumber)) {
-        console.warn("⚠️ Validation failed: Missing name or both email and mobileNumber");
         return {
             status: statusCode.BAD_REQUEST,
             success: false,
@@ -43,10 +38,8 @@ exports.create = async (req) => {
 
     try {
         if (mobileNumber) {
-            console.log("🔍 Checking for existing contact with mobileNumber:", mobileNumber);
             const existingContact = await Contact.findOne({ tenantId, userId, projectId, mobileNumber });
             if (existingContact) {
-                console.warn("❌ Contact already exists with mobile number:", mobileNumber);
                 return {
                     status: statusCode.CONFLICT,
                     success: false,
@@ -55,12 +48,8 @@ exports.create = async (req) => {
             }
         }
 
-        console.log("✅ No duplicate mobile number found");
-
-        console.log("🔎 Validating group IDs:", groupIds);
         const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
         if (!isValid) {
-            console.warn("❌ Invalid group IDs found:", invalidGroups);
             return {
                 status: statusCode.BAD_REQUEST,
                 success: false,
@@ -68,19 +57,14 @@ exports.create = async (req) => {
             };
         }
 
-        console.log("✅ Group ID validation passed");
-
         const knownFields = ['name', 'email', 'mobileNumber', 'groupIds', 'isBlocked'];
         const customFields = {};
 
-        console.log("🛠️ Extracting custom fields from request");
         for (const key in req.body) {
             if (!knownFields.includes(key)) {
-                customFields[key] = req.body[key];  // 🔁 changed this line
+                customFields[key] = req.body[key];  
             }
         }
-
-        console.log("📦 Custom fields extracted (flat key-value):", customFields);
 
         const contactPayload = {
             tenantId,
@@ -94,10 +78,8 @@ exports.create = async (req) => {
             customFields
         };
 
-        console.log("📤 Creating new contact with payload:", contactPayload);
         const contact = await Contact.create(contactPayload);
 
-        console.log("✅ Contact created successfully:", contact._id);
 
         return {
             status: statusCode.CREATED,
@@ -106,7 +88,6 @@ exports.create = async (req) => {
             data: contact
         };
     } catch (error) {
-        console.error("❌ Error in create service:", error);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
@@ -439,7 +420,6 @@ exports.contactById = async (req) => {
             data: contact
         };
     } catch (error) {
-        console.error("Error in contactById service:", error);
         if (error.name === 'CastError') {
             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid contact ID." };
         }
@@ -485,7 +465,6 @@ exports.updateContact = async (req) => {
                 };
             }
         }
-
         const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
         if (!isValid) {
             return {
@@ -495,10 +474,29 @@ exports.updateContact = async (req) => {
             };
         }
 
+        // Update base fields
         contact.name = name || contact.name;
         contact.email = email !== undefined ? email : contact.email;
         contact.mobileNumber = mobileNumber !== undefined ? mobileNumber : contact.mobileNumber;
         contact.groupIds = groupIds !== undefined ? groupIds : contact.groupIds;
+
+
+        // Update custom fields
+        const knownFields = ['name', 'email', 'mobileNumber', 'groupIds', 'isBlocked'];
+        const customFieldUpdates = {};
+        for (const key in req.body) {
+            if (!knownFields.includes(key)) {
+                customFieldUpdates[key] = req.body[key];
+            }
+        }
+
+        if (Object.keys(customFieldUpdates).length > 0) {
+            contact.customFields = {
+                ...(contact.customFields || {}),
+                ...customFieldUpdates
+            };
+        } else {
+        }
 
         await contact.save();
 
@@ -509,9 +507,12 @@ exports.updateContact = async (req) => {
             data: contact
         };
     } catch (error) {
-        console.error("Error in updateContact service:", error);
         if (error.name === 'CastError') {
-            return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid contact ID." };
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: "Invalid contact ID."
+            };
         }
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
