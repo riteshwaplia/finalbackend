@@ -860,3 +860,65 @@ exports.addCustomFieldToContacts = async (req) => {
     message: `Custom field '${key}' added to all matching contacts.`,
   };
 };
+
+exports.fieldList = async (req) => {
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+
+  try {
+
+    const contacts = await Contact.find(
+      { tenantId, projectId },
+      {
+        name: 1,
+        email: 1,
+        mobileNumber: 1,
+        countryCode: 1,
+        customFields: 1,
+      }
+    );
+
+    // Default system fields mapping
+    const defaultFields = [
+      { key: "name", label: "Full Name", type: "text" },
+      { key: "email", label: "Email Address", type: "email" },
+      { key: "mobileNumber", label: "Phone Number", type: "tel" },
+      { key: "countryCode", label: "Country Code", type: "text" }
+    ];
+
+    // Use a map to avoid duplicate custom fields
+    const customFieldMap = new Map();
+
+    contacts.forEach((contact, index) => {
+      const customFields = contact.customFields || {};
+
+      Object.entries(customFields).forEach(([key, value]) => {
+        if (value && typeof value === 'object' && value.type && !customFieldMap.has(key)) {
+          customFieldMap.set(key, {
+            label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+            type: value.type
+          });
+        }
+      });
+    });
+
+    const finalFields = [
+      ...defaultFields.map(f => ({ label: f.label, type: f.type })),
+      ...Array.from(customFieldMap.values())
+    ];
+
+    return {
+      status: 200,
+      success: true,
+      message: "Field list fetched successfully",
+      data: finalFields
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      success: false,
+      message: "Failed to fetch field list",
+      error: error.message
+    };
+  }
+};

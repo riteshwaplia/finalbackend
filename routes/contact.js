@@ -19,7 +19,7 @@ router.get("/blackList", protect, responseHandler(contactController.blackListCon
 router.put("/removeBlackListContact/:contactId", protect, responseHandler(contactController.removeBlockContactController));
 router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
 router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
-
+router.get("/fields", protect, responseHandler(contactController.fieldListController));
 router.put("/contact-add-customField", protect, responseHandler(contactController.addCustomFieldToContactsController)); 
 
 module.exports = router;
