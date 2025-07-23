@@ -1,11 +1,20 @@
-// server/routes/dashboardRoutes.js
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const dashboardController = require('../controllers/projectDashboardController');
-const { protect } = require('../middleware/auth'); // Our existing auth middleware
-const responseHandler = require('../middleware/responseHandler');
+const { protect, authorizeRoles } = require("../middleware/auth");
+const responseHandler = require("../middleware/responseHandler");
+const validate = require("../middleware/validate");
 
-// Route to get dashboard statistics for a specific project
-router.get('/:projectId/stats', protect, responseHandler(dashboardController.getDashboardStatsController));
+const dashboardController = require("../controllers/dashboardController");
+const {
+  validateProjectDashboardStats,
+} = require("../validations/projectValidation");
+
+router.get(
+  "/:projectId/dashboard/stats",
+  protect,
+  authorizeRoles("user"),
+  validate(validateProjectDashboardStats, "params"),
+  responseHandler(dashboardController.getDashboardStatsController)
+);
 
 module.exports = router;

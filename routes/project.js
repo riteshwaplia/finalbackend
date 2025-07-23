@@ -1,19 +1,67 @@
 const express = require('express');
-const { protect, authorizeRoles } = require('../middleware/auth'); // Only `protect` is needed for user projects
+const { protect, authorizeRoles } = require('../middleware/auth');
 const projectController = require('../controllers/projectController');
 const responseHandler = require('../middleware/responseHandler');
+const validate = require('../middleware/validate'); 
+const { projectSchema } = require('../validations/projectValidator');
+
+const {
+  validateCreateProject,
+  validateUpdateProject,
+  validateProjectId
+} = require('../validations/projectValidation');
 
 const router = express.Router();
 
-// All project routes require authentication and will automatically use tenantId from req.tenant
-router.route('/')
-    .post(protect,authorizeRoles('user'), responseHandler(projectController.createProject)) // Create a new project
-    .get(protect,authorizeRoles('user'), responseHandler(projectController.getAllProjects));   // List all projects for the current user
-router.get("/:id/dashboard", protect,authorizeRoles('user') ,responseHandler(projectController.getProjectById));
+// ===== Routes =====
 
-// router.route('/:id')
-//     .get(protect, projectController.details)  // Get project details
-//     .put(protect, projectController.update)   // Update a project
-//     .delete(protect, projectController.delete); // Delete a project
+// Create & Get All Projects
+router.route('/')
+  .post(
+    protect,
+    authorizeRoles('user'),
+    validate(validateCreateProject, 'body'),
+    responseHandler(projectController.createProject)
+  )
+  .get(
+    protect,
+    authorizeRoles('user'),
+    responseHandler(projectController.getAllProjects)
+  );
+
+// Get Project by ID (dashboard view)
+router.get(
+  '/:id/dashboard',
+  protect,
+  authorizeRoles('user'),
+  validate(validateProjectId, 'params'),
+  responseHandler(projectController.getProjectById)
+);
+
+// Update & Delete Project by ID
+router
+  .put("/:id",
+    protect,
+    authorizeRoles('user'),
+    validate(validateProjectId, 'params'),
+    validate(validateUpdateProject, 'body'),
+    responseHandler(projectController.updateProject)
+  );
+  // .delete(
+  //   protect,
+  //   authorizeRoles('user'),
+  //   validate(validateProjectId, 'params'),
+  //   responseHandler(projectController.deleteProject)
+  // );
+
+
+  router.delete(
+    '/:id/delete',
+    protect,
+    authorizeRoles('user'),
+    validate(validateProjectId, 'params'),
+
+    responseHandler(projectController.deleteProject)
+  );
 
 module.exports = router;

@@ -319,6 +319,41 @@ exports.groupList = async (req) => {
 
 
 // @desc    Get contact by ID
+// exports.contactById = async (req) => {
+//     const userId = req.user._id;
+//     const tenantId = req.tenant._id;
+//     const projectId = req.params.projectId;
+//     const contactId = req.params.contactId;
+
+//     try {
+//         const contact = await Contact.findOne({ _id: contactId, tenantId, userId, projectId }).populate('groupIds', 'title');
+//         if (!contact) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: resMessage.Contact_not_found
+//             };
+//         }
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Contacts_fetch_successfully,
+//             data: contact
+//         };
+//     } catch (error) {
+//         console.error("Error in contactById service:", error);
+//         if (error.name === 'CastError') {
+//             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid contact ID." };
+//         }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: resMessage.Server_error,
+//             error: error.message
+//         };
+//     }
+// };
+
 exports.contactById = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -353,7 +388,6 @@ exports.contactById = async (req) => {
         };
     }
 };
-
 // @desc    Update a contact
 exports.updateContact = async (req) => {
     const userId = req.user._id;
