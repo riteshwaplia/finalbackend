@@ -59,8 +59,9 @@ const resMessage = {
     template_view_successfully: "Template view successfully.",
     Template_deleted_successfully: "Template deleted successfully.",
     hsm_id_and_name_is_required: "HSM ID (template_id) and name are required.",
-    Missing_required_fields: "Required fields are missing.", // General message for missing fields
+    Missing_required_fields: "Required fields are missing.",
     Media_required: "Media file is required for this template type.",
+    Template_already_exists: "Template with this name and language already exists locally for this business profile. Please use a different name or language.",
 
     Message_sent_successfully: "Message sent successfully.",
     Message_send_failed: "Message failed to send.",
@@ -101,15 +102,30 @@ const resMessage = {
 
     Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
 
-    Flow_created_successfully: 'Flow created successfully.',
+Flow_created_successfully: 'Flow created successfully.',
     Flows_fetched_successfully: 'Flows fetched successfully.',
     Flow_fetched_successfully: 'Flow fetched successfully.',
     Flow_updated_successfully: 'Flow updated successfully.',
     Flow_deleted_successfully: 'Flow deleted successfully.',
     Flow_name_exists: 'A flow with this name already exists for this project.',
+    // NEW Flow-specific error messages
+    nodes_array_is_required: 'Nodes array is required and cannot be empty.',
+    edges_array_is_required: 'Edges array is required.',
+    No_valid_entry_point: 'Flow must have a valid trigger keyword.', // Renamed for clarity
+    
+    WhatsApp_Business_Profile_updated_successfully: 'WhatsApp Business Profile updated successfully on Meta.',
     WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
     WhatsApp_numbers_fetched_successfully : "WhatsApp phone numbers fetched successfully.",
-    Flow_name_exists: 'A flow with this name already exists for this project.'
+    Flow_name_exists: 'A flow with this name already exists for this project.',
+
+    USER_EXISTS: "User with that email already exists for this tenant.",
+    OTP_SENT_SUCCESSFULLY_TO_EMAIL: "OTP sent successfully to email.",
+    Invalid_user_data: "Invalid user data provided.",
+    EMAIL_NOT_FOUND: "Email not registered.",
+    Invalid_otp: "Invalid OTP provided.",
+    otp_verified_successfully: "OTP verified successfully.",
+
+    Business_profile_not_found: "Selected Business Profile not found or does not belong to your account."
 };
 
 module.exports = {

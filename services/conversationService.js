@@ -1,7 +1,7 @@
 // server/services/conversationService.js
 const Conversation = require("../models/ConversationSchema"); // FIX: Corrected import from ConversationSchema to Conversation
 const Message = require("../models/Message");
-const Project = require("../models/project");
+const Project = require("../models/Project");
 const BusinessProfile = require("../models/BusinessProfile");
 const { statusCode, resMessage } = require("../config/constants");
 const axios = require("axios"); // For sending messages to Meta

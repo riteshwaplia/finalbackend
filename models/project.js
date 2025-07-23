@@ -31,12 +31,12 @@ const ProjectSchema = new mongoose.Schema({
         required: true,
         index: true
     },
-    metaPhoneNumberID: { // NEW: Meta's internal ID for the phone number (e.g., "687854254405676")
+    metaPhoneNumberID: { // Meta's internal ID for the phone number (e.g., "687854254405676")
         type: String,
         trim: true,
         default: ''
     },
-    whatsappNumber: { // NEW: The display phone number (e.g., "+1 234 567 8901")
+    whatsappNumber: { // The display phone number (e.g., "+1 234 567 8901")
         type: String,
         trim: true,
         default: ''
@@ -49,6 +49,43 @@ const ProjectSchema = new mongoose.Schema({
     planDuration: { // Numerical value for plan duration
         type: Number,
         default: 0
+    },
+    // NEW FIELDS for WhatsApp Business Profile details (per phone number)
+    about: {
+        type: String,
+        trim: true,
+        maxlength: 139, // Meta's limit for 'about'
+        default: ''
+    },
+    address: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    description: {
+        type: String,
+        trim: true,
+        default: ''
+    },
+    email: {
+        type: String,
+        trim: true,
+        lowercase: true,
+        default: ''
+    },
+    websites: {
+        type: [String], // Array of strings for websites
+        default: []
+    },
+    vertical: { // Industry category
+        type: String,
+        trim: true,
+        default: ''
+    },
+    profilePictureUrl: { // URL of the profile picture on Meta's CDN
+        type: String,
+        trim: true,
+        default: ''
     },
     createdAt: {
         type: Date,

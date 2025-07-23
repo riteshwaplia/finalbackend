@@ -374,6 +374,7 @@ exports.multiDeleteController = async (req, res) => {
         const userId = req.user._id;
         const tenantId = req.tenant._id;
         const projectId = req.params.projectId;
+        console.log("Multi-delete request for group IDs:", ids);
 
         if (!Array.isArray(ids) || ids.length === 0) {
             return res.status(statusCode.BAD_REQUEST).json({
@@ -415,10 +416,12 @@ exports.multiDeleteController = async (req, res) => {
 // @access  Private (Authenticated User)
 exports.multiUpdateController = async (req, res) => {
     try {
+        console.log("Multi-archive request for group IDs:", {ids: req.body.ids});
         const { ids } = req.body; // Array of group IDs to archive
         const userId = req.user._id;
         const tenantId = req.tenant._id;
         const projectId = req.params.projectId;
+
 
         if (!Array.isArray(ids) || ids.length === 0) {
             return res.status(statusCode.BAD_REQUEST).json({

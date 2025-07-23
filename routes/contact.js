@@ -3,6 +3,7 @@ const { protect } = require("../middleware/auth");
 const responseHandler = require("../middleware/responseHandler");
 const validateRequest = require("../middleware/validateRequest");
 const contactController = require("../controllers/contactController");
+const uploadExcel = require('../config/multerConfig');
 
 const {
   createContactSchema,
@@ -20,14 +21,6 @@ const {
 
 const router = express.Router({ mergeParams: true });
 
-// ✅ Create a new contact
-router.post(
-  "/",
-  protect,
-  validateRequest({ body: createContactSchema }),
-  responseHandler(contactController.createController)
-);
-
 // ✅ Upload contact (CSV/Excel)
 router.post(
   "/upload",
@@ -35,29 +28,6 @@ router.post(
   validateRequest({ body: uploadContactSchema }),
   responseHandler(contactController.uploadContactController)
 );
-
-// ✅ Get all contacts
-router.get(
-  "/contactList",
-  protect,
-  responseHandler(contactController.contactListController)
-);
-
-// ✅ Group list for contact module (STATIC - must come before dynamic route)
-router.get(
-  "/groupList",
-  protect,
-  responseHandler(contactController.groupListController)
-);
-
-// ✅ Get contact by ID
-// router.get(
-//   "/:contactId",
-//   protect,
-//   validateRequest({ params: getContactSchema }),
-//   responseHandler(contactController.contactByIdController)
-// );
-
 
 router.get(
   "/:contactId",
@@ -120,5 +90,24 @@ router.post(
   validateRequest({ body: importCSVSchema }),
   responseHandler(contactController.importContactsFromCSV)
 );
+
+router.post("/", protect, responseHandler(contactController.createController));
+router.post("/uploadContact", protect, uploadExcel.single("excelFile"), responseHandler(contactController.uploadContactController));
+router.get("/contactList", protect, responseHandler(contactController.contactListController));
+router.put("/blackListContact/:contactId", protect, responseHandler(contactController.blockContactController));
+router.get("/groupList", protect, responseHandler(contactController.groupListController));
+router.get("/contactById/:contactId", protect, responseHandler(contactController.contactByIdController));
+router.put("/updateContact/:contactId", protect, responseHandler(contactController.updateContactController));
+router.delete("/deleteContact/:contactId", protect, responseHandler(contactController.deleteContactController));
+router.put("/bulkUpdate", protect, responseHandler(contactController.multiContactUpdateController));
+router.get("/blackList", protect, responseHandler(contactController.blackListController));
+router.put("/removeBlackListContact/:contactId", protect, responseHandler(contactController.removeBlockContactController));
+
+// Remove contacts in bulk (delete many)
+router.put("/bulkContactUpdate/delete", protect, responseHandler(contactController.removeBulkController)); // Note: Original was /bulkContactUpdate
+router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
+router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
+
+router.put("/contact-add-customField", protect, responseHandler(contactController.addCustomFieldToContactsController)); 
 
 module.exports = router;

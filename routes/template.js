@@ -38,75 +38,19 @@ const responseHandler = require('../middleware/responseHandler');
 const templateController = require('../controllers/templateController');
 const mediaUpload = require('../config/multerMediaConfig');
 
-const validate = require('../middleware/validate'); 
-const {
-  createTemplateSchema,
-  submitToMetaSchema,
-  updateTemplateSchema,
-  syncFromMetaSchema,
-} = require('../validations/templateValidator'); 
-
 const router = express.Router();
 
-// Create a new template (locally)
-router.post(
-  '/',
-  protect,
-  validate(createTemplateSchema),
-  responseHandler(templateController.createController)
-);
-
-// Upload media for the template
-router.post(
-  '/upload-media',
-  protect,
-  mediaUpload.single('file'),
-  responseHandler(templateController.uploadMedia)
-);
+router.post("/", protect, responseHandler(templateController.createController));
+router.post('/upload-media', protect, mediaUpload.single('file'), responseHandler(templateController.uploadMedia));
+router.post('/carousel-templates', protect, responseHandler(templateController.createCarouselTemplateController));
 
 // Submit a locally created template to Meta for approval
-router.post(
-  '/:id/submit-to-meta',
-  protect,
-  validate(submitToMetaSchema),
-  responseHandler(templateController.submitToMetaController)
-);
-
-// Get all templates for the authenticated user
-router.get(
-  '/',
-  protect,
-  responseHandler(templateController.getAllController)
-);
-
-// Get a specific template by ID
-router.get(
-  '/:id',
-  protect,
-  responseHandler(templateController.getByIdController)
-);
-
-// Update a template by ID
-router.put(
-  '/:id',
-  protect,
-  validate(updateTemplateSchema),
-  responseHandler(templateController.updateController)
-);
-
-// Delete a template by ID
-router.delete(
-  '/:id',
-  protect,
-  responseHandler(templateController.deleteController)
-);
-
-// Synchronize templates from Meta API
-router.post(
-  '/sync-from-meta',
-  protect,
-  validate(syncFromMetaSchema),
-  responseHandler(templateController.syncTemplatesFromMetaController)
-);
+router.post("/:id/submit-to-meta", protect, responseHandler(templateController.submitToMetaController));
+router.get("/", protect, responseHandler(templateController.getAllController));
+router.get("/:id", protect, responseHandler(templateController.getByIdController));
+router.put("/:id", protect, responseHandler(templateController.updateController));
+router.delete("/:id", protect, responseHandler(templateController.deleteController));
+router.post("/sync-from-meta", protect, responseHandler(templateController.syncTemplatesFromMetaController));
+router.post('/auth', protect, responseHandler(templateController.authTemplateController));
 
 module.exports = router;

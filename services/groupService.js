@@ -1,4 +1,4 @@
-const Project = require('../models/project');
+const Project = require('../models/Project');
 const Group = require('../models/Group');
 const { statusCode, resMessage } = require("../config/constants");
 

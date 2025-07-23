@@ -1,7 +1,5 @@
-const contactService = require("../services/contactService"); // Using the service layer
-
-// The controller functions are now wrappers that call the service and return its result,
-// which is then processed by the `responseHandler` middleware.
+const contactService = require("../services/contactService");
+const { statusCode } = require("../config/constants");
 
 exports.createController = async (req) => {
     return await contactService.create(req);
@@ -20,9 +18,6 @@ exports.blockContactController = async (req) => {
 };
 
 exports.groupListController = async (req) => {
-    // This controller might call the contact service's groupList,
-    // or you could decide to directly call groupController.getController for consistency
-    // if you already have a general group list endpoint.
     return await contactService.groupList(req);
 };
 
@@ -52,4 +47,8 @@ exports.removeBlockContactController = async (req) => {
 
 exports.removeBulkController = async (req) => {
     return await contactService.removeBulkContact(req);
+};
+
+exports.addCustomFieldToContactsController = async (req) => {
+    return await contactService.addCustomFieldToContacts(req);
 };

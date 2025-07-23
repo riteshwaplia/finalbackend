@@ -10,40 +10,16 @@ const {
 
 const router = express.Router();
 
-// ===================== Public Routes =====================
-
-// User registration (public)
-router.post('/register', validate(registerSchema), userController.registerUser);
-
-// User login (public)
-router.post('/login', validate(loginSchema), userController.authUser);
-
-// ===================== Protected Routes =====================
-
-// Get user profile
+router.post('/register', responseHandler(userController.registerController));
+router.post("/verifyOtp", responseHandler(userController.verifyOtpController));
+router.post('/login', userController.authUser);
 router.get('/profile', protect, userController.getUserProfile);
-
-// Update user profile
 router.put('/profile', protect, userController.updateUserProfile);
-
-// Get all users (tenant admin only)
-router.get(
-  '/',
-  protect,
-  authorizeRoles('tenant_admin', 'super_admin'),
-  userController.getAllUsersForTenant
-);
-
-// Admin creates new user
-router.post(
-  '/admin-register',
-  protect,
-  authorizeRoles('tenant_admin', 'super_admin'),
-  validate(registerSchema), // same validation as normal register
-  userController.registerUserByAdmin
-);
-
-// ===================== Business Profile Routes =====================
+router.get('/', protect, authorizeRoles('tenant_admin', 'super_admin'), userController.getAllUsersForTenant);
+router.post('/admin-register', protect, authorizeRoles('tenant_admin', 'super_admin'), userController.registerUserByAdmin);
+router.post('/business-profiles', protect, userController.createBusinessProfile);
+router.get('/business-profiles', protect, userController.getAllBusinessProfilesForUser);
+router.put('/business-profiles/:id', protect,userController.updateBusinessProfile);
 
 // Create business profile
 router.post(

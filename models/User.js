@@ -10,7 +10,6 @@ const UserSchema = new mongoose.Schema({
     username: {
         type: String,
         required: true,
-        unique: true,
         trim: true
     },
     email: {
@@ -26,37 +25,45 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['super_admin', 'tenant_admin', 'user', 'team-member'], // 'team-member' role added
+        enum: ['super_admin', 'tenant_admin', 'user', 'team-member'],
         default: 'user'
     },
-    firstName: { // Added for team members
+    firstName: { 
         type: String,
         trim: true,
         default: ''
     },
-    lastName: { // Added for team members
+    lastName: { 
         type: String,
         trim: true,
         default: ''
     },
-    mobileNumber: { // Added for team members
+    mobileNumber: { 
         type: String,
         trim: true,
         default: ''
     },
-    projectId: { // Link team members to specific projects
+    projectId: { 
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
-        required: function() { return this.role === 'team-member'; }, // Required only for 'team-member' role
-        index: true // Add index for efficient lookups by project
+        required: function() { return this.role === 'team-member'; },
+        index: true 
     },
-    permissions: { // Define specific permissions for team members
-        type: [String], // Array of strings, e.g., ['can_send_message', 'can_manage_contacts']
+    permissions: { 
+        type: [String], 
         default: []
     },
-    isActive: { // Can activate/deactivate a user
+    isActive: { 
         type: Boolean,
         default: true
+    },
+    otp: {
+        type: Number,
+        trim: true
+    },
+    isEmailVerified: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,
@@ -68,7 +75,6 @@ const UserSchema = new mongoose.Schema({
     }
 });
 
-// Hash password before saving
 UserSchema.pre('save', async function (next) {
     if (!this.isModified('password')) {
         return next();
@@ -78,12 +84,10 @@ UserSchema.pre('save', async function (next) {
     next();
 });
 
-// Method to compare passwords
 UserSchema.methods.matchPassword = async function (enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
 
-// Update `updatedAt` on save
 UserSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     next();
