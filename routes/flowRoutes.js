@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router({ mergeParams: true }); // 👈 Important
 const flowController = require('../controllers/flowController');
 const { protect } = require('../middleware/auth'); // Our existing auth middleware
-const responseHandler = require('../middleware/responseHandler'); // Assuming your response handler
+const {responseHandler} = require('../middleware/responseHandler'); // Assuming your response handler
 
 // All flow routes are nested under /api/projects/:projectId/flows
 

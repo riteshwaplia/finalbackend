@@ -1,6 +1,6 @@
 const { statusCode, resMessage } = require("../config/constants");
 
-const responseHandler = (controllerFunction) => async (req, res, next) => {
+exports.responseHandler = (controllerFunction) => async (req, res, next) => {
     try {
         const result = await controllerFunction(req);
 

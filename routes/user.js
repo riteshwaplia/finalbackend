@@ -7,6 +7,7 @@ const {
   loginSchema,
   businessProfileSchema
 } = require('../validations/userValidation'); 
+const { responseHandler } = require('../middleware/responseHandler');
 
 const router = express.Router();
 

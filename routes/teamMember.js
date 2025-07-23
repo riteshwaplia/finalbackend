@@ -1,6 +1,6 @@
 const express = require('express');
 const { protect } = require('../middleware/auth');
-const responseHandler = require('../middleware/responseHandler');
+const {responseHandler} = require('../middleware/responseHandler');
 const validateRequest = require('../middleware/validateRequest');
 const teamMemberController = require('../controllers/teamMemberController');
 const {
