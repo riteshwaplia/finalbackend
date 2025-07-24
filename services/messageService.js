@@ -806,7 +806,7 @@ const BulkSendGroupService = async (req) => {
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
 
-  console.log("📥 Incoming Bulk Send Request:", { templateName, groupId, contactfields });
+  console.log("📥 Incoming Bulk Send Request:", { templateName, groupId, contactfields, userId, tenantId, projectId });
 
   if (!templateName || !groupId) {
     return {
@@ -818,16 +818,8 @@ const BulkSendGroupService = async (req) => {
 
   const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
   console.log("📁 Project loaded:", project ? project._id : null);
-
-  if (!project) {
-    return {
-      status: statusCode.NOT_FOUND,
-      success: false,
-      message: resMessage.No_data_found + " (Project not found or does not belong to you).",
-    };
-  }
-
-  if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
+ 
+  if (!project || !project.isWhatsappVerified || !project.metaPhoneNumberID) {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
@@ -849,7 +841,7 @@ const BulkSendGroupService = async (req) => {
   const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
   const graphVersion = businessProfile.graphVersion || "v16.0";
 
-  let contacts = await Contact.find({
+  const contacts = await Contact.find({
     groupIds: groupId,
     userId,
     tenantId,
@@ -858,7 +850,8 @@ const BulkSendGroupService = async (req) => {
   });
 
   console.log("👥 Contacts fetched:", contacts.length);
-
+  console.log("📋 Contact list sample:", contacts.slice(0, 3).map(c => ({ id: c._id, mobile: c.mobileNumber })));
+ 
   if (!contacts.length) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -867,23 +860,12 @@ const BulkSendGroupService = async (req) => {
     };
   }
 
-  let parsedMessage = message;
-  if (typeof message === "string") {
-    try {
-      parsedMessage = JSON.parse(message);
-    } catch (err) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: "Invalid JSON format in 'message' field.",
-      };
-    }
-  }
-
+  let parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
   let templateComponents = parsedMessage.components;
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
 
   console.log("🧩 Template components from input:", templateComponents);
+  console.log("🈳 Language code:", templateLanguageCode);
 
   if (!templateComponents || templateComponents.length === 0) {
     const localTemplate = await Template.findOne({
@@ -921,6 +903,7 @@ const BulkSendGroupService = async (req) => {
       language: templateLanguageCode,
     },
   });
+  console.log("📦 Bulk send job created:", bulkSendJob._id);
 
   const baseMessage = {
     name: templateName,
@@ -933,20 +916,25 @@ const BulkSendGroupService = async (req) => {
   const errorsSummary = [];
 
   for (const batch of contactBatches) {
+    console.log("📤 Sending batch of size:", batch.length);
     const sendPromises = batch.map(async (contact) => {
       const mobileNumber = String(contact.mobileNumber || "");
-      const countryCode = String(contact.countryCode || "");
+      const countryCode = String(contact.countryCode || "91");
       const to = `${countryCode}${mobileNumber}`;
 
       if (!mobileNumber || mobileNumber.length < 5) {
         totalFailed++;
-        errorsSummary.push({
-          to: mobileNumber,
-          error: "Invalid mobile number format in group contacts.",
-        });
+        errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format." });
         return;
       }
 
+      // Sandbox restriction bypass
+      if (!to.startsWith("91") && process.env.NODE_ENV !== "production") {
+        totalFailed++;
+        errorsSummary.push({ to, error: "Not in test number list (sandbox)." });
+        console.log("⚠️ Not sending to:", to, "(not in test number list)");
+        return;
+      }
       console.log("📦 Preparing message for:", to);
 
       const components = [];
@@ -962,9 +950,10 @@ const BulkSendGroupService = async (req) => {
               parameters: [{ type: "image", image: { link: imageLink } }],
             });
           }
-        } else if (contactfields[0]) {
-          const headerValue = contact.customFields?.[contactfields[0]] || "";
-          console.log(`🧠 HEADER placeholder [${contactfields[0]}] →`, headerValue);
+        } else {
+          const headerKey = contactfields[0] || "First name";
+          const headerValue = contact.customFields?.[headerKey] || "User";
+          console.log(`🧠 HEADER placeholder [${headerKey}] →`, headerValue);
           components.push({
             type: "HEADER",
             parameters: [{ type: "text", text: headerValue }],
@@ -974,12 +963,17 @@ const BulkSendGroupService = async (req) => {
 
       // BODY
       const bodyTemplate = templateComponents.find(c => c.type === "BODY");
-      if (bodyTemplate && contactfields.length > 1) {
-        const bodyParams = contactfields.slice(1).map((key, index) => {
-          const value = contact.customFields?.[key] || "";
-          console.log(`🧠 BODY var {{${index + 1}}} [${key}] →`, value);
-          return { type: "text", text: value };
-        });
+      const expectedBodyParams = bodyTemplate?.text?.match(/{{\d+}}/g)?.length || 0;
+      if (bodyTemplate && expectedBodyParams > 0) {
+        const bodyParams = [];
+ 
+        for (let i = 1; i <= expectedBodyParams; i++) {
+          const key = contactfields[i] || `field${i}`;
+          const value = contact.customFields?.[key] || `...`;
+          console.log(`🧠 BODY var {{${i}}} [${key}] →`, value);
+          bodyParams.push({ type: "text", text: value });
+        }
+ 
         components.push({
           type: "BODY",
           parameters: bodyParams,
@@ -1024,23 +1018,17 @@ const BulkSendGroupService = async (req) => {
 
         if (!sendResult.success && sendResult.error) {
           messageLog.errorDetails = sendResult.error;
-        }
-
-        await messageLog.save();
-
-        if (sendResult.success) {
-          totalSent++;
-        } else {
           totalFailed++;
-          errorsSummary.push({
-            to,
-            error: sendResult.error || "Unknown error",
-          });
+          errorsSummary.push({ to, error: sendResult.error });
+        } else {
+          totalSent++;
         }
+ 
+        await messageLog.save();
       } catch (err) {
         totalFailed++;
-        console.log("❌ Error sending to", to, "→", err.message);
         errorsSummary.push({ to, error: err.message || "Unhandled exception" });
+        console.log("❌ Error sending to", to, "→", err.message);
       }
     });
 
