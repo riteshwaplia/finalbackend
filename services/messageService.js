@@ -737,6 +737,8 @@ console.log("favebookUrl:", FACEBOOK_URL);
     to,
     type
   };
+
+  console.log("message:=========", message);
  
   switch(type) {
     case 'text':
@@ -753,7 +755,7 @@ console.log("favebookUrl:", FACEBOOK_URL);
       payload.template = {
         name: message.name,
         language: {
-          code: message.language.code
+          code: message.language
         }
       };
       if (Array.isArray(message.components)) {
@@ -778,6 +780,8 @@ console.log("favebookUrl:", FACEBOOK_URL);
     default:
       return { success: false, error: 'Unsupported message type in payload building' };
   }
+
+  console.log("=======payload-------", payload);
  
   try {
     const response = await axios.post(url, payload, {
@@ -786,6 +790,8 @@ console.log("favebookUrl:", FACEBOOK_URL);
         'Content-Type': 'application/json'
       }
     });
+
+    console.log("=======response-------", response);
  
     if (response.data && to && type === 'text') {
       await Chat.create({
