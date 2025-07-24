@@ -806,8 +806,6 @@ const BulkSendGroupService = async (req) => {
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
 
-  console.log("📥 Incoming Bulk Send Request:", { templateName, groupId, contactfields, userId, tenantId, projectId });
-
   if (!templateName || !groupId) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -850,8 +848,6 @@ const BulkSendGroupService = async (req) => {
   });
 
   console.log("👥 Contacts fetched:", contacts.length);
-  console.log("📋 Contact list sample:", contacts.slice(0, 3).map(c => ({ id: c._id, mobile: c.mobileNumber })));
- 
   if (!contacts.length) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -864,9 +860,6 @@ const BulkSendGroupService = async (req) => {
   let templateComponents = parsedMessage.components;
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
 
-  console.log("🧩 Template components from input:", templateComponents);
-  console.log("🈳 Language code:", templateLanguageCode);
-
   if (!templateComponents || templateComponents.length === 0) {
     const localTemplate = await Template.findOne({
       tenantId,
@@ -875,8 +868,6 @@ const BulkSendGroupService = async (req) => {
       name: templateName,
       metaStatus: "APPROVED",
     });
-    console.log("📄 Fallback template loaded:", localTemplate ? localTemplate._id : null);
-
     if (localTemplate) {
       templateComponents = localTemplate.components;
       templateLanguageCode = localTemplate.language;
@@ -903,7 +894,6 @@ const BulkSendGroupService = async (req) => {
       language: templateLanguageCode,
     },
   });
-  console.log("📦 Bulk send job created:", bulkSendJob._id);
 
   const baseMessage = {
     name: templateName,
@@ -911,16 +901,17 @@ const BulkSendGroupService = async (req) => {
   };
 
   const contactBatches = chunkArray(contacts, BATCH_SIZE);
+
   let totalSent = 0;
   let totalFailed = 0;
   const errorsSummary = [];
 
-  for (const batch of contactBatches) {
-    console.log("📤 Sending batch of size:", batch.length);
-    const sendPromises = batch.map(async (contact) => {
+  for (const [batchIndex, batch] of contactBatches.entries()) {
+    const sendPromises = batch.map(async (contact, i) => {
       const mobileNumber = String(contact.mobileNumber || "");
       const countryCode = String(contact.countryCode || "91");
       const to = `${countryCode}${mobileNumber}`;
+      const logPrefix = `🔄 [${to}]`;
 
       if (!mobileNumber || mobileNumber.length < 5) {
         totalFailed++;
@@ -928,14 +919,11 @@ const BulkSendGroupService = async (req) => {
         return;
       }
 
-      // Sandbox restriction bypass
       if (!to.startsWith("91") && process.env.NODE_ENV !== "production") {
         totalFailed++;
         errorsSummary.push({ to, error: "Not in test number list (sandbox)." });
-        console.log("⚠️ Not sending to:", to, "(not in test number list)");
         return;
       }
-      console.log("📦 Preparing message for:", to);
 
       const components = [];
 
@@ -953,7 +941,6 @@ const BulkSendGroupService = async (req) => {
         } else {
           const headerKey = contactfields[0] || "First name";
           const headerValue = contact.customFields?.[headerKey] || "User";
-          console.log(`🧠 HEADER placeholder [${headerKey}] →`, headerValue);
           components.push({
             type: "HEADER",
             parameters: [{ type: "text", text: headerValue }],
@@ -969,8 +956,7 @@ const BulkSendGroupService = async (req) => {
  
         for (let i = 1; i <= expectedBodyParams; i++) {
           const key = contactfields[i] || `field${i}`;
-          const value = contact.customFields?.[key] || `...`;
-          console.log(`🧠 BODY var {{${i}}} [${key}] →`, value);
+          const value = contact.customFields?.[key] || "...";
           bodyParams.push({ type: "text", text: value });
         }
  
@@ -985,8 +971,6 @@ const BulkSendGroupService = async (req) => {
         language: baseMessage.language,
         components,
       };
-
-      console.log(`📨 Sending to ${to} with message:`, JSON.stringify(templateMessage));
 
       try {
         const sendResult = await sendWhatsAppMessage({
@@ -1028,7 +1012,6 @@ const BulkSendGroupService = async (req) => {
       } catch (err) {
         totalFailed++;
         errorsSummary.push({ to, error: err.message || "Unhandled exception" });
-        console.log("❌ Error sending to", to, "→", err.message);
       }
     });
 
@@ -1041,12 +1024,6 @@ const BulkSendGroupService = async (req) => {
   bulkSendJob.endTime = new Date();
   bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
   await bulkSendJob.save();
-
-  console.log("✅ Bulk Send Job Completed:", {
-    jobId: bulkSendJob._id,
-    totalSent,
-    totalFailed,
-  });
 
   return {
     status: statusCode.OK,
