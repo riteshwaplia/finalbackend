@@ -16,5 +16,8 @@ router.post('/business-profiles', protect, userController.createBusinessProfile)
 router.get('/business-profiles', protect, userController.getAllBusinessProfilesForUser);
 router.put('/business-profiles/:id', protect,userController.updateBusinessProfile);
 router.put('/reset-password', protect, userController.resetPasswordController);
+router.post('/forgot-password', responseHandler(userController.forgotPasswordController));
+router.post('/update-password-with-otp', responseHandler(userController.updatePasswordWithOtpController));
+
 
 module.exports = router

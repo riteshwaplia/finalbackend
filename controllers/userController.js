@@ -390,6 +390,15 @@ const resetPasswordController = async (req, res) => {
     }
 };
 
+const forgotPasswordController = async (req) => {
+  const result = await userService.forgotPassword(req);
+  return result; // ✅ Let middleware handle the response
+};
+
+const updatePasswordWithOtpController = async (req) => {
+  const result = await userService.updatePasswordWithOtp(req);
+  return result; // ✅ Let middleware handle the response
+};
 
 module.exports = {
     authUser,
@@ -403,5 +412,7 @@ module.exports = {
     getAllBusinessProfilesForUser,
     registerController,
     verifyOtpController,
-    resetPasswordController
+    resetPasswordController,
+    forgotPasswordController,
+    updatePasswordWithOtpController
 };

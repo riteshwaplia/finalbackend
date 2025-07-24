@@ -196,3 +196,95 @@ exports.resetPassword = async (req) => {
         };
     }
 };
+
+exports.forgotPassword = async (req) => {
+  const { email } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.EMAIL_NOT_FOUND || 'Email not registered',
+        statusCode: statusCode.NOT_FOUND
+      };
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    user.otp = otp;
+    await user.save();
+
+    const subject = 'Wachat Password Reset OTP';
+    const text = `Hello ${user.username},\n\nYour OTP to reset your password is: ${otp}`;
+    const html = `
+      <h2>Hello ${user.username},</h2>
+      <p>Your OTP to reset your password is:</p>
+      <h3>${otp}</h3>
+      <p>This OTP will expire soon. Please use it promptly.</p>
+    `;
+
+    await sendEmail(email, subject, text, html);
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: 'OTP sent successfully to email',
+      statusCode: statusCode.OK
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+      statusCode: statusCode.INTERNAL_SERVER_ERROR
+    };
+  }
+};
+
+
+exports.updatePasswordWithOtp = async (req) => {
+  const { email, otp, newPassword } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: 'User not found',
+        statusCode: statusCode.NOT_FOUND
+      };
+    }
+
+    if (String(user.otp) !== String(otp)) {
+      return {
+        status: statusCode.UNAUTHORIZED,
+        success: false,
+        message: 'Invalid OTP',
+        statusCode: statusCode.UNAUTHORIZED
+      };
+    }
+
+    user.password = newPassword;
+    user.otp = null; 
+    await user.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: 'Password updated successfully',
+      statusCode: statusCode.OK
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+      statusCode: statusCode.INTERNAL_SERVER_ERROR
+    };
+  }
+};
+
