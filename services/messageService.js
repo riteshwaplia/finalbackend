@@ -250,6 +250,7 @@ const sendBulkMessageService = async (req) => {
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
   const fileName = req.file?.originalname || "manual_upload.xlsx";
+
   console.log("message:", message);
   if (!templateName || !req.file) {
     return {
@@ -409,6 +410,7 @@ const sendBulkMessageService = async (req) => {
       // 1. Add image header from template if applicable
       templateComponents.forEach((component) => {
         if (component.type === "HEADER" && component.format === "IMAGE") {
+          console.log("Header component found:", component);
           const imageLink = component.example?.header_handle?.[0];
           if (imageLink) {
             components.push({
@@ -881,6 +883,7 @@ const BulkSendGroupService = async (req) => {
   }
 
   let templateComponents = parsedMessage.components;
+  console.log("🧩 Initial template components:", templateComponents);
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
 
   console.log("🧩 Template components from input:", templateComponents);
@@ -1176,7 +1179,7 @@ const getAllBulkSendJobsService = async (req) => {
 // Ensure you have multer configured properly
 const FormData = require("form-data");
 
-exports.uploadMedia = async (req) => {
+const uploadMedia = async (req) => {
   const { projectId } = req.params;
   const file = req.file;
   const userId = req.user._id;
@@ -1346,6 +1349,7 @@ console.log("favebookUrl:", FACEBOOK_URL);
 
 module.exports = {
   sendWhatsAppMessages,
+  uploadMedia,
   BulkSendGroupService,
   sendBulkMessageService,
   getAllBulkSendJobsService,
