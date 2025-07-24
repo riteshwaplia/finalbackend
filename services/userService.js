@@ -139,3 +139,60 @@ exports.verifyOtp = async (req) => {
     };
   }
 };
+
+exports.resetPassword = async (req) => {
+    try {
+        const { oldPassword, newPassword } = req.body;
+        const userId = req.user._id;
+        const tenantId = req.tenant._id;
+
+        if (!oldPassword || !newPassword) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: resMessage.MISSING_FIELDS || 'Old and new passwords are required.',
+                statusCode: statusCode.BAD_REQUEST
+            };
+        }
+
+        const user = await User.findOne({ _id: userId, tenantId });
+
+        if (!user) {
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: resMessage.USER_NOT_FOUND || 'User not found.',
+                statusCode: statusCode.NOT_FOUND
+            };
+        }
+
+        const isMatch = await user.matchPassword(oldPassword);
+
+        if (!isMatch) {
+            return {
+                status: statusCode.UNAUTHORIZED,
+                success: false,
+                message: resMessage.INVALID_OLD_PASSWORD || 'Old password is incorrect.',
+                statusCode: statusCode.UNAUTHORIZED
+            };
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.PASSWORD_UPDATED_SUCCESSFULLY || 'Password updated successfully.',
+            statusCode: statusCode.OK
+        };
+
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        };
+    }
+};

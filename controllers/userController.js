@@ -378,6 +378,19 @@ const registerUserByAdmin = async (req, res) => {
     }
 };
 
+const resetPasswordController = async (req, res) => {
+    try {
+        const result = await userService.resetPassword(req);
+        res.status(result.statusCode || 500).json(result);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Server error'
+        });
+    }
+};
+
+
 module.exports = {
     authUser,
     getUserProfile,
@@ -389,5 +402,6 @@ module.exports = {
     deleteBusinessProfile,
     getAllBusinessProfilesForUser,
     registerController,
-    verifyOtpController
+    verifyOtpController,
+    resetPasswordController
 };
