@@ -17,9 +17,7 @@ const tenantResolver = async (req, res, next) => {
       return res.status(403).json({ message: 'This tenant is currently inactive.' });
     }
 
-    req.tenant = tenant;        // Attach tenant
-    // req.clientIp = ip;          // Attach IP (optional)
-    // req.userAgent = userAgent;  // Attach browser info (optional)
+    req.tenant = tenant; 
 
     next();
   } catch (error) {
