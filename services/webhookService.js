@@ -224,15 +224,14 @@ exports.handleWebhookPayload = async (req) => {
                                 sentAt: timestamp
                             });
                             console.log(`[Inbound Message] Inbound message saved to DB: ${messageDoc._id}`);
-                            
+
                             if (messageType === 'text' && messageContent?.body) {
                                 const userText = messageContent.body.trim();
                                 const phoneNumberId = metaPhoneNumberID;
                                 const accessToken = businessProfileData.metaAccessToken;
                                 const userNumber = fromPhoneNumber;
 
-                                try {
-                                    console.log(`\n--- Auto-replying to user text: "${userText}" ---`);
+                                try {;
                                     const flow = await Flow.findOne({ entryPoint: userText });
 
                                     if (flow) {
@@ -258,10 +257,11 @@ exports.handleWebhookPayload = async (req) => {
                                                     };
                                                 case 'template':
                                                     return {
+                                                        messaging_product: "whatsapp",
                                                         type: 'template',
                                                         message: {
                                                             name: reply.templateName,
-                                                            language: { code: 'en' },
+                                                            language: reply.templateLang,
                                                             components: [
                                                                 {
                                                                     type: 'body',
