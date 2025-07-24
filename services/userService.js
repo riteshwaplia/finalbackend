@@ -3,15 +3,20 @@ const { sendEmail } = require('../functions/functions');
 const generateToken = require('../utils/generateToken');
 const { statusCode, resMessage } = require('../config/constants');
 
-exports.register = async (req) => {
+exports.register = async (req) => {     
     const { username, email, password } = req.body;
     const tenantId = req.tenant._id;
 
     try {
         const existingUser = await User.findOne({ email, tenantId });
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
+        const otp = Array.from({ length: 6 }, () =>
+          String.fromCharCode(
+            Math.random() < 0.5
+              ? 65 + Math.floor(Math.random() * 26)  // A-Z
+              : 97 + Math.floor(Math.random() * 26)  // a-z
+          )
+        ).join('');
         if (existingUser) {
             if (existingUser.isEmailVerified) {
                 return {
@@ -109,7 +114,7 @@ exports.verifyOtp = async (req) => {
       };
     }
 
-    if (String(user.otp) !== String(otp)) {
+    if (user.otp !== otp) {
       return {
         status: statusCode.UNAUTHORIZED,
         success: false,
@@ -212,7 +217,15 @@ exports.forgotPassword = async (req) => {
       };
     }
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otp = Array.from({ length: 6 }, () =>
+      String.fromCharCode(
+        Math.random() < 0.5
+          ? 65 + Math.floor(Math.random() * 26)  // A-Z
+          : 97 + Math.floor(Math.random() * 26)  // a-z
+      )
+    ).join('');
+
+
     user.otp = otp;
     await user.save();
 
@@ -243,7 +256,6 @@ exports.forgotPassword = async (req) => {
   }
 };
 
-
 exports.updatePasswordWithOtp = async (req) => {
   const { email, otp, newPassword } = req.body;
 
@@ -259,7 +271,7 @@ exports.updatePasswordWithOtp = async (req) => {
       };
     }
 
-    if (String(user.otp) !== String(otp)) {
+    if (user.otp !== otp) {
       return {
         status: statusCode.UNAUTHORIZED,
         success: false,
@@ -269,7 +281,7 @@ exports.updatePasswordWithOtp = async (req) => {
     }
 
     user.password = newPassword;
-    user.otp = null; 
+    user.otp = null;
     await user.save();
 
     return {
