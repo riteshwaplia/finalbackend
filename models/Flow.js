@@ -14,4 +14,4 @@ const flowSchema = new mongoose.Schema({
     versionKey: false
 });
 
-module.exports = mongoose.model('flow_builder', flowSchema);
+module.exports = mongoose.model('flow', flowSchema);
