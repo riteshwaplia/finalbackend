@@ -5,15 +5,14 @@ const Project = require("../models/project");
 
 exports.create = async (req) => {
     try {
-        const { nodes, edges } = req.body; 
+        const { name, nodes, edges } = req.body;
         
-        const checkProject = await Project.findOne({ _id: req.params.projectId, userId: req.user._id });
-        console.log("checkProject", req.params.projectId);
+        const checkProject = await Project.findOne({ _id: req.params.projectId, userId: req.user._id, tenantId: req.tenant._id });
         if (!checkProject) {
             return {
                 status: statusCode.NOT_FOUND,
                 success: false,
-                message: resMessage.Project_already_exists,
+                message: resMessage.ProjectId_dont_exists,
                 statusCode: statusCode.NOT_FOUND,
             }
         }
@@ -37,8 +36,8 @@ exports.create = async (req) => {
         }
 
         const entryNode = nodes.find(n => n.id === 'node_0' && n.data?.message);
-        console.log("entryNode", entryNode);
         const entryPoint = entryNode?.data?.message?.toLowerCase();
+        console.log("Entry Point:", entryPoint);
 
         if (!entryPoint) {
             return {
@@ -51,10 +50,12 @@ exports.create = async (req) => {
 
         const savedFlow = await Flow.create({
             projectId: req.params.projectId,
-            userId: req.auth._id,
+            userId: req.user._id,
+            tenantId: req.tenant._id,
             entryPoint,
             nodes,
-            edges
+            edges,
+            name
         });
 
         return {
@@ -66,21 +67,14 @@ exports.create = async (req) => {
         }
     } catch (error) {
         return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
-            message,
+            message: error.message,
             statusCode: statusCode.INTERNAL_SERVER_ERROR,
         };
     }
 }
 
-/**
- * @desc    Get all flows for a specific project, user, and tenant.
- * @param {Object} queryParams - Query parameters.
- * @param {string} queryParams.projectId - ID of the project.
- * @param {string} queryParams.userId - ID of the user.
- * @param {string} queryParams.tenantId - ID of the tenant.
- * @returns {Object} Success status and array of flows.
- */
 exports.getFlows = async ({ projectId, userId, tenantId }) => {
     if (!projectId || !userId || !tenantId) {
         return {
@@ -108,15 +102,6 @@ exports.getFlows = async ({ projectId, userId, tenantId }) => {
     }
 };
 
-/**
- * @desc    Get a single flow by ID.
- * @param {Object} params - Parameters for fetching flow.
- * @param {string} params.flowId - ID of the flow.
- * @param {string} params.projectId - ID of the project.
- * @param {string} params.userId - ID of the user.
- * @param {string} params.tenantId - ID of the tenant.
- * @returns {Object} Success status and the flow data.
- */
 exports.getFlowById = async ({ flowId, projectId, userId, tenantId }) => {
     if (!flowId || !projectId || !userId || !tenantId) {
         return {
@@ -158,16 +143,6 @@ exports.getFlowById = async ({ flowId, projectId, userId, tenantId }) => {
     }
 };
 
-/**
- * @desc    Update an existing conversational flow.
- * @param {Object} params - Parameters for updating flow.
- * @param {string} params.flowId - ID of the flow to update.
- * @param {string} params.projectId - ID of the project.
- * @param {string} params.userId - ID of the user.
- * @param {string} params.tenantId - ID of the tenant.
- * @param {Object} updateData - Data to update the flow with.
- * @returns {Object} Success status and the updated flow.
- */
 exports.updateFlow = async ({ flowId, projectId, userId, tenantId }, updateData) => {
     if (!flowId || !projectId || !userId || !tenantId || !updateData) {
         return {
@@ -178,14 +153,13 @@ exports.updateFlow = async ({ flowId, projectId, userId, tenantId }, updateData)
     }
 
     try {
-        // Check for name conflict if name is being updated
         if (updateData.name) {
             const existingFlow = await Flow.findOne({
                 name: updateData.name,
                 projectId,
                 userId,
                 tenantId,
-                _id: { $ne: flowId } // Exclude the current flow being updated
+                _id: { $ne: flowId }
             });
             if (existingFlow) {
                 return {
@@ -199,7 +173,7 @@ exports.updateFlow = async ({ flowId, projectId, userId, tenantId }, updateData)
         const updatedFlow = await Flow.findOneAndUpdate(
             { _id: flowId, projectId, userId, tenantId },
             updateData,
-            { new: true, runValidators: true } // Return the updated document and run schema validators
+            { new: true, runValidators: true } 
         ).lean();
 
         if (!updatedFlow) {
@@ -233,15 +207,6 @@ exports.updateFlow = async ({ flowId, projectId, userId, tenantId }, updateData)
     }
 };
 
-/**
- * @desc    Delete a conversational flow.
- * @param {Object} params - Parameters for deleting flow.
- * @param {string} params.flowId - ID of the flow to delete.
- * @param {string} params.projectId - ID of the project.
- * @param {string} params.userId - ID of the user.
- * @param {string} params.tenantId - ID of the tenant.
- * @returns {Object} Success status.
- */
 exports.deleteFlow = async ({ flowId, projectId, userId, tenantId }) => {
     if (!flowId || !projectId || !userId || !tenantId) {
         return {

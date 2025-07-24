@@ -22,7 +22,7 @@ const resMessage = {
     Unauthorized_access: "Unauthorized access.",
     Forbidden_access: "Forbidden access.",
     Server_error: "Internal server error.",
-    ProjectId_dont_exists: "Prohject id not found",
+    ProjectId_dont_exists: "Project id not found",
 
     Group_already_exists: "Group with this title already exists for this project.",
     Group_created: "Group created successfully.",
