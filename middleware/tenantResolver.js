@@ -2,15 +2,10 @@ const Tenant = require('../models/Tenant');
 
 const tenantResolver = async (req, res, next) => {
   // In production, domain should come from headers
-  const domain = req.headers.origin;
-  // const userAgent = req.headers['user-agent'];
-  
-  // // Get client IP, even behind proxies (ngrok, render, etc.)
-  // const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress;
+  // const domain = req.headers.origin;
+ 
+  const domain = "http://localhost:5173";
 
-  // console.log("🌐 Origin Domain:", domain);
-  // console.log("🧠 Client Browser Info:", userAgent);
-  // console.log("📍 Client IP Address:", ip);
 
   try {
     const tenant = await Tenant.findOne({ domain });
