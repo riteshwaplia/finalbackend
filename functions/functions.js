@@ -41,6 +41,7 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
     } else if (type === 'template') {
       const templateId = current.data?.selectedTemplateId;
       const templateName = current.data?.selectedTemplateName;
+      const templateLang = current.data?.selectedTemplateLanguage;
       const parameters = current.data?.parameters || [];
 
       if (templateId && templateName) {
@@ -48,6 +49,7 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
           type: 'template',
           templateId,
           templateName,
+          templateLang,
           parameters,
           delay
         });
