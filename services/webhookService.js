@@ -224,68 +224,77 @@ exports.handleWebhookPayload = async (req) => {
                                 sentAt: timestamp
                             });
                             console.log(`[Inbound Message] Inbound message saved to DB: ${messageDoc._id}`);
-
+                            
                             if (messageType === 'text' && messageContent?.body) {
-                            const userText = messageContent.body.trim();
-                            const phoneNumberId = metaPhoneNumberID;
-                            const accessToken = businessProfileData.metaAccessToken;
-                            const userNumber = fromPhoneNumber;
+                                const userText = messageContent.body.trim();
+                                const phoneNumberId = metaPhoneNumberID;
+                                const accessToken = businessProfileData.metaAccessToken;
+                                const userNumber = fromPhoneNumber;
 
-                            try {
-                                console.log(`\n--- Auto-replying to user text: "${userText}" ---`);
-                                const flow = await Flow.findOne({ entryPoint: userText });
+                                try {
+                                    console.log(`\n--- Auto-replying to user text: "${userText}" ---`);
+                                    const flow = await Flow.findOne({ entryPoint: userText });
 
-                                if (flow) {
-                                    console.log(`Flow found for entry point "${userText}":`, flow._id);
-                                    const replies = await traverseFlow(userText, flow.nodes, flow.edges);
-                                    
-                                    for (const reply of replies) {
-                                        let type = reply.type;
-                                        let messagePayload = {};
+                                    if (flow) {
+                                        console.log(`Flow found for entry point "${userText}":`, flow._id);
+                                        const replies = await traverseFlow(userText, flow.nodes, flow.edges);
+                                        console.log(`Replies from flow traversal:`, replies);
 
-                                        switch (type) {
-                                            case 'text':
-                                            messagePayload = { text: reply.text };
-                                            break;
-
-                                            case 'image':
-                                            case 'video':
-                                            messagePayload = {
-                                                link: reply.link,
-                                                caption: reply.caption || ''
-                                            };
-                                            break;
-
-                                            case 'template':
-                                            messagePayload = {
-                                                name: reply.templateName,
-                                                language: { code: 'en' },
-                                                components: [
-                                                {
-                                                    type: 'body',
-                                                    parameters: reply.parameters.map(param => ({
+                                        const buildPayload = (reply) => {
+                                            switch (reply.type) {
+                                                case 'text':
+                                                    return {
                                                         type: 'text',
-                                                        text: param.value
-                                                    }))
-                                                }]
-                                            };
-                                            break;
+                                                        message: { text: reply.text }
+                                                    };
+                                                case 'image':
+                                                case 'video':
+                                                    return {
+                                                        type: reply.type,
+                                                        message: {
+                                                            link: reply.link,
+                                                            caption: reply.caption || ''
+                                                        }
+                                                    };
+                                                case 'template':
+                                                    return {
+                                                        type: 'template',
+                                                        message: {
+                                                            name: reply.templateName,
+                                                            language: { code: 'en' },
+                                                            components: [
+                                                                {
+                                                                    type: 'body',
+                                                                    parameters: reply.parameters.map(param => ({
+                                                                        type: 'text',
+                                                                        text: param.value
+                                                                    }))
+                                                                }
+                                                            ]
+                                                        }
+                                                    };
+                                                default:
+                                                    console.warn(`Unsupported reply type: ${reply.type}`);
+                                                    return null;
+                                            }
+                                        };
 
-                                            default:
-                                            console.warn(`Unsupported reply type: ${type}`);
-                                            continue;
-                                        }
+                                        // Fire all messages at once
+                                        const tasks = replies
+                                            .map(buildPayload)
+                                            .filter(Boolean)
+                                            .map(({ type, message }) =>
+                                                sendWhatsAppMessages({
+                                                    to: userNumber,
+                                                    type,
+                                                    message,
+                                                    phoneNumberId,
+                                                    accessToken,
+                                                    FACEBOOK_URL: "https://graph.facebook.com/v22.0"
+                                                })
+                                            );
 
-                                        console.log("messagePayload=======", messagePayload);
-
-                                        const response = await sendWhatsAppMessages({
-                                            to: userNumber,
-                                            type,
-                                            message: messagePayload,
-                                            phoneNumberId,
-                                            accessToken,
-                                            FACEBOOK_URL: "https://graph.facebook.com/v22.0"
-                                        });
+                                        const results = await Promise.allSettled(tasks);
 
                                         await ConversationSession.create({
                                             whatsappContactId: userNumber,
@@ -295,38 +304,35 @@ exports.handleWebhookPayload = async (req) => {
                                             tenantId: project.tenantId,
                                         });
 
-                                        if (!response.success) {
-                                            console.error(`Failed to send message to ${userNumber}`);
-                                            console.error("Error:", response.error);
-                                        } else {
-                                            console.log(`Message sent to ${userNumber}`);
-                                        }
+                                        results.forEach((r, i) => {
+                                            if (r.status === 'fulfilled' && r.value?.success) {
+                                                console.log(`Reply[${i}] sent to ${userNumber}`);
+                                            } else {
+                                                console.error(`Reply[${i}] failed`, r.reason || r.value?.error);
+                                            }
+                                        });
 
-                                        if (reply.delay && reply.delay > 0) {
-                                            await new Promise(res => setTimeout(res, reply.delay * 1000));
+                                        console.log(`Auto-replied to ${userNumber} with ${results.length} message(s) in parallel.`);
+                                    } else {
+                                        if (io) {
+                                            io.to(project.userId.toString()).emit('newInboundMessage', {
+                                                message: messageDoc.toObject(),
+                                                conversation: conversation.toObject(),
+                                                contact: contact.toObject()
+                                            });
+                                            io.to(conversation._id.toString()).emit('newChatMessage', {
+                                                message: messageDoc.toObject(),
+                                                contact: contact.toObject(),
+                                                conversationId: conversation._id
+                                            });
+                                            console.log(`[Inbound Message] Emitted 'newInboundMessage' to user room '${project.userId}' and 'newChatMessage' to conversation room '${conversation._id}'`);
                                         }
                                     }
-
-                                    console.log(`Auto-replied to ${userNumber} with ${replies.length} message(s).`);
-                                } else {
-                                    if (io) {
-                                io.to(project.userId.toString()).emit('newInboundMessage', {
-                                    message: messageDoc.toObject(),
-                                    conversation: conversation.toObject(),
-                                    contact: contact.toObject()
-                                });
-                                io.to(conversation._id.toString()).emit('newChatMessage', {
-                                    message: messageDoc.toObject(),
-                                    contact: contact.toObject(),
-                                    conversationId: conversation._id
-                                });
-                                console.log(`[Inbound Message] Emitted 'newInboundMessage' to user room '${project.userId}' and 'newChatMessage' to conversation room '${conversation._id}'`);
-                            }
+                                } catch (err) {
+                                    console.error(`Error during auto-reply for "${userText}":`, err.message);
                                 }
-                            } catch (err) {
-                                console.error(`Error during auto-reply for "${userText}":`, err.message);
                             }
-                            }
+
                         }
                     }
                 }
