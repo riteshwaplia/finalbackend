@@ -93,3 +93,71 @@
 [25/7/2025, 15:40:40] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
 [25/7/2025, 15:40:41] Server running on port 5001
 [25/7/2025, 15:40:43] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 15:43:44] Server running on port 5001
+[25/7/2025, 15:43:45] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 15:44:11] Server running on port 5001
+[25/7/2025, 15:44:12] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 15:45:59] Server running on port 5001
+[25/7/2025, 15:46:00] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 15:47:07] Server running on port 5001
+[25/7/2025, 15:47:08] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 15:47:44] Server running on port 5001
+[25/7/2025, 15:47:45] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 15:54:04] Server running on port 5001
+[25/7/2025, 15:54:05] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 15:55:35] Server running on port 5001
+[25/7/2025, 15:55:36] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 15:55:39] Server running on port 5001
+[25/7/2025, 15:55:40] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 15:56:48] Server running on port 5001
+[25/7/2025, 15:56:48] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 15:57:04] Server running on port 5001
+[25/7/2025, 15:57:04] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 15:58:27] Server running on port 5001
+[25/7/2025, 15:58:27] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 16:00:18] Server running on port 5001
+[25/7/2025, 16:00:19] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 16:02:24] Server running on port 5001
+[25/7/2025, 16:02:25] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 16:02:43] Server running on port 5001
+[25/7/2025, 16:02:44] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 16:05:34] Server running on port 5001
+[25/7/2025, 16:05:34] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 16:07:57] Server running on port 5001
+[25/7/2025, 16:07:58] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 16:13:00] Server running on port 5001
+[25/7/2025, 16:13:01] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 16:13:31] Validating body: {"_original":{"name":"jfevekf@@##","metaAccessToken":"47638463sdcececwerve","metaAppId":"jhvckjdcvd"},"details":[{"message":"ID is required.","path":["businessProfileId"],"type":"any.required","context":{"label":"Business Profile ID","key":"businessProfileId"}},{"message":"ID is required.","path":["userId"],"type":"any.required","context":{"label":"User ID","key":"userId"}},{"message":"ID is required.","path":["tenantId"],"type":"any.required","context":{"label":"Tenant ID","key":"tenantId"}},{"message":"Business name must not contain special characters.","path":["name"],"type":"string.pattern.base","context":{"regex":{},"value":"jfevekf@@##","label":"name","key":"name"}},{"message":"Meta App ID should contain only letters and numbers.","path":["metaAppId"],"type":"string.pattern.base","context":{"regex":{},"value":"jhvckjdcvd","label":"metaAppId","key":"metaAppId"}}]}
+[25/7/2025, 16:13:56] Server running on port 5001
+[25/7/2025, 16:13:56] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 16:14:14] Server running on port 5001
+[25/7/2025, 16:14:15] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 16:14:27] Server running on port 5001
+[25/7/2025, 16:14:27] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 16:14:30] Validating body: {"_original":{"name":"jfevekf@@##","metaAccessToken":"47638463sdcececwerve","metaAppId":"1234567890"},"details":[{"message":"ID is required.","path":["businessProfileId"],"type":"any.required","context":{"label":"Business Profile ID","key":"businessProfileId"}},{"message":"ID is required.","path":["userId"],"type":"any.required","context":{"label":"User ID","key":"userId"}},{"message":"ID is required.","path":["tenantId"],"type":"any.required","context":{"label":"Tenant ID","key":"tenantId"}},{"message":"Name must not contain special characters.","path":["name"],"type":"string.pattern.base","context":{"regex":{},"value":"jfevekf@@##","label":"name","key":"name"}}]}
+[25/7/2025, 16:14:34] Validating body: {"_original":{"name":"jfevekf@@##","metaAccessToken":"47638463sdcececwerve","metaAppId":"1234567890a"},"details":[{"message":"ID is required.","path":["businessProfileId"],"type":"any.required","context":{"label":"Business Profile ID","key":"businessProfileId"}},{"message":"ID is required.","path":["userId"],"type":"any.required","context":{"label":"User ID","key":"userId"}},{"message":"ID is required.","path":["tenantId"],"type":"any.required","context":{"label":"Tenant ID","key":"tenantId"}},{"message":"Name must not contain special characters.","path":["name"],"type":"string.pattern.base","context":{"regex":{},"value":"jfevekf@@##","label":"name","key":"name"}},{"message":"Meta App ID should contain only numbers.","path":["metaAppId"],"type":"string.pattern.base","context":{"regex":{},"value":"1234567890a","label":"metaAppId","key":"metaAppId"}}]}
+[25/7/2025, 16:14:41] Validating body: {"_original":{"name":"jfevekf@@##","metaAccessToken":"47638463sdcececwerve","metaAppId":"1234567890!"},"details":[{"message":"ID is required.","path":["businessProfileId"],"type":"any.required","context":{"label":"Business Profile ID","key":"businessProfileId"}},{"message":"ID is required.","path":["userId"],"type":"any.required","context":{"label":"User ID","key":"userId"}},{"message":"ID is required.","path":["tenantId"],"type":"any.required","context":{"label":"Tenant ID","key":"tenantId"}},{"message":"Name must not contain special characters.","path":["name"],"type":"string.pattern.base","context":{"regex":{},"value":"jfevekf@@##","label":"name","key":"name"}},{"message":"Meta App ID should contain only numbers.","path":["metaAppId"],"type":"string.pattern.base","context":{"regex":{},"value":"1234567890!","label":"metaAppId","key":"metaAppId"}}]}
+[25/7/2025, 16:16:09] Validating body: {"_original":{"name":"jfevekf@@##","metaAccessToken":"47638463sdcececwerve","metaAppId":"1234567890!"},"details":[{"message":"ID is required.","path":["businessProfileId"],"type":"any.required","context":{"label":"Business Profile ID","key":"businessProfileId"}},{"message":"ID is required.","path":["userId"],"type":"any.required","context":{"label":"User ID","key":"userId"}},{"message":"ID is required.","path":["tenantId"],"type":"any.required","context":{"label":"Tenant ID","key":"tenantId"}},{"message":"Name must not contain special characters.","path":["name"],"type":"string.pattern.base","context":{"regex":{},"value":"jfevekf@@##","label":"name","key":"name"}},{"message":"Meta App ID should contain only numbers.","path":["metaAppId"],"type":"string.pattern.base","context":{"regex":{},"value":"1234567890!","label":"metaAppId","key":"metaAppId"}}]}
+[25/7/2025, 16:17:59] Server running on port 5001
+[25/7/2025, 16:18:00] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 16:18:03] Server running on port 5001
+[25/7/2025, 16:18:04] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 16:18:06] Validating body: {"_original":{"name":"jfevekf@@##","metaAccessToken":"47638463sdcececwerve","metaAppId":"1234567890!"},"details":[{"message":"_id is required.","path":["businessProfileId"],"type":"any.required","context":{"label":"businessProfileId","key":"businessProfileId"}},{"message":"userId is required.","path":["userId"],"type":"any.required","context":{"label":"userId","key":"userId"}},{"message":"tenantId is required.","path":["tenantId"],"type":"any.required","context":{"label":"tenantId","key":"tenantId"}},{"message":"Name must not contain special characters.","path":["name"],"type":"string.pattern.base","context":{"regex":{},"value":"jfevekf@@##","label":"name","key":"name"}},{"message":"Meta App ID should contain only numbers.","path":["metaAppId"],"type":"string.pattern.base","context":{"regex":{},"value":"1234567890!","label":"metaAppId","key":"metaAppId"}}]}
+[25/7/2025, 16:18:38] Server running on port 5001
+[25/7/2025, 16:18:39] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 16:20:46] Server running on port 5001
+[25/7/2025, 16:20:47] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 16:22:47] Server running on port 5001
+[25/7/2025, 16:22:48] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[25/7/2025, 16:26:26] Server running on port 5001
+[25/7/2025, 16:26:27] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 16:35:40] Server running on port 5001
+[25/7/2025, 16:35:41] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 17:02:31] Server running on port 5001
+[25/7/2025, 17:02:33] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 17:03:40] Server running on port 5001
+[25/7/2025, 17:03:41] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[25/7/2025, 17:03:47] Server running on port 5001
+[25/7/2025, 17:03:48] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[25/7/2025, 17:03:49] Server running on port 5001
+[25/7/2025, 17:03:50] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net

@@ -21,17 +21,12 @@ const router = express.Router();
 router.post('/register',validate(registerSchema), responseHandler(userController.registerController));
 router.post("/verifyOtp",validate(verifyOtpSchema), responseHandler(userController.verifyOtpController));
 router.post('/login',validate(loginSchema), userController.authUser);
-router.get('/profile', protect,validate(getUserProfileSchema), userController.getUserProfile);
+router.get('/profile', protect, userController.getUserProfile);
 router.put('/profile', protect,validate(updateUserProfileSchema), userController.updateUserProfile);
-router.get('/', protect, authorizeRoles('tenant_admin', 'super_admin'),validate(getUsersByTenantSchema), userController.getAllUsersForTenant);
+router.get('/', protect, authorizeRoles('tenant_admin', 'super_admin'), userController.getAllUsersForTenant);
 router.post('/admin-register', protect, authorizeRoles('tenant_admin', 'super_admin'),validate(registerUserByAdminSchema), userController.registerUserByAdmin);
-
 router.post('/business-profiles',protect,validate(businessProfileSchema),userController.createBusinessProfile);
-
-router.get('/business-profiles', protect,validate(getAllBusinessProfilesSchema), userController.getAllBusinessProfilesForUser);
-
-router.put('/business-profiles/:id', protect,validate(updateBusinessProfileSchema), userController.updateBusinessProfile);
-
-// router.delete('/business-profiles/:id', protect, userController.deleteBusinessProfile); // optional
+router.get('/business-profiles', protect, userController.getAllBusinessProfilesForUser);
+router.put('/business-profiles/:id', protect ,validate(updateBusinessProfileSchema), userController.updateBusinessProfile);
 
 module.exports = router;

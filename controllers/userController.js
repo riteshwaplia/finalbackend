@@ -1,7 +1,7 @@
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 const User = require('../models/User');
-const Project = require('../models/Project');
+const Project = require('../models/project');
 const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
@@ -122,7 +122,7 @@ const updateBusinessProfileLogic = async (req) => {
     const businessProfileId = req.params.id;
     const userId = req.user._id;
     const tenantId = req.tenant._id;
-    const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId } = req.body;
+    const { name, businessAddress, metaAccessToken, metaAppId } = req.body;
 
     try {
         const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
@@ -142,17 +142,6 @@ const updateBusinessProfileLogic = async (req) => {
                     status: statusCode.CONFLICT,
                     success: false,
                     message: "Another business profile with this name already exists."
-                };
-            }
-        }
-
-        if (metaBusinessId && metaBusinessId !== businessProfile.metaBusinessId) {
-            const conflict = await BusinessProfile.findOne({ metaBusinessId, userId, tenantId, _id: { $ne: businessProfileId } });
-            if (conflict) {
-                return {
-                    status: statusCode.CONFLICT,
-                    success: false,
-                    message: "Another business profile with this WABA ID already exists."
                 };
             }
         }
@@ -250,7 +239,6 @@ const deleteBusinessProfile = async (req, res) => {
     }
 };
 
-// Express-style handlers (call logic, then send response)
 const createBusinessProfile = async (req, res) => {
     const result = await createBusinessProfileLogic(req);
     res.status(result.status).json(result);
@@ -266,7 +254,6 @@ const getAllBusinessProfilesForUser = async (req, res) => {
     res.status(result.status).json(result);
 };
 
-// Other handlers (already well structured)
 const authUser = async (req, res) => {
     const { email, password } = req.body;
     const tenantId = req.tenant._id;

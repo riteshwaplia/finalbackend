@@ -116,41 +116,52 @@ const getAllBusinessProfilesSchema = Joi.object({
     }),
 });
 
-
-//  Only alphanumeric hex string (24 characters)
-const objectId = Joi.string()
+const updateBusinessProfileSchema = Joi.object({
+  businessProfileId: Joi.string()
   .pattern(/^[a-fA-F0-9]{24}$/)
   .required()
   .messages({
     "string.pattern.base": "ID must be a valid 24-character hex string without special characters.",
-    "any.required": "ID is required.",
-});
+    "any.required": "_id is required.",
+  }),
+  userId: Joi.string()
+  .pattern(/^[a-fA-F0-9]{24}$/)
+  .required()
+  .messages({
+    "string.pattern.base": "ID must be a valid 24-character hex string without special characters.",
+    "any.required": "userId is required.",
+  }),
+  tenantId: Joi.string()
+  .pattern(/^[a-fA-F0-9]{24}$/)
+  .required()
+  .messages({
+    "string.pattern.base": "ID must be a valid 24-character hex string without special characters.",
+    "any.required": "tenantId is required.",
+  }),
 
-const updateBusinessProfileSchema = Joi.object({
-  businessProfileId: objectId.label("Business Profile ID"),
-  userId: objectId.label("User ID"),
-  tenantId: objectId.label("Tenant ID"),
   name: Joi.string()
     .pattern(/^[a-zA-Z0-9\s]+$/)
-    .required()
+    .optional()
     .messages({
-      "string.pattern.base": "Business name must not contain special characters.",
+      "string.pattern.base": "Name must not contain special characters.",
       "any.required": "Business name is required."
     }),
-  businessAddress: Joi.string().optional(),
-  metaAccessToken: Joi.string().required().messages({
-    "any.required": "Meta Access Token is required."
-  }),
-  metaAppId: Joi.string().required().messages({
-    "any.required": "Meta App ID is required."
-  }),
-  metaBusinessId: Joi.string()
-    .pattern(/^[0-9]+$/)
-    .required()
+
+  metaAccessToken: Joi.string()
+    .pattern(/^[a-zA-Z0-9\s]+$/)
+    .optional()
     .messages({
-      "string.pattern.base": "Meta Business ID must contain only digits.",
-      "any.required": "Meta Business ID is required."
+      'string.base': 'Meta Access Token must be a string.',
+      'string.pattern.base': 'Meta Access Token should contain only letters and numbers.'
     }),
+
+  metaAppId: Joi.string()
+    .pattern(/^[0-9\s]+$/)
+    .optional()
+    .messages({
+      'string.base': 'Meta App ID must be a string.',
+      'string.pattern.base': 'Meta App ID should contain only numbers.'
+    })
 });
 
 const registerUserByAdminSchema = Joi.object({
