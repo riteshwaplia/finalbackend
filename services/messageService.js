@@ -581,7 +581,7 @@ const getAllBulkSendJobsService = async (req) => {
 
 const FormData = require("form-data");
 
-exports.uploadMedia = async (req) => {
+const uploadMedia = async (req) => {
   const { projectId } = req.params;
   const file = req.file;
   const userId = req.user._id;
@@ -751,5 +751,6 @@ module.exports = {
   sendWhatsAppMessages,
   sendBulkMessageService,
   getAllBulkSendJobsService,
-  getBulkSendJobDetailsService
+  getBulkSendJobDetailsService,
+  uploadMedia
 }
