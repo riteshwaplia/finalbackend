@@ -702,8 +702,8 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
  
     case 'image':
       payload.image = {};
-      if (message.link) payload.image.link = message.link;
       if (message.id) payload.image.id = message.id;
+      if (message.link) payload.image.link = message.link;
       if (message.caption) payload.image.caption = message.caption;
       break;
  

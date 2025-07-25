@@ -27,11 +27,13 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
       }
 
     } else if (type === 'image') {
+      const mediaId = current.data?.id;
       const url = current.data?.imageUrl || current.data?.url;
       const caption = current.data?.message || current.data?.caption || '';
       if (url) {
         messages.push({
           type: 'image',
+          id: mediaId,
           link: url,
           caption,
           delay
