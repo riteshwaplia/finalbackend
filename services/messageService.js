@@ -6,6 +6,7 @@ const fs = require("fs");
 const Message = require("../models/Message");
 const Template = require("../models/Template");
 const Project = require("../models/project");
+const Contact = require("../models/Contact");
 const BulkSendJob = require("../models/BulkSendJob"); 
 const { statusCode, resMessage } = require("../config/constants");
 const { chunkArray } = require("../utils/helpers");
@@ -643,13 +644,20 @@ const BulkSendGroupService = async (req) => {
               parameters: [{ type: "image", image: { link: imageLink } }],
             });
           }
-        } else {
-          const headerKey = contactfields[0] || "First name";
-          const headerValue = contact.customFields?.[headerKey] || "User";
-          components.push({
-            type: "HEADER",
-            parameters: [{ type: "text", text: headerValue }],
-          });
+        } else if (headerTemplate.format === "TEXT") {
+          const expectedHeaderParams = headerTemplate.text?.match(/{{\d+}}/g)?.length || 0;
+          if (expectedHeaderParams > 0) {
+            const headerKey = contactfields[0] || "First name";
+            const headerValue = contact.customFields?.[headerKey] || "User";
+            components.push({
+              type: "HEADER",
+              parameters: [{ type: "text", text: headerValue }],
+            });
+            console.log(`${logPrefix} 📝 Header text:`, headerValue);
+          } else {
+            console.log(`${logPrefix} 📝 Static header — no parameters passed`);
+            // Don't push HEADER if static
+          }
         }
       }
 
@@ -669,6 +677,8 @@ const BulkSendGroupService = async (req) => {
           type: "BODY",
           parameters: bodyParams,
         });
+      } else if (bodyTemplate && expectedBodyParams === 0) {
+        console.log(`${logPrefix} 📝 Static body — no parameters passed`);
       }
 
       const templateMessage = {
