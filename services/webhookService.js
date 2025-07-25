@@ -216,6 +216,7 @@ exports.handleWebhookPayload = async (req) => {
                                                     return {
                                                         type: reply.type,
                                                         message: {
+                                                            id: reply.id,
                                                             link: reply.link,
                                                             caption: reply.caption || ''
                                                         }

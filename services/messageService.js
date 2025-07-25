@@ -581,7 +581,7 @@ const getAllBulkSendJobsService = async (req) => {
 
 const FormData = require("form-data");
 
-exports.uploadMedia = async (req) => {
+const uploadMedia = async (req) => {
   const { projectId } = req.params;
   const file = req.file;
   const userId = req.user._id;
@@ -702,8 +702,8 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
  
     case 'image':
       payload.image = {};
-      if (message.link) payload.image.link = message.link;
       if (message.id) payload.image.id = message.id;
+      if (message.link) payload.image.link = message.link;
       if (message.caption) payload.image.caption = message.caption;
       break;
  
@@ -749,8 +749,8 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
 
 module.exports = {
   sendWhatsAppMessages,
-  
   sendBulkMessageService,
   getAllBulkSendJobsService,
-  getBulkSendJobDetailsService
+  getBulkSendJobDetailsService,
+  uploadMedia
 }
