@@ -23,3 +23,7 @@ exports.getAllBulkSendJobsService = async (req) => {
 exports.BulkSendGroupController = async (req) => {
     return await messageService.BulkSendGroupService(req);
 };
+
+exports.downloadMediaController = async (req) => {
+    return await messageService.downloadMedia(req);
+};

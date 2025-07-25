@@ -24,6 +24,8 @@ router.get('/bulk-send-jobs/:bulkSendJobId', protect, responseHandler(messageCon
 
 router.post('/bulk-send-group', protect, responseHandler(messageController.BulkSendGroupController));
 
+router.post('/download-media', protect, responseHandler(messageController.downloadMediaController));
+
 // You might add routes for message history, delivery reports later
 
 module.exports = router;

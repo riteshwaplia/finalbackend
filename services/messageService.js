@@ -9,6 +9,7 @@ const Project = require("../models/project");
 const BulkSendJob = require("../models/BulkSendJob"); 
 const { statusCode, resMessage } = require("../config/constants");
 const { chunkArray } = require("../utils/helpers");
+const { v4: uuidv4 } = require("uuid");
 
 const BATCH_SIZE = 20; 
 
@@ -1163,8 +1164,6 @@ exports.uploadMedia = async (req) => {
   }
 };
 
-
-
 const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, message, FACEBOOK_URL }) => {
   const PHONE_NUMBER_ID = phoneNumberId;
   const ACCESS_TOKEN = accessToken;
@@ -1252,10 +1251,107 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
   }
 };
 
+const downloadMedia = async (req) => {
+  const { projectId } = req.params;
+  const { imageId } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+
+  if (!imageId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Image ID is required",
+    };
+  }
+
+  try {
+    const project = await Project.findOne({
+      _id: projectId,
+      userId,
+      tenantId,
+    }).populate("businessProfileId");
+
+    if (
+      !project ||
+      !project.metaPhoneNumberID ||
+      !project.businessProfileId?.metaAccessToken
+    ) {
+      return {
+        status: 400,
+        success: false,
+        message: "Invalid project configuration",
+      };
+    }
+
+    // 1. Get media URL from Meta
+    const metadataResponse = await axios.get(
+      `https://graph.facebook.com/v19.0/${imageId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+        },
+      }
+    );
+
+    const mediaUrl = metadataResponse.data.url;
+
+    // 2. Download media binary
+    const mediaResponse = await axios.get(mediaUrl, {
+      headers: {
+        Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+      },
+      responseType: "arraybuffer",
+    });
+
+    const contentType = mediaResponse.headers["content-type"];
+    const extension = contentType.split("/")[1] || "jpg";
+    const fileName = `meta-image-${uuidv4()}.${extension}`;
+    const tempDir = path.join(__dirname, "../temp");
+
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir);
+    }
+
+    const filePath = path.join(tempDir, fileName);
+
+    fs.writeFileSync(filePath, mediaResponse.data);
+
+    const fileStream = fs.createReadStream(filePath);
+
+    // Automatically delete file when stream closes
+    fileStream.on("close", async () => {
+      try {
+        await fsPromises.unlink(filePath);
+        console.log("🗑️ Temp file deleted:", filePath);
+      } catch (err) {
+        console.error("❌ Error deleting file:", err.message);
+      }
+    });
+
+    return {
+      status: 200,
+      success: true,
+      message: "Media downloaded successfully",
+      stream: fileStream,
+      mimeType: contentType,
+      fileName,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      success: false,
+      message: error.response?.data?.error?.message || "Download failed",
+      error: error.response?.data || error.message,
+    };
+  }
+};
+
 module.exports = {
   sendWhatsAppMessages,
   BulkSendGroupService,
   sendBulkMessageService,
   getAllBulkSendJobsService,
-  getBulkSendJobDetailsService
+  getBulkSendJobDetailsService,
+  downloadMedia
 }
