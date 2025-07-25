@@ -392,12 +392,17 @@ const resetPasswordController = async (req, res) => {
 
 const forgotPasswordController = async (req) => {
   const result = await userService.forgotPassword(req);
-  return result; // ✅ Let middleware handle the response
+  return result; 
 };
 
 const updatePasswordWithOtpController = async (req) => {
   const result = await userService.updatePasswordWithOtp(req);
-  return result; // ✅ Let middleware handle the response
+  return result;
+};
+
+const updateUserController = async (req) => {
+    const result = await userService.updateUser(req);
+    return result;
 };
 
 module.exports = {
@@ -414,5 +419,6 @@ module.exports = {
     verifyOtpController,
     resetPasswordController,
     forgotPasswordController,
-    updatePasswordWithOtpController
+    updatePasswordWithOtpController,
+    updateUserController
 };

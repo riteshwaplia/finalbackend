@@ -300,3 +300,115 @@ exports.updatePasswordWithOtp = async (req) => {
   }
 };
 
+exports.updateUser = async (req) => {
+    try {
+        console.log("🔐 [updateUser] Called");
+
+        const paramUserId = req.params.userId;
+        const tokenUserId = req.user._id;
+        const tenantId = req.tenant._id;
+
+        console.log("🧾 [updateUser] Param User ID:", paramUserId);
+        console.log("🧾 [updateUser] Token User ID:", tokenUserId);
+        console.log("🧾 [updateUser] Tenant ID:", tenantId);
+
+        const {
+            email, // only for matching, not update
+            username,
+            firstName,
+            lastName,
+            mobileNumber,
+            profilePicture,
+            gender,
+            dob
+        } = req.body;
+
+        console.log("📥 [updateUser] Incoming Body:", req.body);
+
+        // Step 1: Check if userId from token matches the param
+        if (paramUserId !== tokenUserId.toString()) {
+            console.warn("❌ [updateUser] Unauthorized access attempt");
+            return {
+                status: statusCode.UNAUTHORIZED,
+                success: false,
+                message: 'Unauthorized: You can only update your own profile.',
+                statusCode: statusCode.UNAUTHORIZED
+            };
+        }
+
+        // Step 2: Validate email presence
+        if (!email) {
+            console.warn("⚠️ [updateUser] Email not provided");
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: 'Email is required to update your profile.',
+                statusCode: statusCode.BAD_REQUEST
+            };
+        }
+
+        // Step 3: Find the user
+        console.log("🔍 [updateUser] Finding user with ID, tenantId, and email...");
+        const user = await User.findOne({ _id: paramUserId, tenantId, email });
+
+        if (!user) {
+            console.warn("❌ [updateUser] User not found or email mismatch");
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: 'User not found or email does not match.',
+                statusCode: statusCode.NOT_FOUND
+            };
+        }
+
+        // Step 4: Prevent email change
+        if (req.body.email !== user.email) {
+            console.warn("❌ [updateUser] Email update attempt blocked");
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: 'Email update is not allowed.',
+                statusCode: statusCode.BAD_REQUEST
+            };
+        }
+
+        // Step 5: Update user fields
+        console.log("✏️ [updateUser] Updating user fields...");
+        user.username = username ?? user.username;
+        user.firstName = firstName ?? user.firstName;
+        user.lastName = lastName ?? user.lastName;
+        user.mobileNumber = mobileNumber ?? user.mobileNumber;
+        user.profilePicture = profilePicture ?? user.profilePicture;
+        user.gender = gender ?? user.gender;
+        user.dob = dob ?? user.dob;
+
+        await user.save();
+        console.log("✅ [updateUser] User updated successfully");
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: 'User profile updated successfully.',
+            data: {
+                _id: user._id,
+                username: user.username,
+                firstName: user.firstName,
+                lastName: user.lastName,
+                mobileNumber: user.mobileNumber,
+                email: user.email,
+                profilePicture: user.profilePicture,
+                gender: user.gender,
+                dob: user.dob
+            },
+            statusCode: statusCode.OK
+        };
+    } catch (error) {
+        console.error("💥 [updateUser] Error:", error.message);
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message || 'Internal server error',
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        };
+    }
+};

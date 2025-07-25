@@ -18,6 +18,6 @@ router.put('/business-profiles/:id', protect,userController.updateBusinessProfil
 router.put('/reset-password', protect, userController.resetPasswordController);
 router.post('/forgot-password', responseHandler(userController.forgotPasswordController));
 router.post('/update-password-with-otp', responseHandler(userController.updatePasswordWithOtpController));
-
+router.put('/update-self/:userId', protect, responseHandler(userController.updateUserController));
 
 module.exports = router

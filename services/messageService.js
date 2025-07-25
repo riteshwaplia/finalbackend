@@ -615,9 +615,7 @@ const BulkSendGroupService = async (req) => {
   for (const [batchIndex, batch] of contactBatches.entries()) {
     const sendPromises = batch.map(async (contact, i) => {
       const mobileNumber = String(contact.mobileNumber || "");
-      const countryCode = String(contact.countryCode || "91");
-      const to = `${countryCode}${mobileNumber}`;
-      const logPrefix = `🔄 [${to}]`;
+      const to = String(contact.mobileNumber || "");
 
       if (!mobileNumber || mobileNumber.length < 5) {
         totalFailed++;
@@ -653,11 +651,7 @@ const BulkSendGroupService = async (req) => {
               type: "HEADER",
               parameters: [{ type: "text", text: headerValue }],
             });
-            console.log(`${logPrefix} 📝 Header text:`, headerValue);
-          } else {
-            console.log(`${logPrefix} 📝 Static header — no parameters passed`);
-            // Don't push HEADER if static
-          }
+          } 
         }
       }
 
@@ -678,7 +672,6 @@ const BulkSendGroupService = async (req) => {
           parameters: bodyParams,
         });
       } else if (bodyTemplate && expectedBodyParams === 0) {
-        console.log(`${logPrefix} 📝 Static body — no parameters passed`);
       }
 
       const templateMessage = {
