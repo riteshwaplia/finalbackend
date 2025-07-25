@@ -5,7 +5,10 @@ const Project = require('../models/Project');
 const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
-
+const { sendEmail } = require('../functions/functions');
+const BlacklistedTokenSchema = require('../models/BlacklistedTokenSchema');
+const { getEmailTemplate } = require('../utils/getEmailTemplate');
+const jwt = require('jsonwebtoken');
 const registerController = async (req) => {
     try {
         return await userService.register(req);
@@ -267,6 +270,29 @@ const getAllBusinessProfilesForUser = async (req, res) => {
 };
 
 // Other handlers (already well structured)
+// const authUser = async (req, res) => {
+//     const { email, password } = req.body;
+//     const tenantId = req.tenant._id;
+
+//     try {
+//         const user = await User.findOne({ email, tenantId, isEmailVerified: true });
+
+//         if (user && (await user.matchPassword(password))) {
+//             return res.json({
+//                 _id: user._id,
+//                 username: user.username,
+//                 email: user.email,
+//                 role: user.role,
+//                 token: generateToken(user._id,email)
+//             });
+//         } else {
+//             return res.status(401).json({ message: 'Invalid email or password for this tenant' });
+//         }
+//     } catch (error) {
+//         console.error('Auth error:', error);
+//         return res.status(500).json({ message: 'Server error' });
+//     }
+// };
 const authUser = async (req, res) => {
     const { email, password } = req.body;
     const tenantId = req.tenant._id;
@@ -275,12 +301,33 @@ const authUser = async (req, res) => {
         const user = await User.findOne({ email, tenantId, isEmailVerified: true });
 
         if (user && (await user.matchPassword(password))) {
+            const token = generateToken(user._id, email);
+             const subject ='New Login Detected'
+            const text = `Hello ${user.username},\n\n`;
+           
+
+const html = `
+  <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
+    <p>Hello <strong>${user.username}</strong>,</p>
+    <p>A new login was detected to your <strong>Wachat</strong> account.</p>
+    <p>If this was not you, please <a href="https://yourapp.com/reset-password" target="_blank">reset your password</a> immediately.</p>
+    <p><strong>Login time:</strong> ${new Date().toLocaleString()}</p>
+    <br />
+    <p>Regards,<br />Wachat Security Team</p>
+  </div>
+`;
+            // Send login notification email
+                        await sendEmail(email, subject, text,getEmailTemplate(html) );
+            
+            // await sendEmail(user.email, ,html= getEmailTemplate(html));
+
+
             return res.json({
                 _id: user._id,
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id)
+                token
             });
         } else {
             return res.status(401).json({ message: 'Invalid email or password for this tenant' });
@@ -288,6 +335,26 @@ const authUser = async (req, res) => {
     } catch (error) {
         console.error('Auth error:', error);
         return res.status(500).json({ message: 'Server error' });
+    }
+};
+const logoutUser = async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+console.log('Logout token:', token);
+    if (!token) {
+        return res.status(400).json({ message: 'Token is required for logout' });
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+console.log('Decoded token:', decoded);
+       const blsck= await BlacklistedTokenSchema.create({
+            token,
+            expiresAt: new Date(decoded.exp * 1000)
+        });
+console.log('Blacklisted token:', blsck);
+        return res.status(200).json({ message: 'Logged out successfully' });
+    } catch (err) {
+        return res.status(401).json({ message: 'Invalid or expired token' });
     }
 };
 
@@ -378,8 +445,31 @@ const registerUserByAdmin = async (req, res) => {
     }
 };
 
+const resetPasswordController = async (req, res) => {
+    try {
+        const result = await userService.resetPassword(req);
+        res.status(result.statusCode || 500).json(result);
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || 'Server error'
+        });
+    }
+};
+
+const forgotPasswordController = async (req) => {
+  const result = await userService.forgotPassword(req);
+  return result; // ✅ Let middleware handle the response
+};
+
+const updatePasswordWithOtpController = async (req) => {
+  const result = await userService.updatePasswordWithOtp(req);
+  return result; // ✅ Let middleware handle the response
+};
+
 module.exports = {
     authUser,
+    logoutUser,
     getUserProfile,
     updateUserProfile,
     getAllUsersForTenant,
@@ -389,5 +479,8 @@ module.exports = {
     deleteBusinessProfile,
     getAllBusinessProfilesForUser,
     registerController,
-    verifyOtpController
+    verifyOtpController,
+    resetPasswordController,
+    forgotPasswordController,
+    updatePasswordWithOtpController
 };

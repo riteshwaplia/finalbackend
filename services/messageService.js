@@ -4,29 +4,14 @@ const path = require("path");
 const xlsx = require("xlsx");
 const fs = require("fs");
 const Message = require("../models/Message");
-const Contact = require("../models/Contact");
 const Template = require("../models/Template");
-const Project = require("../models/Project");
-const BusinessProfile = require("../models/BusinessProfile");
-const BulkSendJob = require("../models/BulkSendJob"); // NEW: Import BulkSendJob model
+const Project = require("../models/project");
+const BulkSendJob = require("../models/BulkSendJob"); 
 const { statusCode, resMessage } = require("../config/constants");
-const { chunkArray, buildTemplateMessage } = require("../utils/helpers");
+const { chunkArray } = require("../utils/helpers");
 
-const BATCH_SIZE = 20; // Number of messages to send in one batch
+const BATCH_SIZE = 20; 
 
-/**
- * Sends a single WhatsApp message using provided Meta API credentials.
- * This helper is used by both single and bulk message sending.
- * @param {Object} options - Options for sending message.
- * @param {string} options.to - Recipient's phone number.
- * @param {string} options.type - Message type.
- * @param {Object} options.message - The message payload.
- * @param {string} options.phoneNumberId - The specific WhatsApp Phone Number ID for sending (from Meta).
- * @param {string} options.accessToken - Meta Access Token.
- * @param {string} options.facebookUrl - Meta Graph API URL.
- * @param {string} options.graphVersion - Meta Graph API version.
- * @returns {Object} Success status and data/error.
- */
 const sendWhatsAppMessage = async ({
   to,
   type,
@@ -36,7 +21,6 @@ const sendWhatsAppMessage = async ({
   facebookUrl,
   graphVersion,
 }) => {
-  // Validate core Meta API credentials
   if (!phoneNumberId || !accessToken || !facebookUrl || !graphVersion) {
     return {
       success: false,
@@ -107,15 +91,12 @@ const sendWhatsAppMessage = async ({
   }
 };
 
-// @desc    Send a single WhatsApp message from the UI
-// @access  Private
 exports.sendMessageService = async (req) => {
   const { to, type, message } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
 
-  // Basic input validation
   if (!to || !type || !message) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -135,7 +116,6 @@ exports.sendMessageService = async (req) => {
     };
   }
 
-  // 1. Fetch Project to get linked BusinessProfileId AND metaPhoneNumberID
   const project = await Project.findOne({
     _id: projectId,
     tenantId,
@@ -151,7 +131,6 @@ exports.sendMessageService = async (req) => {
     };
   }
 
-  // Validate that the project has a configured WhatsApp number
   if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -163,8 +142,7 @@ exports.sendMessageService = async (req) => {
   }
   const phoneNumberId = project.metaPhoneNumberID;
 
-  // 2. Fetch Meta API credentials from the BusinessProfile linked to the Project
-  const businessProfile = project.businessProfileId; // Already populated by .populate('businessProfileId')
+  const businessProfile = project.businessProfileId;
   if (
     !businessProfile ||
     !businessProfile.metaAccessToken ||
@@ -181,7 +159,6 @@ exports.sendMessageService = async (req) => {
     };
   }
 
-  // Extract credentials directly from BusinessProfile
   const accessToken = businessProfile.metaAccessToken;
   const facebookUrl = businessProfile.facebookUrl;
   const graphVersion = businessProfile.graphVersion;
@@ -197,7 +174,6 @@ exports.sendMessageService = async (req) => {
       graphVersion,
     });
 
-    // Save message log to DB
     const messageData = new Message({
       to,
       type,
@@ -207,13 +183,12 @@ exports.sendMessageService = async (req) => {
       userId,
       tenantId,
       projectId,
-      metaPhoneNumberID: phoneNumberId, // Store the specific Meta Phone Number ID used
-      direction: "outbound", // Mark as outbound from our system
+      metaPhoneNumberID: phoneNumberId, 
+      direction: "outbound", 
       templateName: type === "template" ? message.name : undefined,
       templateLanguage:
         type === "template" ? message.language?.code : undefined,
     });
-    // If sending fails, capture error details
     if (!sendResult.success && sendResult.error) {
       messageData.errorDetails = sendResult.error;
     }
@@ -242,16 +217,13 @@ exports.sendMessageService = async (req) => {
   }
 };
 
-// @desc    Send bulk messages from an Excel file
-// @access  Private
 const sendBulkMessageService = async (req) => {
-  const { templateName, message = {} } = req.body;
+  const { templateName, message = {} ,imageId} = req.body;
+  console.log("imgageId", imageId);
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
   const fileName = req.file?.originalname || "manual_upload.xlsx";
-
-  console.log("message:", message);
   if (!templateName || !req.file) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -344,7 +316,6 @@ const sendBulkMessageService = async (req) => {
 
   let templateComponents = parsedMessage.components;
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
-  console.log("Template components:", templateComponents);
   if (!templateComponents || templateComponents.length === 0) {
     const localTemplate = await Template.findOne({
       tenantId,
@@ -407,7 +378,6 @@ const sendBulkMessageService = async (req) => {
 
       const components = [];
 
-      // 1. Add image header from template if applicable
       templateComponents.forEach((component) => {
         if (component.type === "HEADER" && component.format === "IMAGE") {
           console.log("Header component found:", component);
@@ -418,7 +388,7 @@ const sendBulkMessageService = async (req) => {
               parameters: [
                 {
                   type: "image",
-                  image: { link: imageLink },
+                  image: { id: imageLink },
                 },
               ],
             });
@@ -426,9 +396,7 @@ const sendBulkMessageService = async (req) => {
         }
       });
 
-      // 2. Add dynamic header text from Excel if provided (overrides image if present)
       if (contactRow.header_text) {
-        // Replace HEADER if already exists (image one)
         const headerIndex = components.findIndex((c) => c.type === "HEADER");
         const headerComponent = {
           type: "HEADER",
@@ -441,7 +409,6 @@ const sendBulkMessageService = async (req) => {
         }
       }
 
-      // 3. BODY components from Excel like body_1, body_2, etc.
       const bodyParams = [];
       Object.entries(contactRow).forEach(([key, value]) => {
         if (key.startsWith("body_") && value) {
@@ -455,21 +422,11 @@ const sendBulkMessageService = async (req) => {
         });
       }
 
-      // 4. Final message payload
   const templateMessage = {
   name: baseMessage.name,
   language: baseMessage.language,
   components,
 };
-
-// ✅ Deep Debug Log
-console.log("----- 📤 Sending Template Message -----");
-console.log("To:", to);
-console.log("Raw Contact Row:", JSON.stringify(contactRow, null, 2));
-console.log("Final Message Payload:", JSON.stringify(templateMessage, null, 2));
-console.log("Phone Number ID:", phoneNumberId);
-console.log("Access Token (masked):", accessToken?.slice(0, 6) + "...(hidden)");
-console.log("--------------------------------------");
 
       try {
         const sendResult = await sendWhatsAppMessage({
@@ -808,8 +765,6 @@ const BulkSendGroupService = async (req) => {
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
 
-  console.log("📥 Incoming Bulk Send Request:", { templateName, groupId, contactfields });
-
   if (!templateName || !groupId) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -820,16 +775,8 @@ const BulkSendGroupService = async (req) => {
 
   const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
   console.log("📁 Project loaded:", project ? project._id : null);
-
-  if (!project) {
-    return {
-      status: statusCode.NOT_FOUND,
-      success: false,
-      message: resMessage.No_data_found + " (Project not found or does not belong to you).",
-    };
-  }
-
-  if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
+ 
+  if (!project || !project.isWhatsappVerified || !project.metaPhoneNumberID) {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
@@ -851,7 +798,7 @@ const BulkSendGroupService = async (req) => {
   const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
   const graphVersion = businessProfile.graphVersion || "v16.0";
 
-  let contacts = await Contact.find({
+  const contacts = await Contact.find({
     groupIds: groupId,
     userId,
     tenantId,
@@ -860,7 +807,6 @@ const BulkSendGroupService = async (req) => {
   });
 
   console.log("👥 Contacts fetched:", contacts.length);
-
   if (!contacts.length) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -869,24 +815,10 @@ const BulkSendGroupService = async (req) => {
     };
   }
 
-  let parsedMessage = message;
-  if (typeof message === "string") {
-    try {
-      parsedMessage = JSON.parse(message);
-    } catch (err) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: "Invalid JSON format in 'message' field.",
-      };
-    }
-  }
-
+  let parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
   let templateComponents = parsedMessage.components;
   console.log("🧩 Initial template components:", templateComponents);
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
-
-  console.log("🧩 Template components from input:", templateComponents);
 
   if (!templateComponents || templateComponents.length === 0) {
     const localTemplate = await Template.findOne({
@@ -896,8 +828,6 @@ const BulkSendGroupService = async (req) => {
       name: templateName,
       metaStatus: "APPROVED",
     });
-    console.log("📄 Fallback template loaded:", localTemplate ? localTemplate._id : null);
-
     if (localTemplate) {
       templateComponents = localTemplate.components;
       templateLanguageCode = localTemplate.language;
@@ -931,26 +861,29 @@ const BulkSendGroupService = async (req) => {
   };
 
   const contactBatches = chunkArray(contacts, BATCH_SIZE);
+
   let totalSent = 0;
   let totalFailed = 0;
   const errorsSummary = [];
 
-  for (const batch of contactBatches) {
-    const sendPromises = batch.map(async (contact) => {
+  for (const [batchIndex, batch] of contactBatches.entries()) {
+    const sendPromises = batch.map(async (contact, i) => {
       const mobileNumber = String(contact.mobileNumber || "");
-      const countryCode = String(contact.countryCode || "");
+      const countryCode = String(contact.countryCode || "91");
       const to = `${countryCode}${mobileNumber}`;
+      const logPrefix = `🔄 [${to}]`;
 
       if (!mobileNumber || mobileNumber.length < 5) {
         totalFailed++;
-        errorsSummary.push({
-          to: mobileNumber,
-          error: "Invalid mobile number format in group contacts.",
-        });
+        errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format." });
         return;
       }
 
-      console.log("📦 Preparing message for:", to);
+      if (!to.startsWith("91") && process.env.NODE_ENV !== "production") {
+        totalFailed++;
+        errorsSummary.push({ to, error: "Not in test number list (sandbox)." });
+        return;
+      }
 
       const components = [];
 
@@ -965,9 +898,9 @@ const BulkSendGroupService = async (req) => {
               parameters: [{ type: "image", image: { link: imageLink } }],
             });
           }
-        } else if (contactfields[0]) {
-          const headerValue = contact.customFields?.[contactfields[0]] || "";
-          console.log(`🧠 HEADER placeholder [${contactfields[0]}] →`, headerValue);
+        } else {
+          const headerKey = contactfields[0] || "First name";
+          const headerValue = contact.customFields?.[headerKey] || "User";
           components.push({
             type: "HEADER",
             parameters: [{ type: "text", text: headerValue }],
@@ -977,12 +910,16 @@ const BulkSendGroupService = async (req) => {
 
       // BODY
       const bodyTemplate = templateComponents.find(c => c.type === "BODY");
-      if (bodyTemplate && contactfields.length > 1) {
-        const bodyParams = contactfields.slice(1).map((key, index) => {
-          const value = contact.customFields?.[key] || "";
-          console.log(`🧠 BODY var {{${index + 1}}} [${key}] →`, value);
-          return { type: "text", text: value };
-        });
+      const expectedBodyParams = bodyTemplate?.text?.match(/{{\d+}}/g)?.length || 0;
+      if (bodyTemplate && expectedBodyParams > 0) {
+        const bodyParams = [];
+ 
+        for (let i = 1; i <= expectedBodyParams; i++) {
+          const key = contactfields[i] || `field${i}`;
+          const value = contact.customFields?.[key] || "...";
+          bodyParams.push({ type: "text", text: value });
+        }
+ 
         components.push({
           type: "BODY",
           parameters: bodyParams,
@@ -994,8 +931,6 @@ const BulkSendGroupService = async (req) => {
         language: baseMessage.language,
         components,
       };
-
-      console.log(`📨 Sending to ${to} with message:`, JSON.stringify(templateMessage));
 
       try {
         const sendResult = await sendWhatsAppMessage({
@@ -1027,22 +962,15 @@ const BulkSendGroupService = async (req) => {
 
         if (!sendResult.success && sendResult.error) {
           messageLog.errorDetails = sendResult.error;
-        }
-
-        await messageLog.save();
-
-        if (sendResult.success) {
-          totalSent++;
-        } else {
           totalFailed++;
-          errorsSummary.push({
-            to,
-            error: sendResult.error || "Unknown error",
-          });
+          errorsSummary.push({ to, error: sendResult.error });
+        } else {
+          totalSent++;
         }
+ 
+        await messageLog.save();
       } catch (err) {
         totalFailed++;
-        console.log("❌ Error sending to", to, "→", err.message);
         errorsSummary.push({ to, error: err.message || "Unhandled exception" });
       }
     });
@@ -1056,12 +984,6 @@ const BulkSendGroupService = async (req) => {
   bulkSendJob.endTime = new Date();
   bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
   await bulkSendJob.save();
-
-  console.log("✅ Bulk Send Job Completed:", {
-    jobId: bulkSendJob._id,
-    totalSent,
-    totalFailed,
-  });
 
   return {
     status: statusCode.OK,
@@ -1087,7 +1009,7 @@ const getBulkSendJobDetailsService = async (req) => {
   const { bulkSendJobId } = req.params;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
-  const projectId = req.params.projectId; // Assuming projectId is also in params for context
+  const projectId = req.params.projectId;
 
   if (!bulkSendJobId) {
     return {
@@ -1099,12 +1021,11 @@ const getBulkSendJobDetailsService = async (req) => {
   }
 
   try {
-    // Find the bulk send job
     const job = await BulkSendJob.findOne({
       _id: bulkSendJobId,
       tenantId,
       userId,
-      projectId, // Ensure job belongs to current user/project/tenant
+      projectId, 
     });
 
     if (!job) {
@@ -1115,15 +1036,9 @@ const getBulkSendJobDetailsService = async (req) => {
       };
     }
 
-    // Find all messages associated with this bulk send job
-    // You might want to paginate this if a single job can have millions of messages
     const messagesInJob = await Message.find({
       bulkSendJobId: bulkSendJobId,
     }).sort({ createdAt: 1 });
-
-    // Optionally, you can enrich messagesInJob with contact names if needed,
-    // but it might be too heavy for very large jobs.
-    // For now, we'll just return the message documents as they are.
 
     return {
       status: statusCode.OK,
@@ -1131,7 +1046,7 @@ const getBulkSendJobDetailsService = async (req) => {
       message: resMessage.Bulk_send_job_detail_fetched,
       data: {
         jobDetails: job,
-        messages: messagesInJob, // All messages for this job
+        messages: messagesInJob,
       },
     };
   } catch (error) {
@@ -1144,10 +1059,6 @@ const getBulkSendJobDetailsService = async (req) => {
   }
 };
 
-/**
- * @desc    Get a list of all bulk send jobs for a project.
- * @access  Private
- */
 const getAllBulkSendJobsService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -1158,7 +1069,7 @@ const getAllBulkSendJobsService = async (req) => {
       tenantId,
       userId,
       projectId,
-    }).sort({ startTime: -1 }); // Sort by most recent first
+    }).sort({ startTime: -1 }); 
 
     return {
       status: statusCode.OK,
@@ -1176,7 +1087,6 @@ const getAllBulkSendJobsService = async (req) => {
   }
 };
 
-// Ensure you have multer configured properly
 const FormData = require("form-data");
 
 const uploadMedia = async (req) => {
@@ -1185,7 +1095,6 @@ const uploadMedia = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
 
-  // Validation
   if (!file) {
     return {
       status: 400,
@@ -1195,7 +1104,6 @@ const uploadMedia = async (req) => {
   }
 
   try {
-    // 1. Get project and business profile
     const project = await Project.findOne({
       _id: projectId,
       userId,
@@ -1214,7 +1122,6 @@ const uploadMedia = async (req) => {
       };
     }
 
-    // 2. Prepare form data for WhatsApp
     const form = new FormData();
     form.append("file", fs.createReadStream(file.path), {
       filename: file.originalname,
@@ -1223,7 +1130,6 @@ const uploadMedia = async (req) => {
     form.append("type", file.mimetype);
     form.append("messaging_product", "whatsapp");
 
-    // 3. Upload to WhatsApp
     const uploadUrl = `https://graph.facebook.com/v19.0/${project.metaPhoneNumberID}/media`;
     const uploadResponse = await axios.post(uploadUrl, form, {
       headers: {
@@ -1234,7 +1140,6 @@ const uploadMedia = async (req) => {
       maxBodyLength: Infinity,
     });
 
-    // 4. Clean up temporary file
     fs.unlinkSync(file.path);
 
     return {
@@ -1247,7 +1152,6 @@ const uploadMedia = async (req) => {
       },
     };
   } catch (error) {
-    // Clean up if error occurred
     if (file?.path && fs.existsSync(file.path)) {
       fs.unlinkSync(file.path);
     }
@@ -1267,7 +1171,6 @@ const uploadMedia = async (req) => {
 const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, message, FACEBOOK_URL }) => {
   const PHONE_NUMBER_ID = phoneNumberId;
   const ACCESS_TOKEN = accessToken;
-console.log("favebookUrl:", FACEBOOK_URL);
   const url = `${FACEBOOK_URL}/${PHONE_NUMBER_ID}/messages`;
  
   const payload = {
@@ -1288,17 +1191,22 @@ console.log("favebookUrl:", FACEBOOK_URL);
       if (message.caption) payload.video.caption = message.caption;
       break;
  
-    case 'template':
+    case 'template': {
+      const languageCode =
+        typeof message.language === 'string'
+          ? message.language
+          : message.language?.code;
+
       payload.template = {
         name: message.name,
-        language: {
-          code: message.language.code
-        }
+        language: { code: languageCode || 'en_US' }
       };
-      if (Array.isArray(message.components)) {
+
+      if (Array.isArray(message.components) && message.components.length > 0) {
         payload.template.components = message.components;
       }
       break;
+    }
  
     case 'image':
       payload.image = {};
@@ -1328,7 +1236,7 @@ console.log("favebookUrl:", FACEBOOK_URL);
  
     if (response.data && to && type === 'text') {
       await Chat.create({
-        from: 'Wachat', // or a fixed string to indicate it's from the business
+        from: 'Wachat',
         to,
         direction: 'outgoing',
         text: payload.text?.body,

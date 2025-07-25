@@ -14,6 +14,8 @@ router.post('/carousel-templates', protect, responseHandler(templateController.c
 // Submit a locally created template to Meta for approval
 router.post("/:id/submit-to-meta", protect, responseHandler(templateController.submitToMetaController));
 router.get("/", protect, responseHandler(templateController.getAllController));
+router.get("/allapprovedtemplates", protect, responseHandler(templateController.getAllApprovedTemplatesController));
+router.get("/allapprovedcarouseltemplates", protect, responseHandler(templateController.getAllApprovedCarosualTemplatesController))
 router.get("/:id", protect, responseHandler(templateController.getByIdController));
 router.put("/:id", protect, responseHandler(templateController.updateController));
 router.delete("/:id", protect, responseHandler(templateController.deleteController));

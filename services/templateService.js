@@ -870,6 +870,108 @@ exports.getAllTemplates = async (req) => {
   }
 };
 
+
+exports.getAllApprovedTemplates = async (req) => {
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+  const { businessProfileId,page=1,limit=100 } = req.query;
+
+  const query = {
+    tenantId,
+    userId,
+    metaStatus: 'APPROVED', // ✅ Only approved
+    type: { $ne: 'CAROUSEL' } // ✅ Exclude carousel
+  };
+
+  if (businessProfileId) {
+    query.businessProfileId = businessProfileId;
+  }
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  try {
+    const [templates, totalCount] = await Promise.all([
+      Template.find(query).skip(skip).limit(parseInt(limit)).lean(),
+      Template.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      status: 200,
+      success: true,
+      message:
+        templates.length === 0
+          ? 'No approved templates found' +
+            (businessProfileId ? ' for the selected business profile.' : '')
+          : 'Templates fetched successfully',
+      data: templates,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: parseInt(page),
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || 'Internal server error',
+    };
+  }
+};
+exports.getAllCarouselTemplates = async (req) => {
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+  const { businessProfileId, page = 1, limit = 100 } = req.query;
+
+  const query = {
+    tenantId,
+    userId,
+    type: 'CAROUSEL',
+    metaStatus: 'APPROVED',
+  };
+
+  if (businessProfileId) {
+    query.businessProfileId = businessProfileId;
+  }
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  try {
+    const [templates, totalCount] = await Promise.all([
+      Template.find(query).skip(skip).limit(parseInt(limit)).lean(),
+      Template.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      status: 200,
+      success: true,
+      message:
+        templates.length === 0
+          ? 'No carousel templates found' +
+            (businessProfileId ? ' for the selected business profile.' : '')
+          : 'Carousel templates fetched successfully',
+      data: templates,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: parseInt(page),
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching carousel templates:', error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || 'Internal server error',
+    };
+  }
+};
+
 // @desc    Get a single template by ID
 // @access  Private (User/Team Member)
 exports.getTemplateById = async (req) => {

@@ -24,6 +24,12 @@ exports.createCarouselTemplateController = async (req) => {
 exports.getByIdController = async (req) => {
     return await templateService.getTemplateById(req);
 };
+exports.getAllApprovedTemplatesController = async (req) => {
+    return await templateService.getAllApprovedTemplates(req);
+};
+exports.getAllApprovedCarosualTemplatesController = async (req) => {
+    return await templateService.getAllCarouselTemplates(req);
+};
 
 exports.updateController = async (req) => {
     return await templateService.updateTemplate(req);
