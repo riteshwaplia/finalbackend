@@ -16,19 +16,16 @@ exports.handleWebhookPayload = async (req) => {
  
     if (req.method === 'GET') {
         const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
-        console.log("token", VERIFY_TOKEN);
         const mode = req.query['hub.mode'];
         const token = req.query['hub.verify_token'];
         const challenge = req.query['hub.challenge'];
  
         console.log("Webhook GET request received for verification.");
-        console.log("Mode:", mode, "Token:", token ? '[REDACTED]' : 'N/A', "Challenge:", challenge); // Mask token in logs
  
         if (mode && token) {
-            console.log("44444444", token);
             if (mode === 'subscribe' && token === VERIFY_TOKEN) {
                 console.log('WEBHOOK_VERIFIED: Successfully subscribed to webhook.');
-                return { status: statusCode.OK, raw: true, body: challenge }; // Send raw challenge back
+                return { status: statusCode.OK, raw: true, body: challenge }; 
             } else {
                 console.error('Webhook verification failed: Invalid verify token or mode.');
                 return { status: statusCode.FORBIDDEN, success: false, message: resMessage.Webhook_verification_failed || "Webhook verification failed." }; // Use a constant if available
@@ -39,10 +36,8 @@ exports.handleWebhookPayload = async (req) => {
     }
  
     const payload = req.body;
-    console.log("--- Incoming WhatsApp Webhook POST Payload ---");
-    console.log(JSON.stringify(payload, null, 2));
-    console.log("----------------------------------------------");
- 
+    console.log("=======Webhook data========", JSON.stringify(payload, null, 2));
+
     try {
         if (!payload || !payload.object || payload.object !== 'whatsapp_business_account') {
             console.warn("Webhook payload not for 'whatsapp_business_account' or invalid object type. Payload:", JSON.stringify(payload));
@@ -56,9 +51,6 @@ exports.handleWebhookPayload = async (req) => {
                 console.warn(`[Webhook] Could not extract Meta Phone Number ID from entry. Skipping entry. Entry: ${JSON.stringify(entry)}`);
                 continue;
             }
- 
-            console.log(`[Webhook] Processing events for Meta Phone Number ID: ${metaPhoneNumberID}`);
- 
             for (const change of entry.changes) {
                 if (change.field === 'messages') {
                     const value = change.value;
@@ -68,9 +60,6 @@ exports.handleWebhookPayload = async (req) => {
                             const metaMessageId = statusUpdate.id;
                             const newStatus = statusUpdate.status;
                             const timestamp = new Date(parseInt(statusUpdate.timestamp) * 1000);
- 
-                            console.log(`[Webhook Status Update] Meta Message ID: ${metaMessageId}, New Status: ${newStatus}, Time: ${timestamp.toISOString()}`);
- 
                             const messageDoc = await Message.findOne({ metaMessageId: metaMessageId, metaPhoneNumberID: metaPhoneNumberID });
  
                             if (messageDoc) {
@@ -82,8 +71,6 @@ exports.handleWebhookPayload = async (req) => {
                                     console.error(`[Webhook Status Update Error] Details for ${metaMessageId}:`, JSON.stringify(statusUpdate.errors));
                                 }
                                 await messageDoc.save();
-                                console.log(`[Webhook Status Update] Message DB ID ${messageDoc._id} status updated to ${newStatus}.`);
- 
                                 if (io) {
                                     io.to(messageDoc.userId.toString()).emit('messageStatusUpdate', {
                                         messageDbId: messageDoc._id,
@@ -123,24 +110,12 @@ exports.handleWebhookPayload = async (req) => {
                             const metaMessageId = inboundMessage.id;
                             const timestamp = new Date(parseInt(inboundMessage.timestamp) * 1000);
                             const profileName = inboundMessage.contacts?.[0]?.profile?.name || fromPhoneNumber;
- 
-                            console.log(`\n--- Processing Inbound Message ---`);
-                            console.log(`From: ${fromPhoneNumber}`);
-                            console.log(`Meta Phone Number ID (Our Number): ${metaPhoneNumberID}`);
-                            console.log(`Type: ${messageType}`);
-                            console.log(`Meta Message ID: ${metaMessageId}`);
-                            console.log(`Content: ${JSON.stringify(messageContent)}`);
-                            console.log(`Timestamp: ${timestamp.toISOString()}`);
-                            console.log(`----------------------------------`);
- 
                             const project = await Project.findOne({ metaPhoneNumberID: metaPhoneNumberID });
  
                             if (!project) {
                                 console.warn(`[Inbound Message] No project found for Meta Phone Number ID: ${metaPhoneNumberID}. Cannot process inbound message.`);
                                 continue;
                             }
-                            console.log(`[Inbound Message] Found Project: ${project.name} (ID: ${project._id})`);
- 
                             businessProfileData = await Businessprofile.findById(project.businessProfileId);
  
                             let contact = await Contact.findOne({
@@ -157,8 +132,6 @@ exports.handleWebhookPayload = async (req) => {
                                     defaultCountryCode = parsedPhoneNumber.substring(0, parsedPhoneNumber.length - 10);
                                     defaultMobileNumber = parsedPhoneNumber.substring(parsedPhoneNumber.length - 10);
                                 }
- 
-                                console.log(`[Inbound Message] Creating new contact for ${fromPhoneNumber} (WhatsApp ID: ${whatsappId}) in project ${project._id}`);
                                 contact = await Contact.create({
                                     tenantId: project.tenantId,
                                     userId: project.userId,
@@ -169,9 +142,7 @@ exports.handleWebhookPayload = async (req) => {
                                     whatsappId: whatsappId,
                                     profileName: profileName
                                 });
-                                console.log(`[Inbound Message] New contact created: ${contact._id}`);
                             } else if (contact.profileName !== profileName || contact.mobileNumber !== fromPhoneNumber.replace(/^\+/, '')) {
-                                console.log(`[Inbound Message] Updating existing contact ${contact._id}. Old Name: ${contact.profileName}, New Name: ${profileName}`);
                                 contact.profileName = profileName;
                                 contact.mobileNumber = fromPhoneNumber.replace(/^\+/, '');
                                 await contact.save();
@@ -186,7 +157,6 @@ exports.handleWebhookPayload = async (req) => {
                             });
  
                             if (!conversation) {
-                                console.log(`[Inbound Message] Creating new conversation for project ${project._id} with contact ${contact._id} via phone ID ${metaPhoneNumberID}`);
                                 conversation = await Conversation.create({
                                     tenantId: project.tenantId,
                                     userId: project.userId,
@@ -198,9 +168,7 @@ exports.handleWebhookPayload = async (req) => {
                                     lastActivityAt: timestamp,
                                     unreadCount: 1
                                 });
-                                console.log(`[Inbound Message] New conversation created: ${conversation._id}`);
                             } else {
-                                console.log(`[Inbound Message] Updating existing conversation: ${conversation._id}`);
                                 conversation.latestMessage = messageContent.body || messageType;
                                 conversation.latestMessageType = messageType;
                                 conversation.lastActivityAt = timestamp;
@@ -223,68 +191,77 @@ exports.handleWebhookPayload = async (req) => {
                                 status: 'received',
                                 sentAt: timestamp
                             });
-                            console.log(`[Inbound Message] Inbound message saved to DB: ${messageDoc._id}`);
- 
+
                             if (messageType === 'text' && messageContent?.body) {
-                            const userText = messageContent.body.trim().toLowerCase();
-                            const phoneNumberId = metaPhoneNumberID;
-                            const accessToken = businessProfileData.metaAccessToken;
-                            const userNumber = fromPhoneNumber;
- 
-                            try {
-                                const flow = await Flow.findOne({ entryPoint: userText });
- 
-                                if (flow) {
-                                    const replies = await traverseFlow(userText, flow.nodes, flow.edges);
- 
-                                    for (const reply of replies) {
-                                        let type = reply.type;
-                                        let messagePayload = {};
- 
-                                        switch (type) {
-                                            case 'text':
-                                            messagePayload = { text: reply.text };
-                                            break;
- 
-                                            case 'image':
-                                            case 'video':
-                                            messagePayload = {
-                                                link: reply.link,
-                                                caption: reply.caption || ''
-                                            };
-                                            break;
- 
-                                            case 'template':
-                                            messagePayload = {
-                                                name: reply.templateName,
-                                                language: { code: 'en' },
-                                                components: [
-                                                {
-                                                    type: 'body',
-                                                    parameters: reply.parameters.map(param => ({
+                                const userText = messageContent.body.trim();
+                                const phoneNumberId = metaPhoneNumberID;
+                                const accessToken = businessProfileData.metaAccessToken;
+                                const userNumber = fromPhoneNumber;
+
+                                try {;
+                                    const flow = await Flow.findOne({ entryPoint: userText });
+
+                                    if (flow) {
+                                        const replies = await traverseFlow(userText, flow.nodes, flow.edges);
+
+                                        const buildPayload = (reply) => {
+                                            switch (reply.type) {
+                                                case 'text':
+                                                    return {
                                                         type: 'text',
-                                                        text: param.value
-                                                    }))
-                                                }]
-                                            };
-                                            break;
- 
-                                            default:
-                                            console.warn(`Unsupported reply type: ${type}`);
-                                            continue;
-                                        }
- 
-                                        console.log("messagePayload=======", messagePayload);
- 
-                                        const response = await sendWhatsAppMessages({
-                                            to: userNumber,
-                                            type,
-                                            message: messagePayload,
-                                            phoneNumberId,
-                                            accessToken,
-                                            FACEBOOK_URL: "https://graph.facebook.com/v22.0"
-                                        });
- 
+                                                        message: { text: reply.text }
+                                                    };
+                                                case 'image':
+                                                case 'video':
+                                                    return {
+                                                        type: reply.type,
+                                                        message: {
+                                                            link: reply.link,
+                                                            caption: reply.caption || ''
+                                                        }
+                                                    };
+
+                                                case 'template':
+                                                return {
+                                                    type: 'template',
+                                                    message: {
+                                                        name: reply.templateName,
+                                                        language: { code: reply.templateLang },
+                                                        components: (reply.parameters?.length
+                                                            ? [{
+                                                                type: 'body',
+                                                                parameters: reply.parameters.map(param => ({
+                                                                    type: 'text',
+                                                                    text: param.value
+                                                                }))
+                                                            }]
+                                                            : []
+                                                        )
+                                                    }
+                                                };
+
+                                                default:
+                                                    console.warn(`Unsupported reply type: ${reply.type}`);
+                                                    return null;
+                                            }
+                                        };
+
+                                        const tasks = replies
+                                            .map(buildPayload)
+                                            .filter(Boolean)
+                                            .map(({ type, message }) =>
+                                                sendWhatsAppMessages({
+                                                    to: userNumber,
+                                                    type,
+                                                    message,
+                                                    phoneNumberId,
+                                                    accessToken,
+                                                    FACEBOOK_URL: "https://graph.facebook.com/v22.0"
+                                                })
+                                            );
+
+                                        const results = await Promise.allSettled(tasks);
+
                                         await ConversationSession.create({
                                             whatsappContactId: userNumber,
                                             whatsappPhoneNumberId: phoneNumberId,
@@ -292,45 +269,38 @@ exports.handleWebhookPayload = async (req) => {
                                             userId: project.userId,
                                             tenantId: project.tenantId,
                                         });
- 
-                                        if (!response.success) {
-                                            console.error(`Failed to send message to ${userNumber}`);
-                                            console.error("Error:", response.error);
-                                        } else {
-                                            console.log(`Message sent to ${userNumber}`);
-                                        }
- 
-                                        if (reply.delay && reply.delay > 0) {
-                                            await new Promise(res => setTimeout(res, reply.delay * 1000));
+
+                                        results.forEach((r, i) => {
+                                            if (r.status === 'fulfilled' && r.value?.success) {
+                                                console.log(`Reply[${i}] sent to ${userNumber}`);
+                                            } else {
+                                                console.error(`Reply[${i}] failed`, r.reason || r.value?.error);
+                                            }
+                                        });
+                                    } else {
+                                        if (io) {
+                                            io.to(project.userId.toString()).emit('newInboundMessage', {
+                                                message: messageDoc.toObject(),
+                                                conversation: conversation.toObject(),
+                                                contact: contact.toObject()
+                                            });
+                                            io.to(conversation._id.toString()).emit('newChatMessage', {
+                                                message: messageDoc.toObject(),
+                                                contact: contact.toObject(),
+                                                conversationId: conversation._id
+                                            });
                                         }
                                     }
- 
-                                    console.log(`Auto-replied to ${userNumber} with ${replies.length} message(s).`);
-                                } else {
-                                    if (io) {
-                                io.to(project.userId.toString()).emit('newInboundMessage', {
-                                    message: messageDoc.toObject(),
-                                    conversation: conversation.toObject(),
-                                    contact: contact.toObject()
-                                });
-                                io.to(conversation._id.toString()).emit('newChatMessage', {
-                                    message: messageDoc.toObject(),
-                                    contact: contact.toObject(),
-                                    conversationId: conversation._id
-                                });
-                                console.log(`[Inbound Message] Emitted 'newInboundMessage' to user room '${project.userId}' and 'newChatMessage' to conversation room '${conversation._id}'`);
-                            }
+                                } catch (err) {
+                                    console.error(`Error during auto-reply for "${userText}":`, err.message);
                                 }
-                            } catch (err) {
-                                console.error(`Error during auto-reply for "${userText}":`, err.message);
                             }
-                            }
+
                         }
                     }
                 }
             }
         }
-        console.log("--- Webhook Payload Processing Complete ---");
         return { status: statusCode.OK, success: true, message: resMessage.WEBHOOK_RECEIVE_SUCCESS };
     } catch (error) {
         console.error("--- Error processing webhook payload ---");
