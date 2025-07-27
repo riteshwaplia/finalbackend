@@ -145,11 +145,14 @@ const sendMessageService = async (req) => {
   const phoneNumberId = project.metaPhoneNumberID;
 
   const businessProfile = project.businessProfileId;
+  businessProfile.graphVersion = businessProfile.graphVersion || "v16.0";
+  businessProfile.facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
+
   if (
     !businessProfile ||
     !businessProfile.metaAccessToken ||
     !businessProfile.metaBusinessId ||
-    !businessProfile.facebookUrl ||
+    (!businessProfile.facebookUrl ) ||
     !businessProfile.graphVersion
   ) {
     return {
