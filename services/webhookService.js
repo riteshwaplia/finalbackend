@@ -192,8 +192,8 @@ exports.handleWebhookPayload = async (req) => {
                                 sentAt: timestamp
                             });
 
-                            if (messageType === 'text' && messageContent?.body) {
-                                const userText = messageContent.body.trim();
+                            if ((messageType === 'text' && messageContent?.body) || (messageType === 'button' && messageContent?.payload)) {
+                                const userText = messageType === 'text' ? messageContent.body.trim() : messageContent.payload.trim();
                                 const phoneNumberId = metaPhoneNumberID;
                                 const accessToken = businessProfileData.metaAccessToken;
                                 const userNumber = fromPhoneNumber;
