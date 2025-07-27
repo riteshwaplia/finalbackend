@@ -35,7 +35,8 @@ const allowedOrigins = [
   'https://c1d2faae5baf.ngrok-free.app',
   "http://192.168.1.86:5173/",
   "http://172.16.0.2:5173/",
-  "https://sabnode.netlify.app"
+  "https://sabnode.netlify.app",
+  "https://iridescent-gumption-58e07e.netlify.app"
 ];
 
 app.use(cors({
@@ -79,7 +80,7 @@ app.use('/api/projects/:projectId/team-member', teamMemberRoutes);
 const server = http.createServer(app); 
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:3000", "http://localhost:5173"], // Your frontend URL
+        origin: ["http://localhost:3000", "http://localhost:5173"],
         methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     }
 });
