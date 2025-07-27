@@ -91,7 +91,9 @@ const sendWhatsAppMessage = async ({
   }
 };
 
-exports.sendMessageService = async (req) => {
+// http://localhost:5173
+
+const sendMessageService = async (req) => {
   const { to, type, message } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -748,6 +750,7 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
 };
 
 module.exports = {
+  sendMessageService,
   sendWhatsAppMessages,
   sendBulkMessageService,
   getAllBulkSendJobsService,

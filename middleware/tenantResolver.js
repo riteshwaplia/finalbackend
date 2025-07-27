@@ -4,7 +4,7 @@ const tenantResolver = async (req, res, next) => {
   // In production, domain should come from headers
   // const domain = req.headers.origin;
  
-  const domain = "http://localhost:5173";
+  const domain = "https://iridescent-gumption-58e07e.netlify.app/";
 
 
   try {
