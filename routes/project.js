@@ -33,13 +33,7 @@ router.route('/')
   );
 
 // Get Project by ID (dashboard view)
-router.get(
-  '/:id/dashboard',
-  protect,
-  authorizeRoles('user'),
-  validate(validateProjectId, 'params'),
-  responseHandler(projectController.getProjectByIdController)
-);
+router.get('/:id/dashboard', protect, authorizeRoles('user'), responseHandler(projectController.getProjectByIdController));
 
 // Update & Delete Project by ID
 router
