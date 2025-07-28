@@ -36,7 +36,8 @@ const BusinessProfileSchema = new mongoose.Schema({
     metaBusinessId: {
         type: String,
         required: true,
-        trim: true
+        trim: true,
+        unique: true
     },
     isDefault: {
         type: Boolean,
@@ -53,10 +54,12 @@ const BusinessProfileSchema = new mongoose.Schema({
 });
 
 // Compound index to ensure unique combination of businessId per user per tenant
-BusinessProfileSchema.index(
-    { metaBusinessId: 1, userId: 1, tenantId: 1 }, 
-    { unique: true, name: 'unique_business_per_user_tenant' }
-);
+// ❌ REMOVE this (no longer needed):
+// BusinessProfileSchema.index({ metaBusinessId: 1, userId: 1, tenantId: 1 }, { unique: true, name: 'unique_business_per_user_tenant' });
+
+// ✅ ADD this instead:
+BusinessProfileSchema.index({ tenantId: 1 }, { unique: true, name: 'one_business_profile_per_tenant' });
+
 
 // Index for faster querying of user's business profiles
 BusinessProfileSchema.index({ userId: 1, tenantId: 1 });

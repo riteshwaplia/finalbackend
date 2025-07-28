@@ -225,13 +225,12 @@ const sendMessageService = async (req) => {
 };
 
 const sendBulkMessageService = async (req) => {
-  const { templateName, message = {} } = req.body;
+  const { templateName, message = {} ,imageId} = req.body;
+  console.log("imgageId", imageId);
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
   const fileName = req.file?.originalname || "manual_upload.xlsx";
-
-  console.log("message:", message);
   if (!templateName || !req.file) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -396,7 +395,7 @@ const sendBulkMessageService = async (req) => {
               parameters: [
                 {
                   type: "image",
-                  image: { link: imageLink },
+                  image: { id: imageLink },
                 },
               ],
             });

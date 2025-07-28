@@ -24,12 +24,12 @@ router.route('/')
     protect,
     authorizeRoles('user'),
     validate(validateCreateProject, 'body'),
-    responseHandler(projectController.createProject)
+    responseHandler(projectController.createProjectController)
   )
   .get(
     protect,
     authorizeRoles('user'),
-    responseHandler(projectController.getAllProjects)
+    responseHandler(projectController.getAllProjectsController)
   );
 
 // Get Project by ID (dashboard view)
@@ -38,7 +38,7 @@ router.get(
   protect,
   authorizeRoles('user'),
   validate(validateProjectId, 'params'),
-  responseHandler(projectController.getProjectById)
+  responseHandler(projectController.getProjectByIdController)
 );
 
 // Update & Delete Project by ID

@@ -14,13 +14,14 @@ const {
   updateUserProfileSchema,
   getUserProfileSchema
 } = require('../validations/userValidation'); 
-const { responseHandler } = require('../middleware/responseHandler');
+const {responseHandler} = require('../middleware/responseHandler');
 
 const router = express.Router();
 
-router.post('/register',validate(registerSchema), responseHandler(userController.registerController));
-router.post("/verifyOtp",validate(verifyOtpSchema), responseHandler(userController.verifyOtpController));
-router.post('/login',validate(loginSchema), userController.authUser);
+router.post('/register', responseHandler(userController.registerController));
+router.post("/verifyOtp", responseHandler(userController.verifyOtpController));
+router.post('/login', userController.authUser);
+router.post('/logout', protect, userController.logoutUser);
 router.get('/profile', protect, userController.getUserProfile);
 router.put('/profile', protect,validate(updateUserProfileSchema), userController.updateUserProfile);
 router.get('/', protect, authorizeRoles('tenant_admin', 'super_admin'), userController.getAllUsersForTenant);

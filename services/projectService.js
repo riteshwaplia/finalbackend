@@ -1,4 +1,4 @@
-const Project = require('../models/Project'); // Corrected import from 'project' to 'Project'
+const Project = require('../models/project'); // Corrected import from 'project' to 'Project'
 const BusinessProfile = require('../models/BusinessProfile');
 const { statusCode, resMessage } = require('../config/constants');
 const axios = require('axios'); // Import axios for Meta API calls

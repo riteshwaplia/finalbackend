@@ -86,7 +86,7 @@ exports.register = async (req) => {
                 username: user.username,
                 email: user.email,
                 role: user.role,
-                token: generateToken(user._id)
+                // token: generateToken(user._id)
             },
             statusCode: statusCode.CREATED
         };
