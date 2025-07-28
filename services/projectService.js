@@ -1,15 +1,12 @@
-const Project = require('../models/project'); // Corrected import from 'project' to 'Project'
+const Project = require('../models/project');
 const BusinessProfile = require('../models/BusinessProfile');
 const { statusCode, resMessage } = require('../config/constants');
-const axios = require('axios'); // Import axios for Meta API calls
+const axios = require('axios');
 
-// @desc    Create a new project
-// @access  Private (Tenant Admin or regular User)
 exports.createProject = async (req) => {
     const {
         name, description, businessProfileId, isWhatsappVerified, assistantName,
         metaPhoneNumberID, whatsappNumber, activePlan, planDuration,
-        // NEW WhatsApp Business Profile fields
         about, address, email, websites, vertical, profilePictureUrl
     } = req.body;
     const tenantId = req.tenant._id;
@@ -54,7 +51,7 @@ exports.createProject = async (req) => {
             whatsappNumber,
             activePlan,
             planDuration,
-            // NEW WhatsApp Business Profile fields
+
             about,
             address,
             email,
@@ -79,14 +76,11 @@ exports.createProject = async (req) => {
     }
 };
 
-// @desc    Get all projects for the authenticated user within their tenant
-// @access  Private
 exports.getAllProjects = async (req) => {
     const tenantId = req.tenant._id;
     const userId = req.user._id;
 
     try {
-        // Populate businessProfileId to get its name and metaBusinessId
         const projects = await Project.find({ tenantId, userId }).populate('businessProfileId', 'name metaBusinessId');
         if (projects.length === 0) {
             return {
@@ -99,7 +93,7 @@ exports.getAllProjects = async (req) => {
         return {
             status: statusCode.OK,
             success: true,
-            message: resMessage.Projects_fetched_successfully, // Corrected message constant
+            message: resMessage.Projects_fetched_successfully,
             data: projects
         };
     } catch (error) {
@@ -112,15 +106,12 @@ exports.getAllProjects = async (req) => {
     }
 };
 
-// @desc    Get a single project by ID
-// @access  Private
 exports.getProjectById = async (req) => {
     const projectId = req.params.id;
     const tenantId = req.tenant._id;
     const userId = req.user._id;
 
     try {
-        // Populate businessProfileId to get its name and metaBusinessId
         const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate('businessProfileId', 'name metaBusinessId');
 
         if (!project) {
@@ -133,7 +124,7 @@ exports.getProjectById = async (req) => {
         return {
             status: statusCode.OK,
             success: true,
-            message: resMessage.Project_fetched_successfully, // Corrected message constant
+            message: resMessage.Project_fetched_successfully,
             data: project
         };
     } catch (error) {
@@ -149,16 +140,13 @@ exports.getProjectById = async (req) => {
     }
 };
 
-// @desc    Update a project
-// @access  Private
 exports.updateProject = async (req) => {
-    const projectId = req.params.projectId; // Assuming projectId from params
+    const projectId = req.params.projectId;
     const tenantId = req.tenant._id;
     const userId = req.user._id;
     const {
         name, description, businessProfileId, isWhatsappVerified, assistantName,
         metaPhoneNumberID, whatsappNumber, activePlan, planDuration,
-        // NEW WhatsApp Business Profile fields
         about, address, email, websites, vertical, profilePictureUrl
     } = req.body;
 
@@ -172,7 +160,6 @@ exports.updateProject = async (req) => {
             };
         }
 
-        // Handle change of businessProfileId
         if (businessProfileId && businessProfileId.toString() !== project.businessProfileId.toString()) {
             const newBusinessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
             if (!newBusinessProfile) {
@@ -185,7 +172,6 @@ exports.updateProject = async (req) => {
             project.businessProfileId = businessProfileId;
         }
 
-        // Handle name conflict if name is being updated
         if (name && name !== project.name) {
             const nameConflict = await Project.findOne({ name, tenantId, userId, businessProfileId: project.businessProfileId, _id: { $ne: projectId } });
             if (nameConflict) {
@@ -197,7 +183,6 @@ exports.updateProject = async (req) => {
             }
         }
 
-        // Update project fields
         project.name = name !== undefined ? name : project.name;
         project.description = description !== undefined ? description : project.description;
         project.isWhatsappVerified = isWhatsappVerified !== undefined ? isWhatsappVerified : project.isWhatsappVerified;
@@ -207,7 +192,6 @@ exports.updateProject = async (req) => {
         project.activePlan = activePlan !== undefined ? activePlan : project.activePlan;
         project.planDuration = planDuration !== undefined ? planDuration : project.planDuration;
 
-        // NEW: Update WhatsApp Business Profile fields
         project.about = about !== undefined ? about : project.about;
         project.address = address !== undefined ? address : project.address;
         project.email = email !== undefined ? email : project.email;
@@ -238,10 +222,8 @@ exports.updateProject = async (req) => {
     }
 };
 
-// @desc    Delete a project
-// @access  Private
 exports.deleteProject = async (req) => {
-    const projectId = req.params.projectId; // Assuming projectId from params
+    const projectId = req.params.projectId;
     const tenantId = req.tenant._id;
     const userId = req.user._id;
 
@@ -275,16 +257,6 @@ exports.deleteProject = async (req) => {
     }
 };
 
-/**
- * @desc    Updates the WhatsApp Business Profile details on Meta's API for a specific phone number.
- * This function fetches necessary credentials from the linked BusinessProfile.
- * @param {Object} options - Options for updating the profile.
- * @param {string} options.projectId - The ID of the project whose phone number's profile is being updated.
- * @param {string} options.userId - The ID of the authenticated user.
- * @param {string} options.tenantId - The ID of the tenant.
- * @param {Object} profileData - The profile data to send to Meta (about, address, email, websites, vertical, profile_picture_handle).
- * @returns {Object} Success status and Meta API response data.
- */
 exports.updateWhatsappBusinessProfileOnMeta = async ({ projectId, userId, tenantId, profileData }) => {
     if (!projectId || !userId || !tenantId || !profileData) {
         return {
@@ -331,7 +303,6 @@ console.log("project to update WhatsApp Business Profile:", project);
 console.log("Meta API credentials:", { metaAccessToken, facebookUrl, graphVersion });
         const url = `${facebookUrl}/${graphVersion}/${metaPhoneNumberID}/whatsapp_business_profile`;
 console.log("Meta API URL:", url);
-        // Construct the payload for Meta API
         const metaPayload = {
             messaging_product: "whatsapp",
             ...profileData
@@ -346,14 +317,9 @@ console.log("Meta API URL:", url);
             }
         });
 
-        // Meta API returns { success: true } on success for this endpoint
         if (response.data.success) {
-            // Optionally, update the Project model with the new profile data if Meta confirms success
-            // This is important to keep your DB in sync with Meta.
-            // Note: Meta's response for this endpoint is just { success: true }, it doesn't return the full profile.
-            // So, we update based on what we sent.
-            Object.assign(project, profileData); // Apply the updates to the project document
-            await project.save(); // Save the updated project document
+            Object.assign(project, profileData);
+            await project.save();
 
             return {
                 status: statusCode.OK,
