@@ -676,3 +676,9 @@
 [28/7/2025, 18:18:56] token "6887138c5ce662ddebdba1f4" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
 [28/7/2025, 18:20:07] Server running on port 5001
 [28/7/2025, 18:20:08] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 18:22:01] Server running on port 5001
+[28/7/2025, 18:22:02] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 18:22:08] Server running on port 5001
+[28/7/2025, 18:22:09] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 18:22:40] Server running on port 5001
+[28/7/2025, 18:22:40] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
