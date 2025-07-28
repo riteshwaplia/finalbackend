@@ -294,7 +294,8 @@ exports.getPhoneNumbersFromMeta = async ({
 
         return {
             success: false,
-            status: error.response?.status || statusCode.INTERNAL_SERVER_ERROR,
+            // status: error.response?.status || statusCode.INTERNAL_SERVER_ERROR,
+            status:  statusCode.META_ERROR,
             message: userFriendlyMessage,
             metaError,
         };

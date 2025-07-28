@@ -5,24 +5,23 @@ const objectId = Joi.string().pattern(/^[0-9a-fA-F] {24}$/).message("Invalid Obj
 
 // Create Group
 exports.createGroupSchema = Joi.object({
-  body: Joi.object({
-    title: Joi.string().required().messages({
-      'string.base': `"title" must be a string`,
-      'string.empty': `"title" cannot be empty`,
-      'any.required': `"title" is required`
-    }),
-    description: Joi.string().allow('').optional().messages({
-      'string.base': `"description" must be a string`
-    })
+  title: Joi.string().required().messages({
+    'string.base': `"title" must be a string`,
+    'string.empty': `"title" cannot be empty`,
+    'any.required': `"title" is required`
+  }),
+  description: Joi.string().allow('').optional().messages({
+    'string.base': `"description" must be a string`
   }),
   params: Joi.object({
-    projectId: objectId.required().messages({
+    projectId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required().messages({
       'any.required': `"projectId" is required`,
       'string.pattern.base': `"projectId" must be a valid ObjectId`
     })
   }),
   query: Joi.object()
 });
+
 
 // Update Group
 exports.updateGroupSchema = Joi.object({

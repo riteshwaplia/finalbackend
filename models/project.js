@@ -47,7 +47,7 @@ const ProjectSchema = new mongoose.Schema({
         default: ''
     },
     planDuration: { // Numerical value for plan duration
-        type: Number,
+        type: String,
         default: 0
     },
     // NEW FIELDS for WhatsApp Business Profile details (per phone number)

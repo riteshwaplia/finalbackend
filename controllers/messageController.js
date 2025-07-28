@@ -18,8 +18,12 @@ exports.getBulkSendJobDetailsService = async (req) => {
 };
 
 exports.getAllBulkSendJobsService = async (req) => {
-    return await getAllBulkSendJobsService(req);
+    return await messageService.getAllBulkSendJobsService(req);
 };
 exports.BulkSendGroupController = async (req) => {
     return await messageService.BulkSendGroupService(req);
+};
+
+exports.downloadMediaController = async (req) => {
+    return await messageService.downloadMedia(req);
 };

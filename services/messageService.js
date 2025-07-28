@@ -6,9 +6,11 @@ const fs = require("fs");
 const Message = require("../models/Message");
 const Template = require("../models/Template");
 const Project = require("../models/project");
+const Contact = require("../models/Contact");
 const BulkSendJob = require("../models/BulkSendJob"); 
 const { statusCode, resMessage } = require("../config/constants");
 const { chunkArray } = require("../utils/helpers");
+const { v4: uuidv4 } = require("uuid");
 
 const BATCH_SIZE = 20; 
 
@@ -223,7 +225,8 @@ const sendMessageService = async (req) => {
 };
 
 const sendBulkMessageService = async (req) => {
-  const { templateName, message = {} } = req.body;
+  const { templateName, message = {} ,imageId} = req.body;
+  console.log("imgageId", imageId);
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
@@ -384,6 +387,7 @@ const sendBulkMessageService = async (req) => {
 
       templateComponents.forEach((component) => {
         if (component.type === "HEADER" && component.format === "IMAGE") {
+          console.log("Header component found:", component);
           const imageLink = component.example?.header_handle?.[0];
           if (imageLink) {
             components.push({
@@ -391,7 +395,7 @@ const sendBulkMessageService = async (req) => {
               parameters: [
                 {
                   type: "image",
-                  image: { link: imageLink },
+                  image: { id: imageLink },
                 },
               ],
             });
@@ -502,6 +506,257 @@ const sendBulkMessageService = async (req) => {
   };
 };
 
+// @desc    Send bulk messages from an group
+// @access  Private
+
+const BulkSendGroupService = async (req) => {
+  const { templateName, message = {}, groupId, contactfields = [] } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+
+  if (!templateName || !groupId) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Missing_required_fields + " (templateName and groupId are required for group bulk send).",
+    };
+  }
+
+  const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+  console.log("📁 Project loaded:", project ? project._id : null);
+ 
+  if (!project || !project.isWhatsappVerified || !project.metaPhoneNumberID) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Project_whatsapp_number_not_configured,
+    };
+  }
+  const phoneNumberId = project.metaPhoneNumberID;
+  const businessProfile = project.businessProfileId;
+
+  if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Meta_API_credentials_not_configured,
+    };
+  }
+
+  const accessToken = businessProfile.metaAccessToken;
+  const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
+  const graphVersion = businessProfile.graphVersion || "v16.0";
+
+  const contacts = await Contact.find({
+    groupIds: groupId,
+    userId,
+    tenantId,
+    projectId,
+    isBlocked: false,
+  });
+
+  console.log("👥 Contacts fetched:", contacts.length);
+  if (!contacts.length) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.No_valid_contacts_for_bulk_send + " (No contacts found for the group).",
+    };
+  }
+
+  let parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
+  let templateComponents = parsedMessage.components;
+  console.log("🧩 Initial template components:", templateComponents);
+  let templateLanguageCode = parsedMessage.language?.code || "en_US";
+
+  if (!templateComponents || templateComponents.length === 0) {
+    const localTemplate = await Template.findOne({
+      tenantId,
+      userId,
+      businessProfileId: project.businessProfileId,
+      name: templateName,
+      metaStatus: "APPROVED",
+    });
+    if (localTemplate) {
+      templateComponents = localTemplate.components;
+      templateLanguageCode = localTemplate.language;
+    } else {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `Template '${templateName}' not found or not approved.`,
+      };
+    }
+  }
+
+  const bulkSendJob = await BulkSendJob.create({
+    tenantId,
+    userId,
+    projectId,
+    templateName,
+    groupId,
+    totalContacts: contacts.length,
+    status: "in_progress",
+    startTime: new Date(),
+    templateDetails: {
+      components: templateComponents,
+      language: templateLanguageCode,
+    },
+  });
+
+  const baseMessage = {
+    name: templateName,
+    language: { code: templateLanguageCode },
+  };
+
+  const contactBatches = chunkArray(contacts, BATCH_SIZE);
+
+  let totalSent = 0;
+  let totalFailed = 0;
+  const errorsSummary = [];
+
+  for (const [batchIndex, batch] of contactBatches.entries()) {
+    const sendPromises = batch.map(async (contact, i) => {
+      const mobileNumber = String(contact.mobileNumber || "");
+      const to = String(contact.mobileNumber || "");
+
+      if (!mobileNumber || mobileNumber.length < 5) {
+        totalFailed++;
+        errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format." });
+        return;
+      }
+
+      if (!to.startsWith("91") && process.env.NODE_ENV !== "production") {
+        totalFailed++;
+        errorsSummary.push({ to, error: "Not in test number list (sandbox)." });
+        return;
+      }
+
+      const components = [];
+
+      // HEADER (text or image)
+      const headerTemplate = templateComponents.find(c => c.type === "HEADER");
+      if (headerTemplate) {
+        if (headerTemplate.format === "IMAGE") {
+          const imageLink = headerTemplate.example?.header_handle?.[0];
+          if (imageLink) {
+            components.push({
+              type: "HEADER",
+              parameters: [{ type: "image", image: { link: imageLink } }],
+            });
+          }
+        } else if (headerTemplate.format === "TEXT") {
+          const expectedHeaderParams = headerTemplate.text?.match(/{{\d+}}/g)?.length || 0;
+          if (expectedHeaderParams > 0) {
+            const headerKey = contactfields[0] || "First name";
+            const headerValue = contact.customFields?.[headerKey] || "User";
+            components.push({
+              type: "HEADER",
+              parameters: [{ type: "text", text: headerValue }],
+            });
+          } 
+        }
+      }
+
+      // BODY
+      const bodyTemplate = templateComponents.find(c => c.type === "BODY");
+      const expectedBodyParams = bodyTemplate?.text?.match(/{{\d+}}/g)?.length || 0;
+      if (bodyTemplate && expectedBodyParams > 0) {
+        const bodyParams = [];
+ 
+        for (let i = 1; i <= expectedBodyParams; i++) {
+          const key = contactfields[i] || `field${i}`;
+          const value = contact.customFields?.[key] || "...";
+          bodyParams.push({ type: "text", text: value });
+        }
+ 
+        components.push({
+          type: "BODY",
+          parameters: bodyParams,
+        });
+      } else if (bodyTemplate && expectedBodyParams === 0) {
+      }
+
+      const templateMessage = {
+        name: baseMessage.name,
+        language: baseMessage.language,
+        components,
+      };
+
+      try {
+        const sendResult = await sendWhatsAppMessage({
+          to,
+          type: "template",
+          message: templateMessage,
+          phoneNumberId,
+          accessToken,
+          facebookUrl,
+          graphVersion,
+        });
+
+        const messageLog = new Message({
+          to,
+          type: "template",
+          message: templateMessage,
+          status: sendResult.success ? "sent" : "failed",
+          name: contact.name || "",
+          metaResponse: sendResult.data,
+          userId,
+          tenantId,
+          projectId,
+          metaPhoneNumberID: phoneNumberId,
+          direction: "outbound",
+          bulkSendJobId: bulkSendJob._id,
+          templateName,
+          templateLanguage: templateLanguageCode,
+        });
+
+        if (!sendResult.success && sendResult.error) {
+          messageLog.errorDetails = sendResult.error;
+          totalFailed++;
+          errorsSummary.push({ to, error: sendResult.error });
+        } else {
+          totalSent++;
+        }
+ 
+        await messageLog.save();
+      } catch (err) {
+        totalFailed++;
+        errorsSummary.push({ to, error: err.message || "Unhandled exception" });
+      }
+    });
+
+    await Promise.allSettled(sendPromises);
+  }
+
+  bulkSendJob.totalSent = totalSent;
+  bulkSendJob.totalFailed = totalFailed;
+  bulkSendJob.errorsSummary = errorsSummary;
+  bulkSendJob.endTime = new Date();
+  bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
+  await bulkSendJob.save();
+
+  return {
+    status: statusCode.OK,
+    success: true,
+    message: totalFailed > 0
+      ? resMessage.Bulk_send_completed_with_errors
+      : resMessage.Bulk_messages_sent_successfully,
+    data: {
+      bulkSendJobId: bulkSendJob._id,
+      totalSent,
+      totalFailed,
+      errorsSummary,
+    },
+  };
+};
+
+
+/**
+ * @desc    Get details of a specific bulk send job, including individual message statuses.
+ * @access  Private
+ */
 const getBulkSendJobDetailsService = async (req) => {
   const { bulkSendJobId } = req.params;
   const userId = req.user._id;
@@ -663,8 +918,6 @@ const uploadMedia = async (req) => {
   }
 };
 
-
-
 const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, message, FACEBOOK_URL }) => {
   const PHONE_NUMBER_ID = phoneNumberId;
   const ACCESS_TOKEN = accessToken;
@@ -752,11 +1005,109 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
   }
 };
 
+const downloadMedia = async (req) => {
+  const { projectId } = req.params;
+  const { imageId } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+
+  if (!imageId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Image ID is required",
+    };
+  }
+
+  try {
+    const project = await Project.findOne({
+      _id: projectId,
+      userId,
+      tenantId,
+    }).populate("businessProfileId");
+
+    if (
+      !project ||
+      !project.metaPhoneNumberID ||
+      !project.businessProfileId?.metaAccessToken
+    ) {
+      return {
+        status: 400,
+        success: false,
+        message: "Invalid project configuration",
+      };
+    }
+
+    // 1. Get media URL from Meta
+    const metadataResponse = await axios.get(
+      `https://graph.facebook.com/v19.0/${imageId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+        },
+      }
+    );
+
+    const mediaUrl = metadataResponse.data.url;
+
+    // 2. Download media binary
+    const mediaResponse = await axios.get(mediaUrl, {
+      headers: {
+        Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+      },
+      responseType: "arraybuffer",
+    });
+
+    const contentType = mediaResponse.headers["content-type"];
+    const extension = contentType.split("/")[1] || "jpg";
+    const fileName = `meta-image-${uuidv4()}.${extension}`;
+    const tempDir = path.join(__dirname, "../temp");
+
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir);
+    }
+
+    const filePath = path.join(tempDir, fileName);
+
+    fs.writeFileSync(filePath, mediaResponse.data);
+
+    const fileStream = fs.createReadStream(filePath);
+
+    // Automatically delete file when stream closes
+    fileStream.on("close", async () => {
+      try {
+        await fsPromises.unlink(filePath);
+        console.log("🗑️ Temp file deleted:", filePath);
+      } catch (err) {
+        console.error("❌ Error deleting file:", err.message);
+      }
+    });
+
+    return {
+      status: 200,
+      success: true,
+      message: "Media downloaded successfully",
+      stream: fileStream,
+      mimeType: contentType,
+      fileName,
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      success: false,
+      message: error.response?.data?.error?.message || "Download failed",
+      error: error.response?.data || error.message,
+    };
+  }
+};
+
 module.exports = {
   sendMessageService,
   sendWhatsAppMessages,
+  uploadMedia,
+  BulkSendGroupService,
   sendBulkMessageService,
   getAllBulkSendJobsService,
   getBulkSendJobDetailsService,
-  uploadMedia
+  downloadMedia
 }

@@ -107,7 +107,7 @@ router.put("/removeBlackListContact/:contactId", protect, responseHandler(contac
 router.put("/bulkContactUpdate/delete", protect, responseHandler(contactController.removeBulkController)); // Note: Original was /bulkContactUpdate
 router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
 router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
-
+router.get("/fields", protect, responseHandler(contactController.fieldListController));
 router.put("/contact-add-customField", protect, responseHandler(contactController.addCustomFieldToContactsController)); 
 
 module.exports = router;

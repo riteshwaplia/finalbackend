@@ -37,6 +37,7 @@ const BusinessProfileSchema = new mongoose.Schema({
         type: String,
         required: true,
         trim: true
+
     },
     isDefault: {
         type: Boolean,
@@ -52,17 +53,17 @@ const BusinessProfileSchema = new mongoose.Schema({
     }
 });
 
-// Compound index to ensure unique combination of businessId per user per tenant
+// ✅ Enforce unique metaBusinessId **per tenant**
 BusinessProfileSchema.index(
-    { metaBusinessId: 1, userId: 1, tenantId: 1 }, 
-    { unique: true, name: 'unique_business_per_user_tenant' }
+    { tenantId: 1, metaBusinessId: 1 },
+    { unique: true, name: 'unique_metaBusiness_per_tenant' }
 );
 
-// Index for faster querying of user's business profiles
+// Optional: For user/tenant lookup speed
 BusinessProfileSchema.index({ userId: 1, tenantId: 1 });
 
-// Update timestamp on save
-BusinessProfileSchema.pre('save', function(next) {
+// Auto-update timestamps
+BusinessProfileSchema.pre('save', function (next) {
     this.updatedAt = Date.now();
     next();
 });

@@ -7,7 +7,8 @@ const statusCode = {
     NOT_FOUND: 404,
     CONFLICT: 409,
     INTERNAL_SERVER_ERROR: 500,
-    SUCCESS: 200
+    SUCCESS: 200,
+    META_ERROR:502
 };
 
 const resMessage = {
@@ -17,7 +18,7 @@ const resMessage = {
 
     Project_already_exists: "Project with this name already exists.",
     Project_created_successfully: "Project created successfully.",
-    Projects_fetch_successfully: "Projects fetched successfully.",
+    Projects_fetched_successfully: "Projects fetched successfully.",
     No_data_found: "No data found.",
     Unauthorized_access: "Unauthorized access.",
     Forbidden_access: "Forbidden access.",

@@ -35,10 +35,14 @@ const verifyOtpSchema = Joi.object({
     'string.email': 'Email must be a valid email address',
     'any.required': 'Email is required'
   }),
-  otp: Joi.string().length(6).pattern(/^[0-9]+$/).required().messages({
-    'string.length': 'OTP must be 6 digits',
-    'string.pattern.base': 'OTP must contain only numbers',
-    'any.required': 'OTP is required'
+  otp: Joi.string()
+  .length(6)
+  .pattern(/^[a-zA-Z0-9]+$/)
+  .required()
+  .messages({
+    'string.length': 'OTP must be exactly 6 characters',
+    'string.pattern.base': 'OTP must be alphanumeric (a-z, A-Z, 0-9)',
+    'any.required': 'OTP is required',
   })
 });
 
@@ -59,7 +63,7 @@ const loginSchema = Joi.object({
 
 const businessProfileSchema = Joi.object({
   name: Joi.string()
-    .pattern(/^[a-zA-Z0-9 ]+$/)
+    .pattern(/^[a-zA-Z0-9_]+$/)
     .required()
     .messages({
       "string.pattern.base": "Business name should not contain special characters.",
@@ -230,6 +234,7 @@ const getUserProfileSchema = Joi.object({
 module.exports = {
   registerSchema,
   loginSchema,
+  verifyOtpSchema,
   businessProfileSchema,
   getAllBusinessProfilesSchema,
   updateBusinessProfileSchema,

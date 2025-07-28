@@ -74,7 +74,7 @@ const updateProjectSchema = Joi.object({
   }),
 
   activePlan: Joi.string().allow(null, ""),
-  planDuration: Joi.string().allow(null, ""),
+  planDuration: Joi.string().allow(null, "").optional(),
 
   updatedBy: Joi.string().optional()
 });
@@ -100,7 +100,7 @@ const validateWithSchema = (schema, data) => {
 };
 
 module.exports = {
-  validateCreateProject: (data) => validateWithSchema(createProjectSchema, data),
-  validateUpdateProject: (data) => validateWithSchema(updateProjectSchema, data),
-  validateProjectId: (params) => validateWithSchema(idParamSchema, params)
+  validateCreateProject: createProjectSchema,
+  validateUpdateProject: updateProjectSchema,
+  validateProjectId: idParamSchema
 };
