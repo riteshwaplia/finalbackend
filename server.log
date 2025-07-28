@@ -250,3 +250,181 @@
 [27/7/2025, 14:56:08] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
 [27/7/2025, 15:06:32] Server running on port 5001
 [27/7/2025, 15:06:33] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 15:50:56] Server running on port 5001
+[28/7/2025, 15:50:57] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 15:52:08] Server running on port 5001
+[28/7/2025, 15:52:08] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 15:52:19] Server running on port 5001
+[28/7/2025, 15:52:20] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 15:54:11] Server running on port 5001
+[28/7/2025, 15:54:12] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 15:54:18] Validating $ {"_original":{"projectId":"688737673803284e7d52e8ea","contactId":"fields"},"details":[{"message":"Invalid ObjectId","path":["contactId"],"type":"custom","context":{"label":"contactId","value":"fields","key":"contactId"}},{"message":"\"projectId\" is not allowed","path":["projectId"],"type":"object.unknown","context":{"child":"projectId","label":"projectId","value":"688737673803284e7d52e8ea","key":"projectId"}}]}
+[28/7/2025, 15:54:18] Validating $ {"_original":{"projectId":"688737673803284e7d52e8ea","contactId":"contactList"},"details":[{"message":"Invalid ObjectId","path":["contactId"],"type":"custom","context":{"label":"contactId","value":"contactList","key":"contactId"}},{"message":"\"projectId\" is not allowed","path":["projectId"],"type":"object.unknown","context":{"child":"projectId","label":"projectId","value":"688737673803284e7d52e8ea","key":"projectId"}}]}
+[28/7/2025, 15:54:20] Fetched 1 templates for page 1 of 1
+[28/7/2025, 15:54:59] Server running on port 5001
+[28/7/2025, 15:55:00] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 15:55:07] Server running on port 5001
+[28/7/2025, 15:55:08] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 15:55:45] Server running on port 5001
+[28/7/2025, 15:55:45] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 15:56:27] Server running on port 5001
+[28/7/2025, 15:56:27] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 15:57:39] Server running on port 5001
+[28/7/2025, 15:57:40] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 15:57:50] Validating $ {"_original":{"projectId":"688737673803284e7d52e8ea","contactId":"contactList"},"details":[{"message":"Invalid ObjectId","path":["contactId"],"type":"custom","context":{"label":"contactId","value":"contactList","key":"contactId"}},{"message":"\"projectId\" is not allowed","path":["projectId"],"type":"object.unknown","context":{"child":"projectId","label":"projectId","value":"688737673803284e7d52e8ea","key":"projectId"}}]}
+[28/7/2025, 15:57:50] Validating $ {"_original":{"projectId":"688737673803284e7d52e8ea","contactId":"fields"},"details":[{"message":"Invalid ObjectId","path":["contactId"],"type":"custom","context":{"label":"contactId","value":"fields","key":"contactId"}},{"message":"\"projectId\" is not allowed","path":["projectId"],"type":"object.unknown","context":{"child":"projectId","label":"projectId","value":"688737673803284e7d52e8ea","key":"projectId"}}]}
+[28/7/2025, 15:58:03] Fetched 1 templates for page 1 of 1
+[28/7/2025, 15:58:05] Fetched 1 templates for page 1 of 1
+[28/7/2025, 15:58:07] Fetched 1 templates for page 1 of 1
+[28/7/2025, 15:58:11] Validating $ {"_original":{"projectId":"688737673803284e7d52e8ea","contactId":"contactList"},"details":[{"message":"Invalid ObjectId","path":["contactId"],"type":"custom","context":{"label":"contactId","value":"contactList","key":"contactId"}},{"message":"\"projectId\" is not allowed","path":["projectId"],"type":"object.unknown","context":{"child":"projectId","label":"projectId","value":"688737673803284e7d52e8ea","key":"projectId"}}]}
+[28/7/2025, 15:58:11] Validating $ {"_original":{"projectId":"688737673803284e7d52e8ea","contactId":"fields"},"details":[{"message":"Invalid ObjectId","path":["contactId"],"type":"custom","context":{"label":"contactId","value":"fields","key":"contactId"}},{"message":"\"projectId\" is not allowed","path":["projectId"],"type":"object.unknown","context":{"child":"projectId","label":"projectId","value":"688737673803284e7d52e8ea","key":"projectId"}}]}
+[28/7/2025, 16:12:26] Server running on port 5001
+[28/7/2025, 16:12:27] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:13:16] Fetched 1 templates for page 1 of 1
+[28/7/2025, 16:13:56] Server running on port 5001
+[28/7/2025, 16:13:57] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:14:27] Server running on port 5001
+[28/7/2025, 16:14:28] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:15:53] Server running on port 5001
+[28/7/2025, 16:15:53] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:16:24] Server running on port 5001
+[28/7/2025, 16:16:25] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:16:46] Server running on port 5001
+[28/7/2025, 16:16:46] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:16:57] Server running on port 5001
+[28/7/2025, 16:16:58] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:17:24] Server running on port 5001
+[28/7/2025, 16:17:24] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:17:59] Server running on port 5001
+[28/7/2025, 16:18:00] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:18:46] Server running on port 5001
+[28/7/2025, 16:18:47] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:19:27] Server running on port 5001
+[28/7/2025, 16:19:28] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:20:01] Server running on port 5001
+[28/7/2025, 16:20:02] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:22:31] Server running on port 5001
+[28/7/2025, 16:22:32] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:22:44] Server running on port 5001
+[28/7/2025, 16:22:44] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:23:49] Server running on port 5001
+[28/7/2025, 16:23:50] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:24:20] Server running on port 5001
+[28/7/2025, 16:24:20] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:29:40] Server running on port 5001
+[28/7/2025, 16:29:42] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:29:56] Server running on port 5001
+[28/7/2025, 16:29:56] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:32:37] Server running on port 5001
+[28/7/2025, 16:32:38] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:32:42] Server running on port 5001
+[28/7/2025, 16:32:43] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:33:12] Server running on port 5001
+[28/7/2025, 16:33:13] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:33:48] Server running on port 5001
+[28/7/2025, 16:33:49] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:34:06] Server running on port 5001
+[28/7/2025, 16:34:06] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:35:26] Server running on port 5001
+[28/7/2025, 16:35:27] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:39:09] Server running on port 5001
+[28/7/2025, 16:39:10] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:39:21] Server running on port 5001
+[28/7/2025, 16:39:22] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:40:56] Server running on port 5001
+[28/7/2025, 16:40:56] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:41:06] Multi-archive request for group IDs: {"ids":["68873a1d3803284e7d52ea56"]}
+[28/7/2025, 16:42:03] Server running on port 5001
+[28/7/2025, 16:42:04] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:42:17] Server running on port 5001
+[28/7/2025, 16:42:18] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:42:28] Bulk delete request for contact IDs: ["68873a323803284e7d52ea68"]
+[28/7/2025, 16:43:23] Bulk delete request for contact IDs: ["68875b36a53e2abde3090bae","68875b4ea53e2abde3090bbc"]
+[28/7/2025, 16:44:49] Server running on port 5001
+[28/7/2025, 16:44:51] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:47:27] Server running on port 5001
+[28/7/2025, 16:47:28] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:48:39] Server running on port 5001
+[28/7/2025, 16:48:39] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:51:10] Multi-archive request for group IDs: {"ids":["68875d1abae7a15b7ea4709a"]}
+[28/7/2025, 16:52:21] Server running on port 5001
+[28/7/2025, 16:52:22] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:53:36] Server running on port 5001
+[28/7/2025, 16:53:36] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 16:53:38] Server running on port 5001
+[28/7/2025, 16:53:38] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:54:21] 📌 Group IDs for contact: []
+[28/7/2025, 16:56:06] Server running on port 5001
+[28/7/2025, 16:56:06] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:56:12] 📌 Existing groups found: []
+[28/7/2025, 16:56:12] 📌 Group IDs for contact: []
+[28/7/2025, 16:56:44] Server running on port 5001
+[28/7/2025, 16:56:45] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 16:57:34] 📌 Existing groups found: []
+[28/7/2025, 16:57:34] 📌 Group IDs for contact: []
+[28/7/2025, 16:58:02] Server running on port 5001
+[28/7/2025, 16:58:03] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 16:58:11] Bulk delete request for contact IDs: ["68875d952ad0749adc987639","68875d952ad0749adc98763a","68875d952ad0749adc98763b"]
+[28/7/2025, 16:58:57] 📌 Existing groups found: []
+[28/7/2025, 16:58:57] 📌 Group IDs for contact: []
+[28/7/2025, 17:00:43] Server running on port 5001
+[28/7/2025, 17:00:45] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[28/7/2025, 17:01:17] A user connected: 13m1VuqI5lyelG3XAAAC
+[28/7/2025, 17:01:17] A user connected: MpJ_wvCV8mp1mTm5AAAD
+[28/7/2025, 17:01:18] A user connected: AsqokCGxfECB3Tc_AAAF
+[28/7/2025, 17:01:25] User disconnected: 13m1VuqI5lyelG3XAAAC
+[28/7/2025, 17:01:25] User disconnected: AsqokCGxfECB3Tc_AAAF
+[28/7/2025, 17:01:25] User disconnected: MpJ_wvCV8mp1mTm5AAAD
+[28/7/2025, 17:01:25] A user connected: 0GaV3W4dmaTGVJQbAAAI
+[28/7/2025, 17:01:25] A user connected: lYFZm_FSUDrE2zTLAAAK
+[28/7/2025, 17:01:25] A user connected: UTaPFrOWelcT6ME6AAAL
+[28/7/2025, 17:01:26] User disconnected: 0GaV3W4dmaTGVJQbAAAI
+[28/7/2025, 17:01:26] User disconnected: UTaPFrOWelcT6ME6AAAL
+[28/7/2025, 17:01:26] User disconnected: lYFZm_FSUDrE2zTLAAAK
+[28/7/2025, 17:01:27] A user connected: FaXN2imGtzT-miXjAAAO
+[28/7/2025, 17:01:27] A user connected: HYSPXE4PGs6eISsVAAAP
+[28/7/2025, 17:01:27] A user connected: cHTP5AFglOu6mr-vAAAR
+[28/7/2025, 17:01:30] 📌 Resolving group names to IDs: ["gp1"]
+[28/7/2025, 17:01:30] 📌 Tenant ID: "68870730cf57d11281eb4363" User ID: "688726580f70016036a6af53"
+[28/7/2025, 17:01:30] 📌 Existing groups found: []
+[28/7/2025, 17:01:30] 📌 Group IDs for contact: []
+[28/7/2025, 17:01:45] User disconnected: HYSPXE4PGs6eISsVAAAP
+[28/7/2025, 17:01:45] User disconnected: FaXN2imGtzT-miXjAAAO
+[28/7/2025, 17:01:45] User disconnected: cHTP5AFglOu6mr-vAAAR
+[28/7/2025, 17:01:45] A user connected: L2Bq7IFjZMNj24VzAAAU
+[28/7/2025, 17:01:45] A user connected: X0GFEqThyviad9oNAAAV
+[28/7/2025, 17:01:45] A user connected: aEzx7FPvHjn27yFOAAAX
+[28/7/2025, 17:02:01] User disconnected: L2Bq7IFjZMNj24VzAAAU
+[28/7/2025, 17:02:01] User disconnected: aEzx7FPvHjn27yFOAAAX
+[28/7/2025, 17:02:01] User disconnected: X0GFEqThyviad9oNAAAV
+[28/7/2025, 17:02:01] A user connected: As2nhLoG_GZoP39OAAAa
+[28/7/2025, 17:02:01] A user connected: CyQCSLFESUkKVbj_AAAb
+[28/7/2025, 17:02:01] A user connected: UlZX__LgjcjWaJn4AAAd
+[28/7/2025, 17:02:11] A user connected: edSKjZaZ0PK71N4QAAAh
+[28/7/2025, 17:02:11] A user connected: UE0o478WTIl6zMrHAAAi
+[28/7/2025, 17:02:11] A user connected: bBfi688jfXyUSuMaAAAj
+[28/7/2025, 17:02:35] Server running on port 5001
+[28/7/2025, 17:02:36] A user connected: AjPtJYTXtTyAR3gAAAAC
+[28/7/2025, 17:02:36] A user connected: e2C90YS4bGhxAMVLAAAD
+[28/7/2025, 17:02:36] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 17:02:37] A user connected: rb1so7WB04KD1a5XAAAF
+[28/7/2025, 17:02:37] A user connected: oJZYLSUw6W-oq0OZAAAH
+[28/7/2025, 17:02:37] A user connected: 6ttStc6tWocgQRs3AAAJ
+[28/7/2025, 17:02:38] A user connected: Ucxl_KI8R6IVONMOAAAL
+[28/7/2025, 17:02:46] Bulk delete request for contact IDs: ["68875f92eb32e879a7bfe9b1","68875f92eb32e879a7bfe9b2","68875f92eb32e879a7bfe9b3"]
+[28/7/2025, 17:02:51] User disconnected: e2C90YS4bGhxAMVLAAAD
+[28/7/2025, 17:02:51] User disconnected: 6ttStc6tWocgQRs3AAAJ
+[28/7/2025, 17:02:51] User disconnected: rb1so7WB04KD1a5XAAAF
+[28/7/2025, 17:02:53] User disconnected: AjPtJYTXtTyAR3gAAAAC
+[28/7/2025, 17:02:53] User disconnected: Ucxl_KI8R6IVONMOAAAL
+[28/7/2025, 17:02:53] User disconnected: oJZYLSUw6W-oq0OZAAAH
+[28/7/2025, 17:03:13] 📌 Resolving group names to IDs: ["gp1"]
+[28/7/2025, 17:03:13] 📌 Tenant ID: "68870730cf57d11281eb4363" User ID: "688726580f70016036a6af53"
+[28/7/2025, 17:03:13] 📌 Existing groups found: [{"_id":"68875ae4044d713eaceb28f8","tenantId":"68870730cf57d11281eb4363","userId":"688726580f70016036a6af53","projectId":"688737673803284e7d52e8ea","title":"gp1","description":"dsc","isActive":true,"createdAt":"2025-07-28T11:11:32.054Z","updatedAt":"2025-07-28T11:11:32.058Z","__v":0}]
+[28/7/2025, 17:03:13] 📌 Group IDs for contact: ["68875ae4044d713eaceb28f8"]
+[28/7/2025, 17:03:51] Server running on port 5001
+[28/7/2025, 17:03:52] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[28/7/2025, 17:20:51] Fetched 1 templates for page 1 of 1
+[28/7/2025, 17:21:11] Bulk delete request for contact IDs: ["68876389df38856c520caf74"]
+[28/7/2025, 17:26:05] Server running on port 5001
+[28/7/2025, 17:26:06] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net

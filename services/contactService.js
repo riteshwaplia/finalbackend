@@ -221,8 +221,23 @@ exports.uploadContact = async (req) => {
         const filteredData = [];
         const errors = [];
  
-        // OPTIONAL: resolve group name → groupId here (mocked as same)
-        const groupIds = []; // Replace with actual DB lookup
+        let groupIds = [];
+        if (groupNames.length > 0) {
+            const existingGroups = await Group.find({
+                title: { $in: groupNames },
+                tenantId,
+                userId
+            });
+
+            groupIds = existingGroups.map(g => g._id);
+
+            const foundNames = existingGroups.map(g => g.name);
+            const missing = groupNames.filter(name => !foundNames.includes(name));
+            if (missing.length > 0) {
+                console.warn(`⚠️ Groups not found: ${missing.join(", ")}`);
+            }
+        }
+
         for (const [index, row] of normalizedData.entries()) {
             const newRow = {
                 tenantId,
@@ -327,7 +342,6 @@ exports.uploadContact = async (req) => {
     }
 };
  
-
 exports.contactList = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -336,7 +350,7 @@ exports.contactList = async (req) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
     const searchText = req.query.search || "";
-    const groupId = req.query.groupId; 
+    const groupId = req.query.groupId;
 
     try {
         const searchCondition = {
@@ -359,23 +373,20 @@ exports.contactList = async (req) => {
         }
 
         const [data, total] = await Promise.all([
-            Contact.find(searchCondition).sort({ name: 1 }).skip(skip).limit(limit).populate('groupIds', 'title'), // Populate group titles
+            Contact.find(searchCondition)
+                .sort({ name: 1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('groupIds', 'title'),
             Contact.countDocuments(searchCondition)
         ]);
-
-        if (!data || data.length === 0) {
-            return {
-                status: statusCode.OK,
-                success: true,
-                data: [],
-                message: resMessage.No_contacts_found
-            };
-        }
 
         return {
             status: statusCode.OK,
             success: true,
-            message: resMessage.Contacts_fetch_successfully,
+            message: data.length === 0
+                ? resMessage.No_contacts_found
+                : resMessage.Contacts_fetch_successfully,
             data,
             pagination: {
                 total,
@@ -465,40 +476,41 @@ exports.groupList = async (req) => {
     }
 };
 
-exports.contactById = async (req) => {
-    const userId = req.user._id;
-    const tenantId = req.tenant._id;
-    const projectId = req.params.projectId;
-    const contactId = req.params.contactId;
+// exports.contactById = async (req) => {
+//     const userId = req.user._id;
+//     const tenantId = req.tenant._id;
+//     const projectId = req.params.projectId;
+//     const contactId = req.params.contactId;
 
-    try {
-        const contact = await Contact.findOne({ _id: contactId, tenantId, userId, projectId }).populate('groupIds', 'title');
-        if (!contact) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.Contact_not_found
-            };
-        }
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Contacts_fetch_successfully,
-            data: contact
-        };
-    } catch (error) {
-        console.error("Error in contactById service:", error);
-        if (error.name === 'CastError') {
-            return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid contact ID." };
-        }
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: resMessage.Server_error,
-            error: error.message
-        };
-    }
-};
+//     try {
+//         const contact = await Contact.findOne({ _id: contactId, tenantId, userId, projectId }).populate('groupIds', 'title');
+//         if (!contact) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: resMessage.Contact_not_found
+//             };
+//         }
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Contacts_fetch_successfully,
+//             data: contact
+//         };
+//     } catch (error) {
+//         console.error("Error in contactById service:", error);
+//         if (error.name === 'CastError') {
+//             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid contact ID." };
+//         }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: resMessage.Server_error,
+//             error: error.message
+//         };
+//     }
+// };
+
 exports.updateContact = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
@@ -947,4 +959,66 @@ exports.addCustomFieldToContacts = async (req) => {
     success: true,
     message: `Custom field '${key}' added to all matching contacts.`,
   };
+};
+
+exports.fieldList = async (req) => {
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+ 
+  try {
+ 
+    const contacts = await Contact.find(
+      { tenantId, projectId },
+      {
+        name: 1,
+        email: 1,
+        mobileNumber: 1,
+        countryCode: 1,
+        customFields: 1,
+      }
+    );
+ 
+    // Default system fields mapping
+    const defaultFields = [
+      { key: "name", label: "Full Name", type: "text" },
+      { key: "email", label: "Email Address", type: "email" },
+      { key: "mobileNumber", label: "Phone Number", type: "tel" },
+      { key: "countryCode", label: "Country Code", type: "text" }
+    ];
+ 
+    // Use a map to avoid duplicate custom fields
+    const customFieldMap = new Map();
+ 
+    contacts.forEach((contact, index) => {
+      const customFields = contact.customFields || {};
+ 
+      Object.entries(customFields).forEach(([key, value]) => {
+        if (value && typeof value === 'object' && value.type && !customFieldMap.has(key)) {
+          customFieldMap.set(key, {
+            label: key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase()),
+            type: value.type
+          });
+        }
+      });
+    });
+ 
+    const finalFields = [
+      ...defaultFields.map(f => ({ label: f.label, type: f.type })),
+      ...Array.from(customFieldMap.values())
+    ];
+ 
+    return {
+      status: 200,
+      success: true,
+      message: "Field list fetched successfully",
+      data: finalFields
+    };
+  } catch (error) {
+    return {
+      status: 500,
+      success: false,
+      message: "Failed to fetch field list",
+      error: error.message
+    };
+  }
 };

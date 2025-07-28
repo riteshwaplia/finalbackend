@@ -4,11 +4,11 @@ const tenantResolver = async (req, res, next) => {
   // In production, domain should come from headers
   // const domain = req.headers.origin;
  
-  const domain = "https://iridescent-gumption-58e07e.netlify.app/";
+  const domain = ["http://localhost:5173", "https://iridescent-gumption-58e07e.netlify.app/"];
 
 
   try {
-    const tenant = await Tenant.findOne({ domain });
+    const tenant = await Tenant.findOne({ domain: { $in: domain } });
     
     if (!tenant) {
       return res.status(404).json({ message: 'Tenant not found for this domain.' });
