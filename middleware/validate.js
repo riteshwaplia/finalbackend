@@ -1,6 +1,7 @@
-module.exports = (Schema, options = { abortEarly: false }) => {
+module.exports = (Schema, location = 'body', options = { abortEarly: false }) => {
   return (req, res, next) => {
-    const { error } = Schema.validate(req.body, options);
+    const data = req[location]; // Dynamically select the correct data based on the location parameter
+    const { error } = Schema.validate(data, options);
 
     if (error) {
       const errors = options.abortEarly

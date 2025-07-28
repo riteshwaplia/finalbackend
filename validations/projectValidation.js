@@ -81,9 +81,10 @@ const updateProjectSchema = Joi.object({
 
 // ===== GET, DELETE, UPDATE :id Schema =====
 const idParamSchema = Joi.object({
-  id: Joi.string().required().messages({
+  id: Joi.string().required().pattern(/^[0-9a-fA-F]{24}$/).messages({
     "string.empty": "Project ID is required in route.",
-    "any.required": "Project ID is required."
+    "any.required": "Project ID is required.",
+    "string.pattern.base": "Project ID must be a valid ObjectId."
   })
 });
 
@@ -102,5 +103,5 @@ const validateWithSchema = (schema, data) => {
 module.exports = {
   validateCreateProject: createProjectSchema,
   validateUpdateProject: updateProjectSchema,
-  validateProjectId: idParamSchema
+  validateProjectId: idParamSchema // <-- This will now validate req.params.id
 };
