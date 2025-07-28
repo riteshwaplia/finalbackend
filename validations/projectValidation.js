@@ -74,7 +74,7 @@ const updateProjectSchema = Joi.object({
   }),
 
   activePlan: Joi.string().allow(null, ""),
-  planDuration: Joi.number().allow(null, ""),
+  planDuration: Joi.string().allow(null, "").optional(),
 
   updatedBy: Joi.string().optional()
 });
