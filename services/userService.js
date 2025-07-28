@@ -302,54 +302,60 @@ exports.updatePasswordWithOtp = async (req) => {
 };
 
 exports.updateBusinessProfile = async (req) => {
-    const businessProfileId = req.params.id;
-    const userId = req.user._id;
-    const tenantId = req.tenant._id;
-    const { name, businessAddress, metaAccessToken, metaAppId } = req.body;
-    try {
-      const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
-  
-      if (!businessProfile) {
-        return {
-          status: statusCode.NOT_FOUND,
-          success: false,
-          message: resMessage.Business_profile_not_found
-        };
-      }
-  
-      if (name && name !== businessProfile.name) {
-        const conflict = await BusinessProfile.findOne({ name, userId, tenantId, _id: { $ne: businessProfileId } });
-        if (conflict) {
-          return {
-            status: statusCode.CONFLICT,
-            success: false,
-            message: "Another business profile with this name already exists."
-          };
-        }
-      }
-  
-      Object.assign(businessProfile, {
-        name: name ?? businessProfile.name,
-        businessAddress: businessAddress ?? businessProfile.businessAddress,
-        metaAccessToken: metaAccessToken ?? businessProfile.metaAccessToken,
-        metaAppId: metaAppId ?? businessProfile.metaAppId,
-        metaBusinessId: businessProfile.metaBusinessId
-      });
-  
-      await businessProfile.save();
-      
+  const businessProfileId = req.params.id;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const { name, businessAddress, metaAccessToken, metaAppId } = req.body;
+
+  try {
+    const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
+
+    if (!businessProfile) {
       return {
-        status: statusCode.OK,
-        success: true,
-        message: resMessage.Business_profile_updated_successfully,
-        data: businessProfile.toObject()
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Business_profile_not_found
       };
-    } catch (error) {
-      console.error("Update BusinessProfile error:", error);
-        return {
-          status: statusCode.INTERNAL_SERVER_ERROR,
-          success: false,
-          message: error.message || resMessage.Server_error
-        };
     }
-}
+
+    if (name && name !== businessProfile.name) {
+      const conflict = await BusinessProfile.findOne({
+        name,
+        tenantId,
+        _id: { $ne: businessProfileId }
+      });
+
+      if (conflict) {
+        return {
+          status: statusCode.CONFLICT,
+          success: false,
+          message: "Another business profile with this name already exists."
+        };
+      }
+    }
+
+    Object.assign(businessProfile, {
+      name: name ?? businessProfile.name,
+      businessAddress: businessAddress ?? businessProfile.businessAddress,
+      metaAccessToken: metaAccessToken ?? businessProfile.metaAccessToken,
+      metaAppId: metaAppId ?? businessProfile.metaAppId
+      // No metaBusinessId update
+    });
+
+    await businessProfile.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Business_profile_updated_successfully,
+      data: businessProfile.toObject()
+    };
+  } catch (error) {
+    console.error("Update BusinessProfile error:", error);
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};
