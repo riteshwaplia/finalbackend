@@ -31,6 +31,8 @@ router.post("/uploadContact", protect, uploadExcel.single("excelFile"), response
 // router.put("/bulkUpdate", protect, responseHandler(contactController.multiContactUpdateController));
 // router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
 
+// Remove contacts in bulk (delete many)
+// router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
 // router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
 
 module.exports = router;

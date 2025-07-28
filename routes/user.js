@@ -16,5 +16,9 @@ router.post('/admin-register', protect, authorizeRoles('tenant_admin', 'super_ad
 router.post('/business-profiles', protect, userController.createBusinessProfile);
 router.get('/business-profiles', protect, userController.getAllBusinessProfilesForUser);
 router.put('/business-profiles/:id', protect, responseHandler(userController.updateBusinessProfileController));
+router.put('/reset-password', protect, userController.resetPasswordController);
+router.post('/forgot-password', responseHandler(userController.forgotPasswordController));
+router.post('/update-password-with-otp', responseHandler(userController.updatePasswordWithOtpController));
+router.put('/update-self/:userId', protect, responseHandler(userController.updateUserController));
 
 module.exports = router;

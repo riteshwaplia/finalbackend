@@ -407,7 +407,7 @@ exports.uploadMedia = async (req) => {
 // @desc    Create a new template (locally first)
 // @access  Private (User/Team Member)
 exports.createTemplate = async (req) => {
-  const { name, category, language, components, businessProfileId } = req.body;
+  const { name, category, language, components, businessProfileId, projectId } = req.body;
   const tenantId = req.tenant._id;
   const userId = req.user._id;
 
@@ -498,7 +498,9 @@ exports.createTemplate = async (req) => {
 
     console.log("Meta API response for template creation:", metaResponse.data);
 
-    const templateType = components?.some(c => c.type === "CAROUSEL") ? "CAROUSEL" : "TEMPLATE";
+    // FIX: Determine template type correctly based on Meta's definitions
+    // Meta does not have a "TEMPLATE" type, only "STANDARD" or "CAROUSEL"
+    const templateType = components?.some(c => c.type === "CAROUSEL") ? "CAROUSEL" : "STANDARD"; // Corrected this line
 
     // 8. Save template details to local database after successful Meta creation
     const newTemplate = await Template.create({
@@ -514,7 +516,7 @@ exports.createTemplate = async (req) => {
       metaCategory: metaResponse.data.category, // Meta's category
       isSynced: true, // Mark as synced
       lastSyncedAt: new Date(),
-      type: templateType 
+      type: templateType
     });
 
     return {
@@ -539,6 +541,7 @@ exports.createTemplate = async (req) => {
     };
   }
 };
+
 
 /**
  * @desc    Create a new WhatsApp Carousel Message Template on Meta Graph API.
@@ -863,6 +866,108 @@ exports.getAllTemplates = async (req) => {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+
+exports.getAllApprovedTemplates = async (req) => {
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+  const { businessProfileId,page=1,limit=100 } = req.query;
+
+  const query = {
+    tenantId,
+    userId,
+    metaStatus: 'APPROVED', // ✅ Only approved
+    type: { $ne: 'CAROUSEL' } // ✅ Exclude carousel
+  };
+
+  if (businessProfileId) {
+    query.businessProfileId = businessProfileId;
+  }
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  try {
+    const [templates, totalCount] = await Promise.all([
+      Template.find(query).skip(skip).limit(parseInt(limit)).lean(),
+      Template.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      status: 200,
+      success: true,
+      message:
+        templates.length === 0
+          ? 'No approved templates found' +
+            (businessProfileId ? ' for the selected business profile.' : '')
+          : 'Templates fetched successfully',
+      data: templates,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: parseInt(page),
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching templates:', error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || 'Internal server error',
+    };
+  }
+};
+exports.getAllCarouselTemplates = async (req) => {
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+  const { businessProfileId, page = 1, limit = 100 } = req.query;
+
+  const query = {
+    tenantId,
+    userId,
+    type: 'CAROUSEL',
+    metaStatus: 'APPROVED',
+  };
+
+  if (businessProfileId) {
+    query.businessProfileId = businessProfileId;
+  }
+
+  const skip = (parseInt(page) - 1) * parseInt(limit);
+
+  try {
+    const [templates, totalCount] = await Promise.all([
+      Template.find(query).skip(skip).limit(parseInt(limit)).lean(),
+      Template.countDocuments(query),
+    ]);
+
+    const totalPages = Math.ceil(totalCount / limit);
+
+    return {
+      status: 200,
+      success: true,
+      message:
+        templates.length === 0
+          ? 'No carousel templates found' +
+            (businessProfileId ? ' for the selected business profile.' : '')
+          : 'Carousel templates fetched successfully',
+      data: templates,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: parseInt(page),
+      },
+    };
+  } catch (error) {
+    console.error('Error fetching carousel templates:', error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || 'Internal server error',
     };
   }
 };

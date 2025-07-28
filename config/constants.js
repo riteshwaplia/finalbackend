@@ -7,7 +7,8 @@ const statusCode = {
     NOT_FOUND: 404,
     CONFLICT: 409,
     INTERNAL_SERVER_ERROR: 500,
-    SUCCESS: 200
+    SUCCESS: 200,
+    META_ERROR:502
 };
 
 const resMessage = {
@@ -17,7 +18,7 @@ const resMessage = {
 
     Project_already_exists: "Project with this name already exists.",
     Project_created_successfully: "Project created successfully.",
-    Projects_fetch_successfully: "Projects fetched successfully.",
+    Projects_fetched_successfully: "Projects fetched successfully.",
     No_data_found: "No data found.",
     Unauthorized_access: "Unauthorized access.",
     Forbidden_access: "Forbidden access.",
@@ -121,7 +122,7 @@ Flow_created_successfully: 'Flow created successfully.',
     USER_EXISTS: "User with that email already exists for this tenant.",
     OTP_SENT_SUCCESSFULLY_TO_EMAIL: "OTP sent successfully to email.",
     Invalid_user_data: "Invalid user data provided.",
-    EMAIL_NOT_FOUND: "Email not registered.",
+    Email_already_registered: "Email already registered.",
     Invalid_otp: "Invalid OTP provided.",
     otp_verified_successfully: "OTP verified successfully.",
 

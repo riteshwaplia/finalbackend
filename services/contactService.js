@@ -5,7 +5,7 @@ const XLSX = require("xlsx");
 const path = require("path");
 const fs = require("fs");
 const mongoose = require('mongoose');
-const Project = require("../models/Project");
+const Project = require("../models/project");
 
 const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
     if (!groupIds || groupIds.length === 0) {
@@ -23,7 +23,7 @@ const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
 };
 
 exports.create = async (req) => {
-    const { name, email, mobileNumber, groupIds } = req.body;
+    const { name, email, mobileNumber, groupIds, isBlocked } = req.body;
     const userId = req.user._id;
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
@@ -57,7 +57,30 @@ exports.create = async (req) => {
             };
         }
 
-        const contact = await Contact.create({ tenantId, userId, projectId, name, email,   mobileNumber: mobileNumber, groupIds });
+        const knownFields = ['name', 'email', 'mobileNumber', 'groupIds', 'isBlocked'];
+        const customFields = {};
+
+        for (const key in req.body) {
+            if (!knownFields.includes(key)) {
+                customFields[key] = req.body[key];  
+            }
+        }
+
+        const contactPayload = {
+            tenantId,
+            userId,
+            projectId,
+            name,
+            email,
+            mobileNumber,
+            groupIds,
+            isBlocked,
+            customFields
+        };
+
+        const contact = await Contact.create(contactPayload);
+
+
         return {
             status: statusCode.CREATED,
             success: true,
@@ -65,7 +88,6 @@ exports.create = async (req) => {
             data: contact
         };
     } catch (error) {
-        console.error("Error in create service:", error);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
@@ -544,7 +566,6 @@ exports.updateContact = async (req) => {
                 };
             }
         }
-
         const { isValid, invalidGroups } = await validateGroupIds(tenantId, userId, projectId, groupIds);
         if (!isValid) {
             return {
@@ -554,10 +575,29 @@ exports.updateContact = async (req) => {
             };
         }
 
+        // Update base fields
         contact.name = name || contact.name;
         contact.email = email !== undefined ? email : contact.email;
         contact.mobileNumber = mobileNumber !== undefined ? mobileNumber : contact.mobileNumber;
         contact.groupIds = groupIds !== undefined ? groupIds : contact.groupIds;
+
+
+        // Update custom fields
+        const knownFields = ['name', 'email', 'mobileNumber', 'groupIds', 'isBlocked'];
+        const customFieldUpdates = {};
+        for (const key in req.body) {
+            if (!knownFields.includes(key)) {
+                customFieldUpdates[key] = req.body[key];
+            }
+        }
+
+        if (Object.keys(customFieldUpdates).length > 0) {
+            contact.customFields = {
+                ...(contact.customFields || {}),
+                ...customFieldUpdates
+            };
+        } else {
+        }
 
         await contact.save();
 
@@ -568,9 +608,12 @@ exports.updateContact = async (req) => {
             data: contact
         };
     } catch (error) {
-        console.error("Error in updateContact service:", error);
         if (error.name === 'CastError') {
-            return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid contact ID." };
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: "Invalid contact ID."
+            };
         }
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
