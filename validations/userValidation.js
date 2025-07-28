@@ -63,7 +63,7 @@ const loginSchema = Joi.object({
 
 const businessProfileSchema = Joi.object({
   name: Joi.string()
-    .pattern(/^[a-zA-Z0-9 ]+$/)
+    .pattern(/^[a-zA-Z0-9_]+$/)
     .required()
     .messages({
       "string.pattern.base": "Business name should not contain special characters.",
