@@ -1,7 +1,7 @@
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 const User = require('../models/User');
-const Project = require('../models/Project');
+const Project = require('../models/project');
 const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
@@ -77,16 +77,10 @@ const createBusinessProfileLogic = async (req) => {
     }
 
     try {
-        const existingByName = await BusinessProfile.findOne({ name, userId, tenantId });
-        if (existingByName) {
-            return {
-                status: statusCode.CONFLICT,
-                success: false,
-                message: "A business profile with this name already exists."
-            };
-        }
 
-        const existingByWABA = await BusinessProfile.findOne({ metaBusinessId, userId, tenantId });
+
+
+        const existingByWABA = await BusinessProfile.findOne({ metaBusinessId, tenantId });
         if (existingByWABA) {
             return {
                 status: statusCode.CONFLICT,
@@ -139,7 +133,7 @@ const updateBusinessProfileLogic = async (req) => {
         }
 
         if (name && name !== businessProfile.name) {
-            const conflict = await BusinessProfile.findOne({ name, userId, tenantId, _id: { $ne: businessProfileId } });
+            const conflict = await BusinessProfile.findOne({  tenantId, _id: { $ne: businessProfileId } });
             if (conflict) {
                 return {
                     status: statusCode.CONFLICT,
