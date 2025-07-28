@@ -105,36 +105,39 @@ exports.verifyOtp = async (req) => {
   try {
     const { email, otp } = req.body;
 
-    const user = await User.findOne({ email, isEmailVerified: false });
-    if (!user) {
+    const userd = await User.findOne({ email, isEmailVerified: true });
+    if (userd) {
       return {
         status: statusCode.NOT_FOUND,
         success: false,
-        message: resMessage.EMAIL_NOT_FOUND,
+        message: resMessage.Email_already_registered,
         statusCode: statusCode.NOT_FOUND
       };
     }
 
-    if (user.otp !== otp) {
+    const user = await User.findOne({ email, isEmailVerified: false });
+    if (user) {
+      if (user.otp !== otp) {
+        return {
+          status: statusCode.UNAUTHORIZED,
+          success: false,
+          message: resMessage.Invalid_otp,
+          statusCode: statusCode.UNAUTHORIZED
+        };
+      }
+
+      user.otp = null;
+      user.isEmailVerified = true;
+      await user.save();
+
       return {
-        status: statusCode.UNAUTHORIZED,
-        success: false,
-        message: resMessage.Invalid_otp,
-        statusCode: statusCode.UNAUTHORIZED
+        id: user._id,
+        status: statusCode.OK,
+        success: true,
+        message: resMessage.otp_verified_successfully,
+        statusCode: statusCode.OK
       };
     }
-
-    user.otp = null;
-    user.isEmailVerified = true;
-    await user.save();
-
-    return {
-      id: user._id,
-      status: statusCode.OK,
-      success: true,
-      message: resMessage.otp_verified_successfully,
-      statusCode: statusCode.OK
-    };
 
   } catch (err) {
     return {

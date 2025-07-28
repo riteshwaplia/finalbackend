@@ -9,8 +9,29 @@ exports.uploadContactController = async (req) => {
     return await contactService.uploadContact(req);
 };
 
-exports.contactListController = async (req) => {
-    return await contactService.contactList(req);
+exports.contactListController = async (req, res) => {
+    try {
+        const result = await contactService.contactList(req);
+
+        const responsePayload = {
+            success: result.success,
+            message: result.message,
+            data: result.data || [],
+        };
+
+        if (result.pagination) {
+            responsePayload.pagination = result.pagination;
+        }
+
+        res.status(result.status || 200).json(responsePayload);
+    } catch (error) {
+        console.error("Error in contactListController:", error);
+        res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message
+        });
+    }
 };
 
 exports.blockContactController = async (req) => {
@@ -21,9 +42,9 @@ exports.groupListController = async (req) => {
     return await contactService.groupList(req);
 };
 
-exports.contactByIdController = async (req) => {
-    return await contactService.contactById(req);
-};
+// exports.contactByIdController = async (req) => {
+//     return await contactService.contactById(req);
+// };
 
 exports.updateContactController = async (req) => {
     return await contactService.updateContact(req);
