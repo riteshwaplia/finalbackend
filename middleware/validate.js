@@ -1,7 +1,6 @@
 module.exports = (Schema, options = { abortEarly: false }) => {
   return (req, res, next) => {
     const { error } = Schema.validate(req.body, options);
-console.log(`Validating body:`, error);
 
     if (error) {
       const errors = options.abortEarly

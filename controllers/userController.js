@@ -16,37 +16,7 @@ const registerController = async (req) => {
             message: error.message,
         };
     }
-
-    const user = await User.create({
-        tenantId,
-        username,
-        email,
-        password,
-        role: 'user' // default role
-    });
-
-    if (!user) {
-        return {
-            statusCode: 400,
-            success: false,
-            message: 'Invalid user data',
-            data: null
-        };
-    }
-
-    return {
-        statusCode: 201,
-        success: true,
-        message: 'User registered successfully',
-        data: {
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            token: generateToken(user._id)
-        }
-    };
-};
+}
 
 const verifyOtpController = async (req) => {
     try {
@@ -118,56 +88,14 @@ const createBusinessProfileLogic = async (req) => {
     }
 };
 
-const updateBusinessProfileLogic = async (req) => {
-    const businessProfileId = req.params.id;
-    const userId = req.user._id;
-    const tenantId = req.tenant._id;
-    const { name, businessAddress, metaAccessToken, metaAppId } = req.body;
-
+const updateBusinessProfileController = async (req) => {
     try {
-        const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
-
-        if (!businessProfile) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.Business_profile_not_found
-            };
-        }
-
-        if (name && name !== businessProfile.name) {
-            const conflict = await BusinessProfile.findOne({ name, userId, tenantId, _id: { $ne: businessProfileId } });
-            if (conflict) {
-                return {
-                    status: statusCode.CONFLICT,
-                    success: false,
-                    message: "Another business profile with this name already exists."
-                };
-            }
-        }
-
-        Object.assign(businessProfile, {
-            name: name ?? businessProfile.name,
-            businessAddress: businessAddress ?? businessProfile.businessAddress,
-            metaAccessToken: metaAccessToken ?? businessProfile.metaAccessToken,
-            metaAppId: metaAppId ?? businessProfile.metaAppId,
-            metaBusinessId: metaBusinessId ?? businessProfile.metaBusinessId
-        });
-
-        await businessProfile.save();
-
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Business_profile_updated_successfully,
-            data: businessProfile.toObject()
-        };
+        return await userService.updateBusinessProfile(req);
     } catch (error) {
-        console.error("Update BusinessProfile error:", error);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
-            message: error.message || resMessage.Server_error
+            message: error.message,
         };
     }
 };
@@ -376,5 +304,6 @@ module.exports = {
     deleteBusinessProfile,
     getAllBusinessProfilesForUser,
     registerController,
-    verifyOtpController
+    verifyOtpController,
+    updateBusinessProfileController
 };

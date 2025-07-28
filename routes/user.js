@@ -27,6 +27,6 @@ router.get('/', protect, authorizeRoles('tenant_admin', 'super_admin'), userCont
 router.post('/admin-register', protect, authorizeRoles('tenant_admin', 'super_admin'),validate(registerUserByAdminSchema), userController.registerUserByAdmin);
 router.post('/business-profiles',protect,validate(businessProfileSchema),userController.createBusinessProfile);
 router.get('/business-profiles', protect, userController.getAllBusinessProfilesForUser);
-router.put('/business-profiles/:id', protect ,validate(updateBusinessProfileSchema), userController.updateBusinessProfile);
+router.put('/business-profiles/:id', protect, validate(updateBusinessProfileSchema), responseHandler(userController.updateBusinessProfileController));
 
 module.exports = router;

@@ -1,6 +1,5 @@
 const Joi = require("joi");
 
-// Register (public or admin)
 const registerSchema = Joi.object({ 
   username: Joi.string().min(3).max(30).required().messages({
     "string.empty": "Username is required.",
@@ -43,8 +42,6 @@ const verifyOtpSchema = Joi.object({
   })
 });
 
-
-// Login
 const loginSchema = Joi.object({
   email: Joi.string()
     .email({ tlds: { allow: false } })
@@ -60,8 +57,6 @@ const loginSchema = Joi.object({
   }),
 });
 
-
-// Business profile creation
 const businessProfileSchema = Joi.object({
   name: Joi.string()
     .pattern(/^[a-zA-Z0-9 ]+$/)
@@ -96,8 +91,8 @@ const businessProfileSchema = Joi.object({
 
 const getAllBusinessProfilesSchema = Joi.object({
   userId: Joi.string()
-    .pattern(/^[a-zA-Z0-9]+$/) // only alphanumeric characters
-    .length(24) // optional: restrict to 24 chars (MongoDB ObjectId format)
+    .pattern(/^[a-zA-Z0-9]+$/)
+    .length(24)
     .required()
     .messages({
       "string.pattern.base": "User ID must not contain special characters.",
@@ -117,35 +112,16 @@ const getAllBusinessProfilesSchema = Joi.object({
 });
 
 const updateBusinessProfileSchema = Joi.object({
-  businessProfileId: Joi.string()
-  .pattern(/^[a-fA-F0-9]{24}$/)
-  .required()
-  .messages({
-    "string.pattern.base": "ID must be a valid 24-character hex string without special characters.",
-    "any.required": "_id is required.",
-  }),
-  userId: Joi.string()
-  .pattern(/^[a-fA-F0-9]{24}$/)
-  .required()
-  .messages({
-    "string.pattern.base": "ID must be a valid 24-character hex string without special characters.",
-    "any.required": "userId is required.",
-  }),
-  tenantId: Joi.string()
-  .pattern(/^[a-fA-F0-9]{24}$/)
-  .required()
-  .messages({
-    "string.pattern.base": "ID must be a valid 24-character hex string without special characters.",
-    "any.required": "tenantId is required.",
-  }),
-
   name: Joi.string()
     .pattern(/^[a-zA-Z0-9\s]+$/)
     .optional()
     .messages({
       "string.pattern.base": "Name must not contain special characters.",
-      "any.required": "Business name is required."
+      "any.required": "Name is required."
     }),
+
+  wabaId: Joi.string()
+    .optional(),
 
   metaAccessToken: Joi.string()
     .pattern(/^[a-zA-Z0-9\s]+$/)
@@ -159,7 +135,7 @@ const updateBusinessProfileSchema = Joi.object({
     .pattern(/^[0-9\s]+$/)
     .optional()
     .messages({
-      'string.base': 'Meta App ID must be a string.',
+      'string.base': 'Meta App ID must be a number.',
       'string.pattern.base': 'Meta App ID should contain only numbers.'
     })
 });
