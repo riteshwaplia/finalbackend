@@ -125,7 +125,8 @@ Flow_created_successfully: 'Flow created successfully.',
     Invalid_otp: "Invalid OTP provided.",
     otp_verified_successfully: "OTP verified successfully.",
 
-    Business_profile_not_found: "Selected Business Profile not found or does not belong to your account."
+    Business_profile_not_found: "Selected Business Profile not found or does not belong to your account.",
+    Business_profile_updated_successfully: "Business Profile updated successfully."
 };
 
 module.exports = {

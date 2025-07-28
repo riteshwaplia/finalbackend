@@ -1,4 +1,3 @@
-// server/controllers/dashboardController.js
 const dashboardService = require('../services/dashboardService');
 const { statusCode, resMessage } = require('../config/constants');
 

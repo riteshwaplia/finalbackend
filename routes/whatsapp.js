@@ -1,7 +1,7 @@
 // server/routes/whatsapp.js
 const express = require('express');
 const { protect } = require('../middleware/auth');
-const responseHandler = require('../middleware/responseHandler');
+const {responseHandler} = require('../middleware/responseHandler');
 const whatsappController = require('../controllers/whatsappController');
 
 const router = express.Router();

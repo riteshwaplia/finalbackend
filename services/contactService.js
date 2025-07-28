@@ -520,7 +520,6 @@ exports.contactById = async (req) => {
         };
     }
 };
-
 exports.updateContact = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;

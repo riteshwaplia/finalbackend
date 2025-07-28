@@ -93,7 +93,9 @@ const sendWhatsAppMessage = async ({
   }
 };
 
-exports.sendMessageService = async (req) => {
+// http://localhost:5173
+
+const sendMessageService = async (req) => {
   const { to, type, message } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
@@ -145,11 +147,14 @@ exports.sendMessageService = async (req) => {
   const phoneNumberId = project.metaPhoneNumberID;
 
   const businessProfile = project.businessProfileId;
+  businessProfile.graphVersion = businessProfile.graphVersion || "v16.0";
+  businessProfile.facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
+
   if (
     !businessProfile ||
     !businessProfile.metaAccessToken ||
     !businessProfile.metaBusinessId ||
-    !businessProfile.facebookUrl ||
+    (!businessProfile.facebookUrl ) ||
     !businessProfile.graphVersion
   ) {
     return {
@@ -956,8 +961,8 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
  
     case 'image':
       payload.image = {};
-      if (message.link) payload.image.link = message.link;
       if (message.id) payload.image.id = message.id;
+      if (message.link) payload.image.link = message.link;
       if (message.caption) payload.image.caption = message.caption;
       break;
  
@@ -1098,6 +1103,7 @@ const downloadMedia = async (req) => {
 };
 
 module.exports = {
+  sendMessageService,
   sendWhatsAppMessages,
   uploadMedia,
   BulkSendGroupService,

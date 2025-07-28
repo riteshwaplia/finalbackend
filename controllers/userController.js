@@ -1,7 +1,7 @@
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 const User = require('../models/User');
-const Project = require('../models/Project');
+const Project = require('../models/project');
 const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
@@ -16,37 +16,7 @@ const registerController = async (req) => {
             message: error.message,
         };
     }
-
-    const user = await User.create({
-        tenantId,
-        username,
-        email,
-        password,
-        role: 'user' // default role
-    });
-
-    if (!user) {
-        return {
-            statusCode: 400,
-            success: false,
-            message: 'Invalid user data',
-            data: null
-        };
-    }
-
-    return {
-        statusCode: 201,
-        success: true,
-        message: 'User registered successfully',
-        data: {
-            _id: user._id,
-            username: user.username,
-            email: user.email,
-            role: user.role,
-            token: generateToken(user._id)
-        }
-    };
-};
+}
 
 const verifyOtpController = async (req) => {
     try {
@@ -118,67 +88,14 @@ const createBusinessProfileLogic = async (req) => {
     }
 };
 
-const updateBusinessProfileLogic = async (req) => {
-    const businessProfileId = req.params.id;
-    const userId = req.user._id;
-    const tenantId = req.tenant._id;
-    const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId } = req.body;
-
+const updateBusinessProfileController = async (req) => {
     try {
-        const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
-
-        if (!businessProfile) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.Business_profile_not_found
-            };
-        }
-
-        if (name && name !== businessProfile.name) {
-            const conflict = await BusinessProfile.findOne({ name, userId, tenantId, _id: { $ne: businessProfileId } });
-            if (conflict) {
-                return {
-                    status: statusCode.CONFLICT,
-                    success: false,
-                    message: "Another business profile with this name already exists."
-                };
-            }
-        }
-
-        if (metaBusinessId && metaBusinessId !== businessProfile.metaBusinessId) {
-            const conflict = await BusinessProfile.findOne({ metaBusinessId, userId, tenantId, _id: { $ne: businessProfileId } });
-            if (conflict) {
-                return {
-                    status: statusCode.CONFLICT,
-                    success: false,
-                    message: "Another business profile with this WABA ID already exists."
-                };
-            }
-        }
-
-        Object.assign(businessProfile, {
-            name: name ?? businessProfile.name,
-            businessAddress: businessAddress ?? businessProfile.businessAddress,
-            metaAccessToken: metaAccessToken ?? businessProfile.metaAccessToken,
-            metaAppId: metaAppId ?? businessProfile.metaAppId,
-            metaBusinessId: metaBusinessId ?? businessProfile.metaBusinessId
-        });
-
-        await businessProfile.save();
-
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Business_profile_updated_successfully,
-            data: businessProfile.toObject()
-        };
+        return await userService.updateBusinessProfile(req);
     } catch (error) {
-        console.error("Update BusinessProfile error:", error);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
-            message: error.message || resMessage.Server_error
+            message: error.message,
         };
     }
 };
@@ -250,7 +167,6 @@ const deleteBusinessProfile = async (req, res) => {
     }
 };
 
-// Express-style handlers (call logic, then send response)
 const createBusinessProfile = async (req, res) => {
     const result = await createBusinessProfileLogic(req);
     res.status(result.status).json(result);
@@ -266,7 +182,6 @@ const getAllBusinessProfilesForUser = async (req, res) => {
     res.status(result.status).json(result);
 };
 
-// Other handlers (already well structured)
 const authUser = async (req, res) => {
     const { email, password } = req.body;
     const tenantId = req.tenant._id;
@@ -420,5 +335,6 @@ module.exports = {
     resetPasswordController,
     forgotPasswordController,
     updatePasswordWithOtpController,
-    updateUserController
+    updateUserController,
+    updateBusinessProfileController
 };

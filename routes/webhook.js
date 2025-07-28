@@ -1,7 +1,7 @@
 // server/routes/webhook.js
 const express = require('express');
 const webhookService = require('../services/webhookService');
-const responseHandler = require('../middleware/responseHandler');
+const {responseHandler} = require('../middleware/responseHandler');
 
 const router = express.Router();
 
