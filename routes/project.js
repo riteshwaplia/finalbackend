@@ -2,13 +2,16 @@ const express = require('express');
 const { protect, authorizeRoles } = require('../middleware/auth');
 const router = express.Router();
 const projectController = require('../controllers/projectController');
-const {responseHandler} = require('../middleware/responseHandler');
+const { responseHandler } = require('../middleware/responseHandler');
+const validate = require('../middleware/validate');
+const { createProjectSchema } = require('../validations/projectValidation');
 
 router.route('/')
   .post(
     protect,
     authorizeRoles('user'),
-    responseHandler(projectController.createProject)
+    validate(createProjectSchema),
+    responseHandler(projectController.createProjectController)
   )
   .get(
     protect,

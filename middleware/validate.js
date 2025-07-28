@@ -1,19 +1,7 @@
-module.exports = (Schema, options = { abortEarly: false }) => {
-  return (req, res, next) => {
-    const { error } = Schema.validate(req.body, options);
-
+module.exports = (schema) => (req, res, next) => {
+    const { error } = schema.validate(req.body);
     if (error) {
-      const errors = options.abortEarly
-        ? [error.details[0].message]
-        : error.details.map((detail) => detail.message);
-
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors,
-      });
+        return res.status(400).json({ success: false, message: error.details[0].message });
     }
-
     next();
-  };
 };
