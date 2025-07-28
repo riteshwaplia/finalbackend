@@ -20,12 +20,14 @@ router.route('/')
   );
 
 router.get('/:id/dashboard', protect, authorizeRoles('user'), responseHandler(projectController.getProjectByIdController));
-router
-  .put("/:id",
-    protect,
-    authorizeRoles('user'),
-    responseHandler(projectController.updateProject)
-  );
+router.delete('/:projectId', protect, responseHandler(projectController.deleteProjectController));
+router.put('/:projectId/whatsapp-business-profile', protect, responseHandler(projectController.updateWhatsappBusinessProfileController));
+// router
+//   .put("/:id",
+//     protect,
+//     authorizeRoles('user'),
+//     responseHandler(projectController.updateProjectController)
+//   );
   // .delete(
   //   protect,
   //   authorizeRoles('user'),
@@ -33,9 +35,7 @@ router
   //   responseHandler(projectController.deleteProject)
   // );
 
-router.delete('/:id/delete', protect, authorizeRoles('user'), responseHandler(projectController.deleteProject));
-router.put('/:projectId', protect, responseHandler(projectController.updateProjectController));
-router.delete('/:projectId', protect, responseHandler(projectController.deleteProjectController));
-router.put('/:projectId/whatsapp-business-profile', protect, responseHandler(projectController.updateWhatsappBusinessProfileController));
+// router.delete('/:id/delete', protect, authorizeRoles('user'), responseHandler(projectController.deleteProject));
+// router.put('/:projectId', protect, responseHandler(projectController.updateProjectController));
 
 module.exports = router;
