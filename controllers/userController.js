@@ -38,6 +38,7 @@ const createBusinessProfileLogic = async (req) => {
     const tenantId = req.tenant._id;
     const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId } = req.body;
 
+    // 1. Validate required fields
     if (!name || !metaAccessToken || !metaBusinessId || !metaAppId) {
         return {
             status: statusCode.BAD_REQUEST,
@@ -47,18 +48,17 @@ const createBusinessProfileLogic = async (req) => {
     }
 
     try {
-
-
-
-        const existingByWABA = await BusinessProfile.findOne({ metaBusinessId, tenantId });
-        if (existingByWABA) {
+        // 2. Check if the same metaBusinessId exists in same tenant
+        const existing = await BusinessProfile.findOne({ tenantId, metaBusinessId });
+        if (existing) {
             return {
                 status: statusCode.CONFLICT,
                 success: false,
-                message: "A business profile with this WABA ID already exists."
+                message: "A business profile with this Meta Business ID already exists in this tenant."
             };
         }
 
+        // 3. Create new profile
         const newProfile = await BusinessProfile.create({
             userId,
             tenantId,
@@ -75,7 +75,17 @@ const createBusinessProfileLogic = async (req) => {
             message: resMessage.Business_profile_created_successfully,
             data: newProfile.toObject()
         };
+
     } catch (error) {
+        // 4. Handle MongoDB unique index errors more clearly
+        if (error.code === 11000) {
+            return {
+                status: statusCode.CONFLICT,
+                success: false,
+                message: "Duplicate entry: a profile with this Meta Business ID already exists."
+            };
+        }
+
         console.error("Create BusinessProfile error:", error);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
