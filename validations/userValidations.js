@@ -105,7 +105,7 @@ exports.update = Joi.object({
         .messages({
             "string.min": "Password must be at least 6 characters long",
         }),
-});  //
+});  //done
 
 exports.forgotPassword = Joi.object({
     email: Joi.string()
