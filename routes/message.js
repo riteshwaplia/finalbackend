@@ -1,5 +1,5 @@
 const express = require('express');
-const responseHandler = require('../middleware/responseHandler');
+const {responseHandler} = require('../middleware/responseHandler');
 const { protect } = require('../middleware/auth');
 const uploadExcel = require('../config/multerConfig');
 const mediaUploadDir = require('../config/multerMediaConfig'); // Assuming you have a separate config for directory uploads

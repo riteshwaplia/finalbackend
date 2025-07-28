@@ -1,25 +1,50 @@
 const express = require('express');
 const { protect } = require('../middleware/auth');
-const responseHandler = require('../middleware/responseHandler');
+const {responseHandler} = require('../middleware/responseHandler');
+const validateRequest = require('../middleware/validateRequest');
 const teamMemberController = require('../controllers/teamMemberController');
+const {
+  createTeamMemberSchema,
+  getAllTeamMembersSchema,
+  getOrDeleteTeamMemberSchema,
+  updateTeamMemberSchema
+} = require('../validations/teamMemberValidation');
 
-const router = express.Router({ mergeParams: true }); // mergeParams is crucial for nested routes
+const router = express.Router({ mergeParams: true });
 
-// All team member routes will be prefixed with /api/projects/:projectId/team-member
+router.post(
+  "/",
+  protect,
+  validateRequest(createTeamMemberSchema),
+  responseHandler(teamMemberController.createController)
+);
 
-// Create a new team member for a specific project
-router.post("/", protect, responseHandler(teamMemberController.createController));
+router.get(
+  "/",
+  protect,
+  validateRequest(getAllTeamMembersSchema),
+  responseHandler(teamMemberController.getAllController)
+);
 
-// Get all team members for a project
-router.get("/", protect, responseHandler(teamMemberController.getAllController));
+router.get(
+  "/:id",
+  protect,
+  validateRequest(getOrDeleteTeamMemberSchema),
+  responseHandler(teamMemberController.getByIdController)
+);
 
-// Get a specific team member by ID
-router.get("/:id", protect, responseHandler(teamMemberController.getByIdController));
+router.put(
+  "/:id",
+  protect,
+  validateRequest(updateTeamMemberSchema),
+  responseHandler(teamMemberController.updateController)
+);
 
-// Update a team member by ID
-router.put("/:id", protect, responseHandler(teamMemberController.updateController));
-
-// Delete a team member by ID
-router.delete("/:id", protect, responseHandler(teamMemberController.deleteController));
+router.delete(
+  "/:id",
+  protect,
+  validateRequest(getOrDeleteTeamMemberSchema),
+  responseHandler(teamMemberController.deleteController)
+);
 
 module.exports = router;

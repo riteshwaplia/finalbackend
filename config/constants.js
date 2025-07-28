@@ -18,7 +18,7 @@ const resMessage = {
 
     Project_already_exists: "Project with this name already exists.",
     Project_created_successfully: "Project created successfully.",
-    Projects_fetch_successfully: "Projects fetched successfully.",
+    Projects_fetched_successfully: "Projects fetched successfully.",
     No_data_found: "No data found.",
     Unauthorized_access: "Unauthorized access.",
     Forbidden_access: "Forbidden access.",
@@ -126,7 +126,8 @@ Flow_created_successfully: 'Flow created successfully.',
     Invalid_otp: "Invalid OTP provided.",
     otp_verified_successfully: "OTP verified successfully.",
 
-    Business_profile_not_found: "Selected Business Profile not found or does not belong to your account."
+    Business_profile_not_found: "Selected Business Profile not found or does not belong to your account.",
+    Business_profile_updated_successfully: "Business Profile updated successfully."
 };
 
 module.exports = {

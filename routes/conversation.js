@@ -1,7 +1,7 @@
 // server/routes/conversation.js
 const express = require('express');
 const { protect } = require('../middleware/auth');
-const responseHandler = require('../middleware/responseHandler');
+const {responseHandler} = require('../middleware/responseHandler');
 const conversationController = require('../controllers/conversationController');
 
 const router = express.Router({ mergeParams: true }); // mergeParams to get projectId from parent route

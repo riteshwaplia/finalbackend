@@ -1,4 +1,4 @@
-// server/services/whatsappWebhookService.js
+// server/services/webhookService.js
 const Message = require("../models/Message");
 const Contact = require("../models/Contact");
 const Conversation = require("../models/ConversationSchema");
@@ -9,11 +9,11 @@ const Flow = require("../models/Flow");
 const { traverseFlow } = require('../functions/functions');
 const {sendWhatsAppMessages} = require("../services/messageService");
 const ConversationSession = require('../models/ConversationSchema');
-
+ 
 exports.handleWebhookPayload = async (req) => {
     const io = req.app.get('io');
     let businessProfileData;
-
+ 
     if (req.method === 'GET') {
         const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN;
         const mode = req.query['hub.mode'];
@@ -34,7 +34,7 @@ exports.handleWebhookPayload = async (req) => {
         console.warn("Invalid verification request: Missing mode or token in query parameters.");
         return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid verification request." };
     }
-
+ 
     const payload = req.body;
     console.log("=======Webhook data========", JSON.stringify(payload, null, 2));
 
@@ -43,27 +43,25 @@ exports.handleWebhookPayload = async (req) => {
             console.warn("Webhook payload not for 'whatsapp_business_account' or invalid object type. Payload:", JSON.stringify(payload));
             return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid webhook object type." };
         }
-
+ 
         for (const entry of payload.entry) {
             const metaPhoneNumberID = entry.changes?.[0]?.value?.metadata?.phone_number_id;
-
+ 
             if (!metaPhoneNumberID) {
                 console.warn(`[Webhook] Could not extract Meta Phone Number ID from entry. Skipping entry. Entry: ${JSON.stringify(entry)}`);
                 continue;
             }
-
             for (const change of entry.changes) {
                 if (change.field === 'messages') {
                     const value = change.value;
-
+ 
                     if (value.statuses) {
                         for (const statusUpdate of value.statuses) {
                             const metaMessageId = statusUpdate.id;
                             const newStatus = statusUpdate.status;
                             const timestamp = new Date(parseInt(statusUpdate.timestamp) * 1000);
-
                             const messageDoc = await Message.findOne({ metaMessageId: metaMessageId, metaPhoneNumberID: metaPhoneNumberID });
-
+ 
                             if (messageDoc) {
                                 messageDoc.status = newStatus;
                                 messageDoc.updatedAt = new Date();
@@ -73,7 +71,6 @@ exports.handleWebhookPayload = async (req) => {
                                     console.error(`[Webhook Status Update Error] Details for ${metaMessageId}:`, JSON.stringify(statusUpdate.errors));
                                 }
                                 await messageDoc.save();
-
                                 if (io) {
                                     io.to(messageDoc.userId.toString()).emit('messageStatusUpdate', {
                                         messageDbId: messageDoc._id,
@@ -103,7 +100,7 @@ exports.handleWebhookPayload = async (req) => {
                             }
                         }
                     }
-
+ 
                     if (value.messages) {
                         for (const inboundMessage of value.messages) {
                             const fromPhoneNumber = inboundMessage.from;
@@ -113,20 +110,20 @@ exports.handleWebhookPayload = async (req) => {
                             const metaMessageId = inboundMessage.id;
                             const timestamp = new Date(parseInt(inboundMessage.timestamp) * 1000);
                             const profileName = inboundMessage.contacts?.[0]?.profile?.name || fromPhoneNumber;
-
                             const project = await Project.findOne({ metaPhoneNumberID: metaPhoneNumberID });
-
+ 
                             if (!project) {
                                 console.warn(`[Inbound Message] No project found for Meta Phone Number ID: ${metaPhoneNumberID}. Cannot process inbound message.`);
                                 continue;
                             }
-
+                            businessProfileData = await Businessprofile.findById(project.businessProfileId);
+ 
                             let contact = await Contact.findOne({
                                 projectId: project._id,
                                 userId: project.userId,
                                 whatsappId: whatsappId
                             });
-
+ 
                             if (!contact) {
                                 const parsedPhoneNumber = fromPhoneNumber.replace(/^\+/, '');
                                 let defaultCountryCode = '';
@@ -135,7 +132,6 @@ exports.handleWebhookPayload = async (req) => {
                                     defaultCountryCode = parsedPhoneNumber.substring(0, parsedPhoneNumber.length - 10);
                                     defaultMobileNumber = parsedPhoneNumber.substring(parsedPhoneNumber.length - 10);
                                 }
-
                                 contact = await Contact.create({
                                     tenantId: project.tenantId,
                                     userId: project.userId,
@@ -153,13 +149,13 @@ exports.handleWebhookPayload = async (req) => {
                             } else {
                                 console.log(`[Inbound Message] Existing contact found: ${contact._id}`);
                             }
-
+ 
                             let conversation = await Conversation.findOne({
                                 projectId: project._id,
                                 contactId: contact._id,
                                 metaPhoneNumberID: metaPhoneNumberID
                             });
-
+ 
                             if (!conversation) {
                                 conversation = await Conversation.create({
                                     tenantId: project.tenantId,
@@ -170,8 +166,7 @@ exports.handleWebhookPayload = async (req) => {
                                     latestMessage: messageContent.body || messageType,
                                     latestMessageType: messageType,
                                     lastActivityAt: timestamp,
-                                    unreadCount: 1,
-                                    isActive: true
+                                    unreadCount: 1
                                 });
                             } else {
                                 conversation.latestMessage = messageContent.body || messageType;
@@ -181,25 +176,24 @@ exports.handleWebhookPayload = async (req) => {
                                 conversation.isActive = true;
                                 await conversation.save();
                             }
-
+ 
                             const messageDoc = await Message.create({
                                 tenantId: project.tenantId,
                                 userId: project.userId,
                                 projectId: project._id,
                                 conversationId: conversation._id,
                                 metaPhoneNumberID: metaPhoneNumberID,
-                                from: fromPhoneNumber, // Sender's number
-                                to: metaPhoneNumberID, // Our number
+                                from: fromPhoneNumber,
                                 direction: 'inbound',
                                 type: messageType,
-                                message: inboundMessage, // Store full inbound message object
+                                message: messageContent,
                                 metaMessageId: metaMessageId,
-                                status: 'received', // Initial status for inbound
+                                status: 'received',
                                 sentAt: timestamp
                             });
 
-                            if (messageType === 'text' && messageContent?.body) {
-                                const userText = messageContent.body.trim();
+                            if ((messageType === 'text' && messageContent?.body) || (messageType === 'button' && messageContent?.payload)) {
+                                const userText = messageType === 'text' ? messageContent.body.trim() : messageContent.payload.trim();
                                 const phoneNumberId = metaPhoneNumberID;
                                 const accessToken = businessProfileData.metaAccessToken;
                                 const userNumber = fromPhoneNumber;
@@ -222,6 +216,7 @@ exports.handleWebhookPayload = async (req) => {
                                                     return {
                                                         type: reply.type,
                                                         message: {
+                                                            id: reply.id,
                                                             link: reply.link,
                                                             caption: reply.caption || ''
                                                         }
@@ -312,6 +307,7 @@ exports.handleWebhookPayload = async (req) => {
         console.error("--- Error processing webhook payload ---");
         console.error("Error details:", error.message);
         console.error("Stack trace:", error.stack);
+        console.error("---------------------------------------");
         return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
     }
 };

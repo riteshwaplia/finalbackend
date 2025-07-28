@@ -5,7 +5,7 @@ const XLSX = require("xlsx");
 const path = require("path");
 const fs = require("fs");
 const mongoose = require('mongoose');
-const Project = require("../models/Project");
+const Project = require("../models/project");
 
 const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
     if (!groupIds || groupIds.length === 0) {
@@ -520,7 +520,6 @@ exports.contactById = async (req) => {
         };
     }
 };
-
 exports.updateContact = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;

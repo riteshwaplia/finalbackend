@@ -65,4 +65,4 @@ const responseHandler = (fn) => async (req, res, next) => {
     }
 };
  
-module.exports = responseHandler;
+module.exports = {responseHandler};
