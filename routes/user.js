@@ -19,7 +19,7 @@ const { responseHandler } = require('../middleware/responseHandler');
 const router = express.Router();
 
 router.post('/register',validate(registerSchema), responseHandler(userController.registerController));
-router.post("/verifyOtp",validate(verifyOtpSchema), responseHandler(userController.verifyOtpController));
+router.post("/verifyOtp", responseHandler(userController.verifyOtpController));
 router.post('/login',validate(loginSchema), userController.authUser);
 router.get('/profile', protect, userController.getUserProfile);
 router.put('/profile', protect,validate(updateUserProfileSchema), userController.updateUserProfile);
