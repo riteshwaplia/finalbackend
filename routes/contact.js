@@ -18,21 +18,16 @@ router.post("/", protect, responseHandler(contactController.createController));
 router.delete("/deleteContact/:contactId", protect, responseHandler(contactController.deleteContactController));
 router.put("/bulkContactUpdate/delete", protect, responseHandler(contactController.removeBulkController));
 router.post("/uploadContact", protect, uploadExcel.single("excelFile"), responseHandler(contactController.uploadContactController));
+router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
+router.post('/bulk-unblock', protect, responseHandler(contactController.bulkUnblockContactController));
+
 // router.post("/upload", protect, responseHandler(contactController.uploadContactController));
 // router.get("/:contactId", protect, responseHandler(contactController.contactByIdController));
 // router.put("/:contactId", protect, responseHandler(contactController.updateContactController));
 // router.delete("/:contactId", protect, responseHandler(contactController.deleteContactController));
-// router.post("/bulk-delete", protect, responseHandler(contactController.removeBulkController));
 // router.post("/bulk-update", protect, responseHandler(contactController.multiContactUpdateController));
 // router.post("/block", protect, responseHandler(contactController.blockContactController));
-// router.post("/unblock", protect, responseHandler(contactController.removeBlockContactController));
 // router.post("/import-csv", protect, responseHandler(contactController.importContactsFromCSV));
 // router.get("/contactById/:contactId", protect, responseHandler(contactController.contactByIdController));
-// router.put("/bulkUpdate", protect, responseHandler(contactController.multiContactUpdateController));
-// router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
-
-// Remove contacts in bulk (delete many)
-// router.post("/bulkContactUpdate", protect, responseHandler(contactController.removeBulkController));
-// router.post('/bulk-block', protect, responseHandler(contactController.bulkBlockContactController));
 
 module.exports = router;

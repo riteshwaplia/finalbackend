@@ -90,3 +90,16 @@ exports.bulkBlockContactController = async (req) => {
         }
     }
 }
+
+exports.bulkUnblockContactController = async (req) => {
+    try {
+        return await contactService.bulkUnblockContact(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        }
+    }
+}
