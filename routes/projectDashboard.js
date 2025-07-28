@@ -13,7 +13,6 @@ router.get(
   "/:projectId/dashboard/stats",
   protect,
   authorizeRoles("user"),
-  validate(validateProjectDashboardStats, "params"),
   responseHandler(dashboardController.getDashboardStatsController)
 );
 
