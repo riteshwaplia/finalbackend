@@ -1,21 +1,35 @@
 const Joi = require("joi");
 
-const nameField = Joi.string()
-  .trim()
-  .pattern(/^[^<>]*$/, { name: 'no angle brackets' })
-  .message('Name must not contain "<" or ">"');
-
 const baseContactSchema = {
-  name: nameField.allow(''),
+  name: Joi.string().trim().pattern(/^[a-zA-Z0-9_]+$/).messages({
+    "string.pattern.base": "Name can only contain letters, numbers, and underscores",
+    "string.base": "Name must be a string",
+  }),
   email: Joi.string().email().trim().lowercase().allow('', null),
-  countryCode: Joi.string().trim().allow(''),
-  mobileNumber: Joi.string().trim().required().messages({
+  countryCode: Joi.string().trim().allow('', null),
+  mobileNumber: Joi.string().trim().pattern(/^[0-9]+$/).required().messages({
     "any.required": "Mobile number is required",
   }),
-  whatsappId: Joi.string().trim().allow('', null),
-  profileName: Joi.string().trim().allow(''),
+  whatsappId: Joi.string().trim()..pattern(/^[0-9]+$/).allow('', null),
+  profileName: Joi.string().trim().allow('', null),
   isBlocked: Joi.boolean(),
-  groupIds: Joi.array().items(Joi.string().hex().length(24)),
+  groupIds: Joi.array()
+  .items(
+    Joi.string()
+      .hex()
+      .length(24)
+      .messages({
+        "string.length": "Each group ID must be 24 characters long",
+        "string.hex": "Each group ID must be a valid hex string",
+      })
+  )
+  .min(1)
+  .required()
+  .messages({
+    "any.required": "Group IDs are required",
+    "array.base": "Group IDs must be an array",
+    "array.min": "At least one group ID is required",
+  }),
   tags: Joi.array().items(Joi.string()),
 };
 
