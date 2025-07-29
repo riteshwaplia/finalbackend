@@ -7,8 +7,8 @@ const {responseHandler} = require('../middleware/responseHandler');
 
 router.post('/', protect, responseHandler(flowController.createController));
 router.get('/', protect, responseHandler(flowController.getFlowsController));
+router.get('/:flowId', protect, responseHandler(flowController.getFlowByIdController));
 
-// router.get('/:flowId', protect, responseHandler(flowController.getFlowByIdController));
 // router.put('/:flowId', protect, responseHandler(flowController.updateFlowController));
 // router.delete('/:flowId', protect, responseHandler(flowController.deleteFlowController));
 

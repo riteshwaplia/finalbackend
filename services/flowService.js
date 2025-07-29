@@ -117,46 +117,46 @@ exports.getFlows = async ({ projectId, userId, tenantId }) => {
     }
 };
 
-// exports.getFlowById = async ({ flowId, projectId, userId, tenantId }) => {
-//     if (!flowId || !projectId || !userId || !tenantId) {
-//         return {
-//             status: statusCode.BAD_REQUEST,
-//             success: false,
-//             message: resMessage.Missing_required_fields + " (flowId, projectId, userId, tenantId are required)."
-//         };
-//     }
+exports.getFlowById = async ({ flowId, projectId, userId, tenantId }) => {
+    if (!flowId || !projectId || !userId || !tenantId) {
+        return {
+            status: statusCode.BAD_REQUEST,
+            success: false,
+            message: resMessage.Missing_required_fields + " (flowId, projectId, userId, tenantId are required)."
+        };
+    }
 
-//     try {
-//         const flow = await Flow.findOne({ _id: flowId, projectId, userId, tenantId }).lean();
-//         if (!flow) {
-//             return {
-//                 status: statusCode.NOT_FOUND,
-//                 success: false,
-//                 message: resMessage.No_data_found + " (Flow not found or unauthorized)."
-//             };
-//         }
-//         return {
-//             status: statusCode.OK,
-//             success: true,
-//             message: resMessage.Flow_fetched_successfully,
-//             data: flow,
-//         };
-//     } catch (error) {
-//         console.error("Error fetching flow by ID:", error);
-//         if (error.name === "CastError") {
-//             return {
-//                 status: statusCode.BAD_REQUEST,
-//                 success: false,
-//                 message: "Invalid Flow ID format.",
-//             };
-//         }
-//         return {
-//             status: statusCode.INTERNAL_SERVER_ERROR,
-//             success: false,
-//             message: error.message || resMessage.Server_error,
-//         };
-//     }
-// };
+    try {
+        const flow = await Flow.findOne({ _id: flowId, projectId, userId, tenantId }).lean();
+        if (!flow) {
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: resMessage.No_data_found + " (Flow not found or unauthorized)."
+            };
+        }
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Flow_fetched_successfully,
+            data: flow,
+        };
+    } catch (error) {
+        console.error("Error fetching flow by ID:", error);
+        if (error.name === "CastError") {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: "Invalid Flow ID format.",
+            };
+        }
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message || resMessage.Server_error,
+        };
+    }
+};
 
 // exports.updateFlow = async ({ flowId, projectId, userId, tenantId }, updateData) => {
 //     if (!flowId || !projectId || !userId || !tenantId || !updateData) {

@@ -23,18 +23,13 @@ exports.getFlowsController = async (req) => {
     return await flowService.getFlows({ projectId, userId, tenantId });
 };
 
-// /**
-//  * @desc    Get a single conversational flow by ID.
-//  * @route   GET /api/projects/:projectId/flows/:flowId
-//  * @access  Private (User/Team Member)
-//  */
-// exports.getFlowByIdController = async (req) => {
-//     const { projectId, flowId } = req.params;
-//     const userId = req.user._id;
-//     const tenantId = req.tenant._id;
+exports.getFlowByIdController = async (req) => {
+    const { projectId, flowId } = req.params;
+    const userId = req.user._id;
+    const tenantId = req.tenant._id;
 
-//     return await flowService.getFlowById({ flowId, projectId, userId, tenantId });
-// };
+    return await flowService.getFlowById({ flowId, projectId, userId, tenantId });
+};
 
 // /**
 //  * @desc    Update an existing conversational flow.
