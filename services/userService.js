@@ -316,12 +316,13 @@ exports.updateUser = async (req) => {
         console.log("🧾 [updateUser] Token User ID:", tokenUserId);
         console.log("🧾 [updateUser] Tenant ID:", tenantId);
 
+        // 👇 Destructure using incoming field names (from validation)
         const {
-            email, // only for matching, not update
-            username,
+            email,
+            userName,          // <-- mapped to username in schema
             firstName,
             lastName,
-            mobileNumber,
+            mobile,            // <-- mapped to mobileNumber in schema
             profilePicture,
             gender,
             dob
@@ -329,7 +330,7 @@ exports.updateUser = async (req) => {
 
         console.log("📥 [updateUser] Incoming Body:", req.body);
 
-        // Step 1: Check if userId from token matches the param
+        // Step 1: Check user ID matches
         if (paramUserId !== tokenUserId.toString()) {
             console.warn("❌ [updateUser] Unauthorized access attempt");
             return {
@@ -365,7 +366,7 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 4: Prevent email change
+        // Step 4: Prevent email update
         if (req.body.email !== user.email) {
             console.warn("❌ [updateUser] Email update attempt blocked");
             return {
@@ -376,15 +377,15 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 5: Update user fields
+        // Step 5: Map and update only provided fields
         console.log("✏️ [updateUser] Updating user fields...");
-        user.username = username ?? user.username;
-        user.firstName = firstName ?? user.firstName;
-        user.lastName = lastName ?? user.lastName;
-        user.mobileNumber = mobileNumber ?? user.mobileNumber;
-        user.profilePicture = profilePicture ?? user.profilePicture;
-        user.gender = gender ?? user.gender;
-        user.dob = dob ?? user.dob;
+        if (userName !== undefined) user.username = userName;
+        if (firstName !== undefined) user.firstName = firstName;
+        if (lastName !== undefined) user.lastName = lastName;
+        if (mobile !== undefined) user.mobileNumber = mobile;
+        if (profilePicture !== undefined) user.profilePicture = profilePicture;
+        if (gender !== undefined) user.gender = gender;
+        if (dob !== undefined) user.dob = dob;
 
         await user.save();
         console.log("✅ [updateUser] User updated successfully");
@@ -416,6 +417,7 @@ exports.updateUser = async (req) => {
         };
     }
 };
+
 exports.updateBusinessProfile = async (req) => {
   const businessProfileId = req.params.id;
   const userId = req.user._id;

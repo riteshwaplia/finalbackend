@@ -34,7 +34,7 @@ exports.update = Joi.object({
       "string.email": "Please provide a valid email",
     }),
 
-  username: Joi.string()
+  userName: Joi.string() // Match field exactly
     .trim()
     .optional(),
 
@@ -46,19 +46,22 @@ exports.update = Joi.object({
     .trim()
     .optional(),
 
-  mobileNumber: Joi.string()
+  mobile: Joi.string()
     .trim()
-    .length(10)
+    .min(10)
+    .max(13)
     .pattern(/^[0-9]+$/)
     .optional()
     .messages({
-      "string.length": "Mobile number must be 10 digits",
+      "string.min": "Mobile number must be at least 10 digits",
+      "string.max": "Mobile number must not exceed 13 digits",
       "string.pattern.base": "Mobile number must be numeric",
     }),
 
   profilePicture: Joi.string()
     .trim()
     .uri()
+    .allow(null, '') 
     .optional()
     .messages({
       "string.uri": "Profile picture must be a valid URI",
@@ -78,7 +81,6 @@ exports.update = Joi.object({
       "date.format": "Date of birth must be in ISO format (YYYY-MM-DD)",
     }),
 });
-
 
 exports.forgotPassword = Joi.object({
   email: Joi.string().trim().email().required().messages({
