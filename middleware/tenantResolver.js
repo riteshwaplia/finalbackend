@@ -2,7 +2,7 @@ const Tenant = require('../models/Tenant');
 
 const tenantResolver = async (req, res, next) => {
 
-  const domain = ["https://iridescent-gumption-58e07e.netlify.app", "http://localhost:5173"];
+  const domain = ["https://voluble-pony-84b892.netlify.app", "http://localhost:5173"];
 
   try {
     const tenant = await Tenant.findOne({ domain: { $in: domain } });
