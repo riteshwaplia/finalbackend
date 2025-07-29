@@ -38,7 +38,6 @@ const createBusinessProfileLogic = async (req) => {
     const tenantId = req.tenant._id;
     const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId } = req.body;
 
-    // 1. Validate required fields
     if (!name || !metaAccessToken || !metaBusinessId || !metaAppId) {
         return {
             status: statusCode.BAD_REQUEST,
@@ -48,7 +47,6 @@ const createBusinessProfileLogic = async (req) => {
     }
 
     try {
-        // 2. Check if the same metaBusinessId exists in same tenant
         const existing = await BusinessProfile.findOne({ tenantId, metaBusinessId });
         if (existing) {
             return {
@@ -58,7 +56,6 @@ const createBusinessProfileLogic = async (req) => {
             };
         }
 
-        // 3. Create new profile
         const newProfile = await BusinessProfile.create({
             userId,
             tenantId,
@@ -77,7 +74,6 @@ const createBusinessProfileLogic = async (req) => {
         };
 
     } catch (error) {
-        // 4. Handle MongoDB unique index errors more clearly
         if (error.code === 11000) {
             return {
                 status: statusCode.CONFLICT,
@@ -198,25 +194,24 @@ const authUser = async (req, res) => {
 
         if (user && (await user.matchPassword(password))) {
             const token = generateToken(user._id, email);
-             const subject ='New Login Detected'
+            const subject ='New Login Detected'
             const text = `Hello ${user.username},\n\n`;
-           
 
-const html = `
-  <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
-    <p>Hello <strong>${user.username}</strong>,</p>
-    <p>A new login was detected to your <strong>Wachat</strong> account.</p>
-    <p>If this was not you, please <a href="https://yourapp.com/reset-password" target="_blank">reset your password</a> immediately.</p>
-    <p><strong>Login time:</strong> ${new Date().toLocaleString()}</p>
-    <br />
-    <p>Regards,<br />Wachat Security Team</p>
-  </div>
-`;
-            // Send login notification email
-                        await sendEmail(email, subject, text,getEmailTemplate(html) );
+            const html = `
+            <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
+                <p>Hello <strong>${user.username}</strong>,</p>
+                <p>A new login was detected to your <strong>Wachat</strong> account.</p>
+                <p>If this was not you, please <a href="https://yourapp.com/reset-password" target="_blank">reset your password</a> immediately.</p>
+                <p><strong>Login time:</strong> ${new Date().toLocaleString()}</p>
+                <br />
+                <p>Regards,<br />Wachat Security Team</p>
+            </div>
+            `;
+
+            await sendEmail(email, subject, text,getEmailTemplate(html) );
             
-            // await sendEmail(user.email, ,html= getEmailTemplate(html));
-
+            user.token = token;
+            await user.save();
 
             return res.json({
                 _id: user._id,
@@ -233,6 +228,7 @@ const html = `
         return res.status(500).json({ message: 'Server error' });
     }
 };
+
 const logoutUser = async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
 console.log('Logout token:', token);
