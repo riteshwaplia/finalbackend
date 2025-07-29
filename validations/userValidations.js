@@ -1,8 +1,13 @@
 const Joi = require("joi");
 
 exports.register = Joi.object({
-  username: Joi.string().trim().required().messages({
+  username: Joi.string()
+  .trim()
+  .pattern(/^[^<>]*$/)
+  .required()
+   .messages({
     "any.required": "Username is required",
+    "string.pattern.base": "Username must not contain '<' or '>' characters",
   }),
   email: Joi.string().trim().email().required().messages({
     "any.required": "Email is required",
@@ -34,9 +39,13 @@ exports.update = Joi.object({
       "string.email": "Please provide a valid email",
     }),
 
-  userName: Joi.string() // Match field exactly
+  userName:  Joi.string()
     .trim()
-    .optional(),
+    .pattern(/^[^<>]*$/)
+    .optional()
+    .messages({
+      "string.pattern.base": "Username must not contain '<' or '>' characters",
+    }),
 
   firstName: Joi.string()
     .trim()
