@@ -10,10 +10,16 @@ const titleValidation = Joi.string()
   });
 
 const createGroup = Joi.object({
-  title: titleValidation.required(),
+  title: Joi.string()
+    .pattern(/^[a-zA-Z0-9_]+$/)
+    .optional()
+    .messages({
+      "string.pattern.base": "Title can only contain letters, numbers, and underscores",
+      "string.base": "Title must be a string",
+    }),
   description: Joi.string().trim().allow('', null).optional().messages({
     "string.base": "Description must be a string",
-  }),
+  })
 });
 
 const updateGroup = Joi.object({
