@@ -9,7 +9,10 @@ const router = express.Router({ mergeParams: true }); // mergeParams is crucial 
 // All message routes will be prefixed with /api/projects/:projectId/messages
 
 // Send a single message
-router.post("/send", protect, responseHandler(messageController.sendMessageController));
+const validateRequest = require("../middleware/validate");
+const messageValidation = require("../validations/messageValidations");
+
+router.post("/send", protect, validateRequest(messageValidation.sendMessage), responseHandler(messageController.sendMessageController));
 
 // Send bulk messages from an Excel file
 // 'file' is the name of the input field in the form that contains the Excel file
