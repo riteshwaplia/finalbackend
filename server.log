@@ -682,3 +682,575 @@
 [28/7/2025, 18:22:09] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
 [28/7/2025, 18:22:40] Server running on port 5001
 [28/7/2025, 18:22:40] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 18:34:58] token "6887138c5ce662ddebdba1f4" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[28/7/2025, 18:38:06] 🔐 [updateUser] Called
+[28/7/2025, 18:38:06] 🧾 [updateUser] Param User ID: 6887138c5ce662ddebdba1f4
+[28/7/2025, 18:38:06] 🧾 [updateUser] Token User ID: "6887138c5ce662ddebdba1f4"
+[28/7/2025, 18:38:06] 🧾 [updateUser] Tenant ID: "68870730cf57d11281eb4363"
+[28/7/2025, 18:38:06] 📥 [updateUser] Incoming Body: {"name":"yogesh","email":"yogesh@gmail.com","companySize":"","timezone":"","state":"RAJASTHAN","country":"India","industry":"","currency":"","firstName":"","lastName":"","gender":"","dob":"","profilePicture":""}
+[28/7/2025, 18:38:06] 🔍 [updateUser] Finding user with ID, tenantId, and email...
+[28/7/2025, 18:38:06] ✏️ [updateUser] Updating user fields...
+[28/7/2025, 18:38:06] ✅ [updateUser] User updated successfully
+[29/7/2025, 10:11:54] Server running on port 5001
+[29/7/2025, 10:11:55] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:12:00] A user connected: J2jMjKqaaNwW429eAAAB
+[29/7/2025, 10:12:03] A user connected: tmlouzdWdKRcFgWbAAAD
+[29/7/2025, 10:22:43] User disconnected: tmlouzdWdKRcFgWbAAAD
+[29/7/2025, 10:22:43] User disconnected: J2jMjKqaaNwW429eAAAB
+[29/7/2025, 10:22:46] A user connected: x9xDIIPc73kDfPJaAAAF
+[29/7/2025, 10:22:47] A user connected: k69MwmHv9mwnO7DDAAAH
+[29/7/2025, 10:27:53] A user connected: Lr31y4Xy-CmT8y77AAAK
+[29/7/2025, 10:27:53] A user connected: tFa6jWP9n2wpbIZhAAAL
+[29/7/2025, 10:28:25] User disconnected: Lr31y4Xy-CmT8y77AAAK
+[29/7/2025, 10:28:25] User disconnected: tFa6jWP9n2wpbIZhAAAL
+[29/7/2025, 10:28:27] A user connected: LrokwXrJeuUjWLM1AAAO
+[29/7/2025, 10:28:27] A user connected: 4YCr87QscKDB4Q36AAAP
+[29/7/2025, 10:31:13] User disconnected: 4YCr87QscKDB4Q36AAAP
+[29/7/2025, 10:31:13] User disconnected: LrokwXrJeuUjWLM1AAAO
+[29/7/2025, 10:31:16] A user connected: a3SggV5oU1596fx0AAAS
+[29/7/2025, 10:31:16] A user connected: p0S7uPLsh1YD0YEKAAAT
+[29/7/2025, 10:33:55] User disconnected: a3SggV5oU1596fx0AAAS
+[29/7/2025, 10:33:55] User disconnected: p0S7uPLsh1YD0YEKAAAT
+[29/7/2025, 10:33:58] A user connected: E0DWMNyVu-GnvC6lAAAW
+[29/7/2025, 10:33:58] A user connected: oFbY-4mn0POqvDhIAAAX
+[29/7/2025, 10:33:58] User disconnected: oFbY-4mn0POqvDhIAAAX
+[29/7/2025, 10:33:58] User disconnected: E0DWMNyVu-GnvC6lAAAW
+[29/7/2025, 10:34:03] User disconnected: x9xDIIPc73kDfPJaAAAF
+[29/7/2025, 10:34:03] User disconnected: k69MwmHv9mwnO7DDAAAH
+[29/7/2025, 10:34:07] A user connected: xw2R7Bf8Ul2qr1t6AAAZ
+[29/7/2025, 10:34:08] A user connected: VwCL1x54aLW1f_TqAAAb
+[29/7/2025, 10:36:47] A user connected: pYBw5w7u2aIDTqp7AAAe
+[29/7/2025, 10:36:47] A user connected: rfUKBPjyxV_wTF4TAAAf
+[29/7/2025, 10:38:35] User disconnected: VwCL1x54aLW1f_TqAAAb
+[29/7/2025, 10:38:35] User disconnected: xw2R7Bf8Ul2qr1t6AAAZ
+[29/7/2025, 10:38:37] A user connected: plTpMWvnQgRKhsKTAAAh
+[29/7/2025, 10:38:37] A user connected: eMPlUdjbv4_3J9-LAAAj
+[29/7/2025, 10:39:28] User disconnected: plTpMWvnQgRKhsKTAAAh
+[29/7/2025, 10:39:28] User disconnected: eMPlUdjbv4_3J9-LAAAj
+[29/7/2025, 10:40:27] A user connected: Tk0ZHZs1khspkRN6AAAm
+[29/7/2025, 10:40:27] A user connected: C6_Oiut7KQh0wU9JAAAn
+[29/7/2025, 10:40:31] User disconnected: rfUKBPjyxV_wTF4TAAAf
+[29/7/2025, 10:40:31] User disconnected: pYBw5w7u2aIDTqp7AAAe
+[29/7/2025, 10:40:37] A user connected: 3o6AGtWPjLf5wW-1AAAq
+[29/7/2025, 10:40:37] A user connected: yVmUnhLTisELjJFvAAAr
+[29/7/2025, 10:40:39] User disconnected: C6_Oiut7KQh0wU9JAAAn
+[29/7/2025, 10:40:39] User disconnected: Tk0ZHZs1khspkRN6AAAm
+[29/7/2025, 10:41:57] Server running on port 5001
+[29/7/2025, 10:41:59] A user connected: rqapYJXr5V6VWjspAAAB
+[29/7/2025, 10:41:59] A user connected: KZi6R-qudeUABEHlAAAD
+[29/7/2025, 10:42:00] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:42:02] Server running on port 5001
+[29/7/2025, 10:42:03] A user connected: OVKZr7XNtBqfshsKAAAB
+[29/7/2025, 10:42:03] A user connected: vDnP7yZDabYJ2fpSAAAD
+[29/7/2025, 10:42:03] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:42:06] Server running on port 5001
+[29/7/2025, 10:42:07] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:42:07] A user connected: NrcTydGymUiQ3IbeAAAB
+[29/7/2025, 10:42:08] A user connected: O4I_j7Yvr4eIzst9AAAD
+[29/7/2025, 10:42:23] Server running on port 5001
+[29/7/2025, 10:42:23] A user connected: UWO6-OhKWJWt7PK5AAAB
+[29/7/2025, 10:42:23] A user connected: kkWJdaXWb5eiQ9lsAAAD
+[29/7/2025, 10:42:26] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:42:29] Server running on port 5001
+[29/7/2025, 10:42:29] A user connected: xlxDuCDaTbW4pb_zAAAB
+[29/7/2025, 10:42:30] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:42:32] A user connected: IzD_8V7NnAnh_YBvAAAD
+[29/7/2025, 10:42:40] Server running on port 5001
+[29/7/2025, 10:42:40] A user connected: dcoZkEvxm3WAPW2yAAAB
+[29/7/2025, 10:42:40] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:42:42] A user connected: YJEi9Md7yFxBEV-kAAAD
+[29/7/2025, 10:42:51] Server running on port 5001
+[29/7/2025, 10:42:51] A user connected: fmEeJFr3fHJrdaNfAAAB
+[29/7/2025, 10:42:52] A user connected: ZKXvMxle7wIkzZRLAAAD
+[29/7/2025, 10:42:57] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:43:06] Server running on port 5001
+[29/7/2025, 10:43:06] A user connected: OVnl9CZzm-KBlMRuAAAB
+[29/7/2025, 10:43:07] A user connected: 5Em2KkRdipBstu5OAAAD
+[29/7/2025, 10:43:07] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:43:22] Server running on port 5001
+[29/7/2025, 10:43:22] A user connected: yoHj3X3n4ueEZ0onAAAB
+[29/7/2025, 10:43:22] A user connected: jL_Q4_C8v1m7AP89AAAD
+[29/7/2025, 10:43:23] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:43:46] Server running on port 5001
+[29/7/2025, 10:43:47] A user connected: WDoycgjnm5BFgKvmAAAB
+[29/7/2025, 10:43:47] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:43:48] A user connected: uYuBOBiiWIsYzz7OAAAD
+[29/7/2025, 10:43:50] Server running on port 5001
+[29/7/2025, 10:43:50] A user connected: NmnmacPPlPaM3o-zAAAB
+[29/7/2025, 10:43:51] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:43:52] A user connected: qgEMXp9EyXdWUQ1-AAAD
+[29/7/2025, 10:44:14] Server running on port 5001
+[29/7/2025, 10:44:14] A user connected: socrp67NDjnnr5VKAAAB
+[29/7/2025, 10:44:15] A user connected: dFXDYnzR1HRPCsXCAAAD
+[29/7/2025, 10:44:15] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:44:44] Server running on port 5001
+[29/7/2025, 10:44:44] A user connected: nd__MSySxH0EXHyPAAAB
+[29/7/2025, 10:44:44] A user connected: j60TxbPyVVciXib-AAAD
+[29/7/2025, 10:44:45] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:45:03] User disconnected: nd__MSySxH0EXHyPAAAB
+[29/7/2025, 10:45:03] User disconnected: j60TxbPyVVciXib-AAAD
+[29/7/2025, 10:45:03] A user connected: U_kJAsrBM_Wy6hhRAAAG
+[29/7/2025, 10:45:03] A user connected: CufhdpBLYMl-KF5GAAAH
+[29/7/2025, 10:45:20] User disconnected: U_kJAsrBM_Wy6hhRAAAG
+[29/7/2025, 10:45:20] User disconnected: CufhdpBLYMl-KF5GAAAH
+[29/7/2025, 10:45:21] A user connected: g0g6gwN1gjJjnMpxAAAK
+[29/7/2025, 10:45:21] A user connected: 4CN7Ir-oyyu5JShjAAAL
+[29/7/2025, 10:45:56] User disconnected: 4CN7Ir-oyyu5JShjAAAL
+[29/7/2025, 10:45:56] User disconnected: g0g6gwN1gjJjnMpxAAAK
+[29/7/2025, 10:45:59] A user connected: gwDgLTwJ6LenTIuBAAAO
+[29/7/2025, 10:45:59] A user connected: 8OsiDZwlYX8yTuA7AAAP
+[29/7/2025, 10:49:24] User disconnected: 8OsiDZwlYX8yTuA7AAAP
+[29/7/2025, 10:49:24] User disconnected: gwDgLTwJ6LenTIuBAAAO
+[29/7/2025, 10:49:27] A user connected: GeXDp0Wjs84pTJIZAAAS
+[29/7/2025, 10:49:27] A user connected: v39TkJnhrJ6kV_TSAAAT
+[29/7/2025, 10:51:55] User disconnected: GeXDp0Wjs84pTJIZAAAS
+[29/7/2025, 10:51:55] User disconnected: v39TkJnhrJ6kV_TSAAAT
+[29/7/2025, 10:51:58] A user connected: ODs085WE3o7UrWTzAAAW
+[29/7/2025, 10:51:58] A user connected: 90R6YfQDagMM6RDxAAAX
+[29/7/2025, 10:52:31] User disconnected: 90R6YfQDagMM6RDxAAAX
+[29/7/2025, 10:52:31] User disconnected: ODs085WE3o7UrWTzAAAW
+[29/7/2025, 10:52:33] A user connected: yRw9gh3PbQULdWRvAAAa
+[29/7/2025, 10:52:33] A user connected: KIsp5E00OUz2C1XfAAAb
+[29/7/2025, 10:53:15] User disconnected: yRw9gh3PbQULdWRvAAAa
+[29/7/2025, 10:53:15] User disconnected: KIsp5E00OUz2C1XfAAAb
+[29/7/2025, 10:57:56] A user connected: oV77YYJRMkfxoVrfAAAe
+[29/7/2025, 10:57:56] A user connected: 6X5Bq4ktEEdISfBPAAAf
+[29/7/2025, 10:58:58] User disconnected: oV77YYJRMkfxoVrfAAAe
+[29/7/2025, 10:58:58] User disconnected: 6X5Bq4ktEEdISfBPAAAf
+[29/7/2025, 10:59:00] A user connected: PRb2GhKaivj6o2saAAAi
+[29/7/2025, 10:59:00] A user connected: 7uN_Ahji_PBRmMhuAAAj
+[29/7/2025, 10:59:55] Server running on port 5001
+[29/7/2025, 10:59:57] A user connected: RlZVIaMrWv0VxJYoAAAB
+[29/7/2025, 10:59:57] A user connected: QGjBLvi1ib58R-zrAAAD
+[29/7/2025, 10:59:59] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 11:00:32] Server running on port 5001
+[29/7/2025, 11:00:32] A user connected: 3GNLpb_dqo2b44SPAAAB
+[29/7/2025, 11:00:32] A user connected: JOPR-qIMOu-_abbmAAAD
+[29/7/2025, 11:00:33] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 11:01:51] User disconnected: 3GNLpb_dqo2b44SPAAAB
+[29/7/2025, 11:01:51] User disconnected: JOPR-qIMOu-_abbmAAAD
+[29/7/2025, 11:01:53] A user connected: 8Eng--XfjYdaW1orAAAG
+[29/7/2025, 11:01:53] A user connected: ypbLNCrr2jmLb_dAAAAH
+[29/7/2025, 11:03:04] Server running on port 5001
+[29/7/2025, 11:03:04] A user connected: 2tc6ECJ3ya3di6zdAAAB
+[29/7/2025, 11:03:05] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 11:03:05] A user connected: sE6Brrxrlv2pj8BxAAAD
+[29/7/2025, 11:03:24] User disconnected: 2tc6ECJ3ya3di6zdAAAB
+[29/7/2025, 11:03:24] User disconnected: sE6Brrxrlv2pj8BxAAAD
+[29/7/2025, 11:03:26] A user connected: bNDxMuSAnAlEX_WsAAAG
+[29/7/2025, 11:03:26] A user connected: cjOob5sNx9YGUMzZAAAH
+[29/7/2025, 11:04:27] A user connected: oB-R0oR48nEOz5doAAAK
+[29/7/2025, 11:04:27] A user connected: IRbqMUnDfYzb8dNHAAAL
+[29/7/2025, 11:05:32] Server running on port 5001
+[29/7/2025, 11:05:32] A user connected: fM4d7mN-nFqlityZAAAB
+[29/7/2025, 11:05:32] A user connected: YR7fxDrjCbgSwj_JAAAD
+[29/7/2025, 11:05:32] A user connected: u9FNkHlwRD7ZWqdUAAAF
+[29/7/2025, 11:05:33] A user connected: peD8NPVuNp-HKfcoAAAH
+[29/7/2025, 11:05:33] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 11:06:35] User disconnected: u9FNkHlwRD7ZWqdUAAAF
+[29/7/2025, 11:06:35] User disconnected: YR7fxDrjCbgSwj_JAAAD
+[29/7/2025, 11:06:37] A user connected: 8OrSt1RDQRjbfxdhAAAK
+[29/7/2025, 11:06:37] A user connected: hDTscu6VeTfLHrDdAAAL
+[29/7/2025, 11:11:11] A user connected: 7UWob2lJZnLQc44cAAAN
+[29/7/2025, 11:12:43] User disconnected: fM4d7mN-nFqlityZAAAB
+[29/7/2025, 11:12:43] User disconnected: 7UWob2lJZnLQc44cAAAN
+[29/7/2025, 11:12:43] User disconnected: peD8NPVuNp-HKfcoAAAH
+[29/7/2025, 11:20:48] User disconnected: hDTscu6VeTfLHrDdAAAL
+[29/7/2025, 11:20:48] User disconnected: 8OrSt1RDQRjbfxdhAAAK
+[29/7/2025, 11:44:49] Server running on port 5001
+[29/7/2025, 11:44:52] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 11:45:00] Server running on port 5001
+[29/7/2025, 11:45:02] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 11:45:05] Server running on port 5001
+[29/7/2025, 11:45:06] Server running on port 5001
+[29/7/2025, 11:45:07] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 11:45:09] Server running on port 5001
+[29/7/2025, 11:45:11] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 11:49:24] A user connected: eZJJAyGrvHBkY_4gAAAC
+[29/7/2025, 11:49:24] A user connected: ZergICf25t0pHCtpAAAD
+[29/7/2025, 11:49:42] User disconnected: eZJJAyGrvHBkY_4gAAAC
+[29/7/2025, 11:49:42] User disconnected: ZergICf25t0pHCtpAAAD
+[29/7/2025, 11:49:45] A user connected: ZhyF2CdUQpO9VoeOAAAG
+[29/7/2025, 11:49:45] A user connected: 8kC0bXZXe1vn_0zlAAAH
+[29/7/2025, 11:49:50] User disconnected: ZhyF2CdUQpO9VoeOAAAG
+[29/7/2025, 11:49:50] User disconnected: 8kC0bXZXe1vn_0zlAAAH
+[29/7/2025, 11:49:52] A user connected: 5v6mOPklc8klEK9FAAAL
+[29/7/2025, 11:49:52] A user connected: u7E8Hf7iH23cfaaEAAAM
+[29/7/2025, 11:49:52] A user connected: OM-8WPCMhQpYZzqNAAAN
+[29/7/2025, 11:50:49] User disconnected: 5v6mOPklc8klEK9FAAAL
+[29/7/2025, 11:50:49] User disconnected: OM-8WPCMhQpYZzqNAAAN
+[29/7/2025, 11:50:49] User disconnected: u7E8Hf7iH23cfaaEAAAM
+[29/7/2025, 12:05:11] A user connected: b-6kOwJlviiPgw6IAAAR
+[29/7/2025, 12:05:11] A user connected: YMl7kQXrye8orqVsAAAS
+[29/7/2025, 12:05:11] A user connected: cEgAiVzxlFYoxh6TAAAT
+[29/7/2025, 12:06:28] token "688714615ce662ddebdba24d" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 12:06:42] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:06:44] Meta API response for template sync: {"data":[{"name":"hello_world","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"Hello World"},{"type":"BODY","text":"Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."},{"type":"FOOTER","text":"WhatsApp Business Platform sample message"}],"language":"en_US","status":"APPROVED","category":"UTILITY","id":"1910399639718840"},{"name":"button_template","parameter_format":"POSITIONAL","components":[{"type":"BODY","text":"Hello, This template is for testing purpose."},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}],"language":"en","status":"APPROVED","category":"MARKETING","sub_category":"CUSTOM","id":"2440442226336876"},{"name":"test_image","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/511440978_723645490451051_7874677363281472032_n.jpg?ccb=1-7&_nc_sid=8b1bef&_nc_ohc=zvGRm3uUldAQ7kNvwEDVG1B&_nc_oc=AdmyzOdcsDRS4hHw7tx4y4z18Tbe-WSa9w3-UlhD7Lm7wMbLNgGGuK21Nfl-Fo3sYvmJaAbpsQD5eYEbwHmoFFoZ&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=A1RnGESI8Z07csJ3m9nLdg&oh=01_Q5Aa2AFz_zkQscu7otIrKA4ew3wIfoAEKH2uds60z8uoSuKkqQ&oe=68AFD38B"]}},{"type":"BODY","text":"This is image for testing."}],"language":"en","status":"APPROVED","category":"MARKETING","sub_category":"CUSTOM","id":"723645487117718"},{"name":"carousel_template","parameter_format":"POSITIONAL","components":[{"type":"BODY","text":"helo i am from testing team ho are you bro {{1}}","example":{"body_text":[["Example_1"]]}},{"type":"CAROUSEL","cards":[{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/522058172_1723844184904837_5266955580549759704_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=LczlYt143CUQ7kNvwGeyBHf&_nc_oc=AdlYpcvNzA1bwGA_zjZf1Xv33FaTgrT3ibxnmbjidShaQNZTq5n92X4Ep87HBikEa6-fPXkwiI14LV5yQIIVEh9Y&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=A1RnGESI8Z07csJ3m9nLdg&oh=01_Q5Aa2AHE_Gp5StjMAFBL7ld4Mu6JQJRUZSXuRjmFwvSvayK-xQ&oe=68AFC9FE"]}},{"type":"BODY","text":"hello i am from testing team {{1}} hoe are you bro good na {{2}} dgf ok ok","example":{"body_text":[["Example_1","Example_2"]]}},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]},{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/522058172_1181320383752587_8140949986512136819_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=2GI5Ax7XAK8Q7kNvwHXy4mL&_nc_oc=AdkQA5Hs_hSUj8pdyKLpnIuAnLb5232cGYYCRQbsLmuURTxFUNqPNsZ_xOnX9oJU5YExTadayPBr2UX_YUWp6ilU&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=A1RnGESI8Z07csJ3m9nLdg&oh=01_Q5Aa2AFhz4-6moGitQHticuqikk8d_c-zcOvHrdfyqzQ4lWFWA&oe=68AFF082"]}},{"type":"BODY","text":"eh fdgf dfgdf dfdfgd dgdf ddfgd sdfggd ddg {{1}} fhfg dfgdf dfgdf dfgdf {{2}}","example":{"body_text":[["Example_1","Example_2"]]}},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]}]}],"language":"af","status":"APPROVED","category":"MARKETING","id":"4076615632579811"},{"name":"testimg","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491878467_2317125712023525_8830204382430147073_n.jpg?ccb=1-7&_nc_sid=8b1bef&_nc_ohc=SdwDeofGR1UQ7kNvwHWzAXp&_nc_oc=AdmUF7AjMS6dUXQ8yopGA0rM5VDqFO54dlvL3AsI9J797b7df1tGZhWCfseKwxH2MZ05Uew1Lqwd17XAlerc5h7b&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=A1RnGESI8Z07csJ3m9nLdg&oh=01_Q5Aa2AENaWBEn8ROnKKSpX9oF04wJH2k-OWWtnDLLf-NZPt1gA&oe=68AFF014"]}},{"type":"BODY","text":"Hello testing image to send to user with some variable in the body to test. {{1}} kumar also . hare i am writing more text to not get reject . this very good if you are in the good work for sending templates .","example":{"body_text":[["test"]]}},{"type":"FOOTER","text":"type 'STOP' to stop services"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Talk to Expert"},{"type":"URL","text":"Go to website","url":"https://sabnode.com/"},{"type":"PHONE_NUMBER","text":"Call Now","phone_number":"+918757011172"}]}],"language":"en","status":"APPROVED","category":"MARKETING","sub_category":"CUSTOM","id":"2317125708690192"}],"paging":{"cursors":{"before":"MAZDZD","after":"MjQZD"}}}
+[29/7/2025, 12:06:44] Processing Meta template: hello_world (en_US)
+[29/7/2025, 12:06:45] Processing Meta template: button_template (en)
+[29/7/2025, 12:06:45] Processing Meta template: test_image (en)
+[29/7/2025, 12:06:45] Processing Meta template: carousel_template (af)
+[29/7/2025, 12:06:45] Processing Meta template: testimg (en)
+[29/7/2025, 12:06:46] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:09:35] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:09:38] Socket b-6kOwJlviiPgw6IAAAR joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:09:38] Socket b-6kOwJlviiPgw6IAAAR joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:09:38] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:09:44] Socket b-6kOwJlviiPgw6IAAAR joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:09:44] Socket b-6kOwJlviiPgw6IAAAR joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:09:56] Socket b-6kOwJlviiPgw6IAAAR joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:09:56] Socket b-6kOwJlviiPgw6IAAAR joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:09:57] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:16:50] Socket b-6kOwJlviiPgw6IAAAR joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:16:50] Socket b-6kOwJlviiPgw6IAAAR joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:21:15] User disconnected: cEgAiVzxlFYoxh6TAAAT
+[29/7/2025, 12:21:15] User disconnected: YMl7kQXrye8orqVsAAAS
+[29/7/2025, 12:21:15] User disconnected: b-6kOwJlviiPgw6IAAAR
+[29/7/2025, 12:21:20] A user connected: hLT0neB3O64la5jUAAAX
+[29/7/2025, 12:21:20] A user connected: 4_ctRK2o6cOGOJ3PAAAY
+[29/7/2025, 12:21:20] A user connected: 8HAc1U2XftTetQzeAAAZ
+[29/7/2025, 12:21:20] Socket hLT0neB3O64la5jUAAAX joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:21:20] Socket hLT0neB3O64la5jUAAAX joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:21:21] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:21:21] User disconnected: hLT0neB3O64la5jUAAAX
+[29/7/2025, 12:21:21] User disconnected: 8HAc1U2XftTetQzeAAAZ
+[29/7/2025, 12:21:21] User disconnected: 4_ctRK2o6cOGOJ3PAAAY
+[29/7/2025, 12:21:21] A user connected: vUYX-g7Gql6xUEnKAAAd
+[29/7/2025, 12:21:21] A user connected: 5Mw78px5j38r-o35AAAe
+[29/7/2025, 12:21:21] A user connected: K_7vPqzc4NFoWO7eAAAf
+[29/7/2025, 12:21:22] Socket vUYX-g7Gql6xUEnKAAAd joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:21:22] Socket vUYX-g7Gql6xUEnKAAAd joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:21:23] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:21:26] User disconnected: K_7vPqzc4NFoWO7eAAAf
+[29/7/2025, 12:21:26] User disconnected: 5Mw78px5j38r-o35AAAe
+[29/7/2025, 12:21:26] User disconnected: vUYX-g7Gql6xUEnKAAAd
+[29/7/2025, 12:21:26] A user connected: RnwIn03yXuLZr9bQAAAj
+[29/7/2025, 12:21:26] A user connected: IjO66GJ3MjHOOrr4AAAk
+[29/7/2025, 12:21:26] A user connected: xLp46y-QCEdeKU_rAAAl
+[29/7/2025, 12:22:43] User disconnected: xLp46y-QCEdeKU_rAAAl
+[29/7/2025, 12:22:43] User disconnected: IjO66GJ3MjHOOrr4AAAk
+[29/7/2025, 12:22:43] User disconnected: RnwIn03yXuLZr9bQAAAj
+[29/7/2025, 12:22:46] A user connected: yAe-tzMvAhAOgiDrAAAp
+[29/7/2025, 12:22:46] A user connected: yTbi5ocn9D326IppAAAq
+[29/7/2025, 12:22:46] A user connected: JUWKa5vSqaz1tBjXAAAr
+[29/7/2025, 12:25:01] A user connected: -y6pYchjfU_9CXTkAAAt
+[29/7/2025, 12:25:02] A user connected: JQXi5BLuGza_vYz7AAAv
+[29/7/2025, 12:25:03] A user connected: L5JD4KcVm9D_196XAAAx
+[29/7/2025, 12:25:14] token "688726580f70016036a6af53" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 12:25:16] User disconnected: JUWKa5vSqaz1tBjXAAAr
+[29/7/2025, 12:25:16] User disconnected: yTbi5ocn9D326IppAAAq
+[29/7/2025, 12:25:16] User disconnected: yAe-tzMvAhAOgiDrAAAp
+[29/7/2025, 12:25:19] A user connected: bOU5AuQanG2SEWrdAAA1
+[29/7/2025, 12:25:19] A user connected: N13Bx3T_E0_8C3QWAAA2
+[29/7/2025, 12:25:19] A user connected: OxArcz73EN9rb_pjAAA3
+[29/7/2025, 12:25:23] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:26:29] 🟡 Resumable Upload params: {"facebookUrl":"https://graph.facebook.com","graphVersion":"v19.0","appIdUsedForUploads":"1552905692540289","accessToken":true,"mimeType":"image/jpeg","fileSize":231810}
+[29/7/2025, 12:26:29] Resumable Upload Init URL: https://graph.facebook.com/v19.0/763282839597862/uploads
+[29/7/2025, 12:26:30] ✅ Init upload session response: {"id":"upload:MTphdHRhY2htZW50Ojk2YjBhZTE3LTc2M2EtNDQ5Ni05ZDVlLTkyNjE4MDczNTEwOT9maWxlX2xlbmd0aD0yMzE4MTAmZmlsZV90eXBlPWltYWdlJTJGanBlZw==?sig=ARYShTpiQe9ld15_ehw"}
+[29/7/2025, 12:26:30] Resumable Upload File URL: https://graph.facebook.com/v19.0/upload:MTphdHRhY2htZW50Ojk2YjBhZTE3LTc2M2EtNDQ5Ni05ZDVlLTkyNjE4MDczNTEwOT9maWxlX2xlbmd0aD0yMzE4MTAmZmlsZV90eXBlPWltYWdlJTJGanBlZw==?sig=ARYShTpiQe9ld15_ehw
+[29/7/2025, 12:26:32] ✅ Media uploaded to Meta: {"h":"4::aW1hZ2UvanBlZw==:ARYcGBaRO5ZEbTk2dcN6vA8jadyy-3-IuPJkdplqTR9VymaCJk5wP7-RDZqed7lGdoR3lrIrxZg-17Okd_Hp_n0jOttadoh8SQGB1eJrLF41gA:e:1754117792:763282839597862:61578691132929:ARYeQS5ZgcvzVxtrWNs"}
+[29/7/2025, 12:26:43] 🟡 Resumable Upload params: {"facebookUrl":"https://graph.facebook.com","graphVersion":"v19.0","appIdUsedForUploads":"1552905692540289","accessToken":true,"mimeType":"image/jpeg","fileSize":3949076}
+[29/7/2025, 12:26:43] Resumable Upload Init URL: https://graph.facebook.com/v19.0/763282839597862/uploads
+[29/7/2025, 12:26:44] ✅ Init upload session response: {"id":"upload:MTphdHRhY2htZW50OmI2NWFhMThlLWMwMDMtNGQ0Yi04NDkyLTI0MmJmMzI1NjkwMj9maWxlX2xlbmd0aD0zOTQ5MDc2JmZpbGVfdHlwZT1pbWFnZSUyRmpwZWc=?sig=ARbEgA6b-Z_ErILR44M"}
+[29/7/2025, 12:26:44] Resumable Upload File URL: https://graph.facebook.com/v19.0/upload:MTphdHRhY2htZW50OmI2NWFhMThlLWMwMDMtNGQ0Yi04NDkyLTI0MmJmMzI1NjkwMj9maWxlX2xlbmd0aD0zOTQ5MDc2JmZpbGVfdHlwZT1pbWFnZSUyRmpwZWc=?sig=ARbEgA6b-Z_ErILR44M
+[29/7/2025, 12:27:15] 🟡 Resumable Upload params: {"facebookUrl":"https://graph.facebook.com","graphVersion":"v19.0","appIdUsedForUploads":"1552905692540289","accessToken":true,"mimeType":"image/jpeg","fileSize":231810}
+[29/7/2025, 12:27:15] Resumable Upload Init URL: https://graph.facebook.com/v19.0/763282839597862/uploads
+[29/7/2025, 12:27:21] ✅ Init upload session response: {"id":"upload:MTphdHRhY2htZW50OjBkYzM2OTEzLWExYTItNDFkZi05MTM0LTlhYWFjNTA4MTY5ZD9maWxlX2xlbmd0aD0yMzE4MTAmZmlsZV90eXBlPWltYWdlJTJGanBlZw==?sig=ARav-q4XApb838iWk10"}
+[29/7/2025, 12:27:21] Resumable Upload File URL: https://graph.facebook.com/v19.0/upload:MTphdHRhY2htZW50OjBkYzM2OTEzLWExYTItNDFkZi05MTM0LTlhYWFjNTA4MTY5ZD9maWxlX2xlbmd0aD0yMzE4MTAmZmlsZV90eXBlPWltYWdlJTJGanBlZw==?sig=ARav-q4XApb838iWk10
+[29/7/2025, 12:27:31] ✅ Media uploaded to Meta: {"h":"4::aW1hZ2UvanBlZw==:ARbLfhrT8EFaYlxqLsI6wv-dWFUdqdQohTf67Dbbu5rOcUWbgmMI7jJdVZ6PyRZ5jSbYea3OG3_xAWIVeCfNqUXE07-kDLFw-yMf7hMQSUok0g:e:1754117851:763282839597862:61578691132929:ARZ7jCIeEGkTsH-hsAg"}
+[29/7/2025, 12:27:33] ✅ Media uploaded to Meta: {"h":"4::aW1hZ2UvanBlZw==:ARaeYsi7Ovvkrv4ywaI5FbCCy01Vrafy_FXekzGZHlmUJoitWuoX5Df7K6vHF5TnfSLTRDjDNm8FiwrlTygWmzUxJ-_5hDTPl-AOuIYcDnNtcg:e:1754117816:763282839597862:61578691132929:ARZ4GW2AIG_s82WW2U0\n4::aW1hZ2UvanBlZw==:ARZVfF0gIK_793AW6nJwi7eFiXVIrnb6wTR_tgLkTHQgCbLfGjdskhYLmNoPWCfr_-_W3wip7Y6WGY_NFW6hyE9AZXHvAwZedp0KIBkTjTrk8w:e:1754117835:763282839597862:61578691132929:ARbkCjlojHni21mUpCU\n4::aW1hZ2UvanBlZw==:ARZtdic93Mi5MAKd8eWUBug3OHqr0t7uZmc9BoLS1ETwHsqI30sxV8K6H3KT5QAzMgjy_oqAtqwcOUk0CcB00zF-nqiAIDIfpDWF8NN2Q65xng:e:1754117846:763282839597862:61578691132929:ARYrx1TpUawpd_M7oUc\n4::aW1hZ2UvanBlZw==:ARY8E7YWnDjmgcKuXBJErZZ2j2kSQgCuMmEUZvj9eKaEsmJj0IXQd84B4HIj0FZ7EunBH2Dtv4yw5MYkaIfuChAXALeMdqazGQHU0kpF4gz6dQ:e:1754117853:763282839597862:61578691132929:ARa1sT2iMc9uiV_4ED0"}
+[29/7/2025, 12:28:20] 🟡 Resumable Upload params: {"facebookUrl":"https://graph.facebook.com","graphVersion":"v19.0","appIdUsedForUploads":"1552905692540289","accessToken":true,"mimeType":"image/jpeg","fileSize":3949076}
+[29/7/2025, 12:28:20] Resumable Upload Init URL: https://graph.facebook.com/v19.0/763282839597862/uploads
+[29/7/2025, 12:28:21] ✅ Init upload session response: {"id":"upload:MTphdHRhY2htZW50OjgwODBmNDE0LWEyODEtNDc3Ni1iNDI5LWYxYmRmNDIwNTRiOD9maWxlX2xlbmd0aD0zOTQ5MDc2JmZpbGVfdHlwZT1pbWFnZSUyRmpwZWc=?sig=ARb5Bdzz1FDQ2TeJep4"}
+[29/7/2025, 12:28:21] Resumable Upload File URL: https://graph.facebook.com/v19.0/upload:MTphdHRhY2htZW50OjgwODBmNDE0LWEyODEtNDc3Ni1iNDI5LWYxYmRmNDIwNTRiOD9maWxlX2xlbmd0aD0zOTQ5MDc2JmZpbGVfdHlwZT1pbWFnZSUyRmpwZWc=?sig=ARb5Bdzz1FDQ2TeJep4
+[29/7/2025, 12:28:47] 🟡 Resumable Upload params: {"facebookUrl":"https://graph.facebook.com","graphVersion":"v19.0","appIdUsedForUploads":"1552905692540289","accessToken":true,"mimeType":"image/jpeg","fileSize":231810}
+[29/7/2025, 12:28:47] Resumable Upload Init URL: https://graph.facebook.com/v19.0/763282839597862/uploads
+[29/7/2025, 12:28:48] ✅ Init upload session response: {"id":"upload:MTphdHRhY2htZW50OmI3ZjAyZTE0LTU1OTUtNDBjOC05MTAzLTY3Nzc5NDNlNGY0Mj9maWxlX2xlbmd0aD0yMzE4MTAmZmlsZV90eXBlPWltYWdlJTJGanBlZw==?sig=ARar7_mxfP97XHj0ORU"}
+[29/7/2025, 12:28:48] Resumable Upload File URL: https://graph.facebook.com/v19.0/upload:MTphdHRhY2htZW50OmI3ZjAyZTE0LTU1OTUtNDBjOC05MTAzLTY3Nzc5NDNlNGY0Mj9maWxlX2xlbmd0aD0yMzE4MTAmZmlsZV90eXBlPWltYWdlJTJGanBlZw==?sig=ARar7_mxfP97XHj0ORU
+[29/7/2025, 12:28:51] ✅ Media uploaded to Meta: {"h":"4::aW1hZ2UvanBlZw==:ARZ0v4XbXmTKIHBUkY4FZ_Lq_cAQUPJ1uK_sIFKP0iZ28gP2PTIZQQj7LyO5rSbsLOtmxfZY3q1XE1ZbHyPX45RMv4FHE5ObZ8fiCNgUf6nshw:e:1754117930:763282839597862:61578691132929:ARZWcDSSKadu35QjHkE"}
+[29/7/2025, 12:28:59] ✅ Media uploaded to Meta: {"h":"4::aW1hZ2UvanBlZw==:ARaVeAvUZ1wmvI1EpHx856Or1KMZBOEdu_vt7Q2xBdSZscN5ari8OczEjtu_KIwvbnUccfbWz47Pedhl1jyppU_1mrABuTs_in2emPonc9Z1xA:e:1754117915:763282839597862:61578691132929:ARYQ3kr4cNTWpG3JnjU\n4::aW1hZ2UvanBlZw==:ARYidgt7qLzNgo3zEj-xsvzfprftY406a4P2qrKhnIxwGTvoD_9tW8fN4RZ6daHQpbMKAgI_tVdT4eh8Kb3wxG__0mjUzTcjLhmcH6gZJFtE5Q:e:1754117922:763282839597862:61578691132929:ARbGmltLF00dZfl5PXI\n4::aW1hZ2UvanBlZw==:ARZvzrhdkdP9tCIbSCPolm106aFZgGDYFj16FZIbZGzEJTLcy0MqkHV21CoJz9vhwnjjPXVq6dDtlJxTPtpxUMEehXxuDXxSZKi2UJHxEO8eMg:e:1754117934:763282839597862:61578691132929:ARYP8kl7s_rl9OkInrY\n4::aW1hZ2UvanBlZw==:ARaxT6NFYmhestLs4FTN024oWq5kF9pcvh-5kj6hID0KZ0D56gHhdBLMqUr7MeH8aTVM8oJ--pqurbYEedZwhF-1md0aTEIinByC3Mq42ixxdQ:e:1754117939:763282839597862:61578691132929:ARZwoIKfqOnY7YfoIh4"}
+[29/7/2025, 12:29:01] Sending carousel template creation request to Meta: {
+  "name": "template_carr1",
+  "language": "en",
+  "category": "MARKETING",
+  "components": [
+    {
+      "type": "BODY",
+      "text": "Hello carrousel "
+    },
+    {
+      "type": "CAROUSEL",
+      "cards": [
+        {
+          "components": [
+            {
+              "type": "HEADER",
+              "format": "IMAGE",
+              "example": {
+                "header_handle": [
+                  "4::aW1hZ2UvanBlZw==:ARYcGBaRO5ZEbTk2dcN6vA8jadyy-3-IuPJkdplqTR9VymaCJk5wP7-RDZqed7lGdoR3lrIrxZg-17Okd_Hp_n0jOttadoh8SQGB1eJrLF41gA:e:1754117792:763282839597862:61578691132929:ARYeQS5ZgcvzVxtrWNs"
+                ]
+              }
+            },
+            {
+              "type": "BODY",
+              "text": "Hello carrousel "
+            },
+            {
+              "type": "FOOTER",
+              "text": "Hello carrousel  foo"
+            },
+            {
+              "type": "BUTTONS",
+              "buttons": [
+                {
+                  "type": "QUICK_REPLY",
+                  "text": "Quick Reply"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "components": [
+            {
+              "type": "HEADER",
+              "format": "IMAGE",
+              "example": {
+                "header_handle": [
+                  "4::aW1hZ2UvanBlZw==:ARZ0v4XbXmTKIHBUkY4FZ_Lq_cAQUPJ1uK_sIFKP0iZ28gP2PTIZQQj7LyO5rSbsLOtmxfZY3q1XE1ZbHyPX45RMv4FHE5ObZ8fiCNgUf6nshw:e:1754117930:763282839597862:61578691132929:ARZWcDSSKadu35QjHkE"
+                ]
+              }
+            },
+            {
+              "type": "BODY",
+              "text": "Hello carrousel "
+            },
+            {
+              "type": "FOOTER",
+              "text": "Hello carrousel  foo"
+            },
+            {
+              "type": "BUTTONS",
+              "buttons": [
+                {
+                  "type": "QUICK_REPLY",
+                  "text": "Quick Reply"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+[29/7/2025, 12:29:05] Meta API carousel template creation response: {"id":"763467629488481","status":"PENDING","category":"MARKETING"}
+[29/7/2025, 12:29:08] Fetched 3 templates for page 1 of 1
+[29/7/2025, 12:29:38] Fetched 3 templates for page 1 of 1
+[29/7/2025, 12:30:39] Server running on port 5001
+[29/7/2025, 12:30:40] A user connected: z2WYsM1_AxiraFW9AAAB
+[29/7/2025, 12:30:40] A user connected: E5FsIcQluAKkUW7qAAAD
+[29/7/2025, 12:30:40] A user connected: XABhi7aY6wKkmUCRAAAF
+[29/7/2025, 12:30:41] A user connected: hLNIm9J3zTzN23WUAAAH
+[29/7/2025, 12:30:41] A user connected: f2t5PPyLxSwcTRBeAAAJ
+[29/7/2025, 12:30:42] A user connected: c_Sy9K8RpsBYtwdiAAAL
+[29/7/2025, 12:30:46] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 12:31:50] Server running on port 5001
+[29/7/2025, 12:31:50] A user connected: K4L9p_cysvOxCcA_AAAB
+[29/7/2025, 12:31:51] A user connected: bXHKuHiQancwI0QHAAAD
+[29/7/2025, 12:31:51] A user connected: LxCv34ehQ7P179t1AAAF
+[29/7/2025, 12:31:51] A user connected: q3WNv3vOJ5NDSC85AAAH
+[29/7/2025, 12:31:51] A user connected: lo6CoB2pmP86zRozAAAJ
+[29/7/2025, 12:31:51] A user connected: 8N7yWBds5BuAr1EbAAAL
+[29/7/2025, 12:31:57] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 12:32:43] token "688726580f70016036a6af53" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 12:33:04] token "688726580f70016036a6af53" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 12:35:32] Fetched 3 templates for page 1 of 1
+[29/7/2025, 12:35:50] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:36:02] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:36:04] Meta API response for template sync: {"data":[{"name":"template_carr1","parameter_format":"POSITIONAL","components":[{"type":"BODY","text":"Hello carrousel"},{"type":"CAROUSEL","cards":[{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873227_1998613507571652_6242519443063286607_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=YYnQQkv1u_UQ7kNvwHrHJIv&_nc_oc=Adn81AsbS669JtdFo0asrPeyMuVLookvYuB14Tr4oRy0djWMGZqI2ZC1Dvfiy48gIAYPdQfUhywE3g0uZmvPya8N&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=zWNAj9n4VobxjL1CQLo9nQ&oh=01_Q5Aa2AHcNCumrW6JqyuQEiwUenAS9zqJ3dzy0x66zEgIrxtM_A&oe=68AFF50F"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]},{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873612_1288885909253670_5933319049841578051_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=K9t2gCE8vhgQ7kNvwF1Tm0E&_nc_oc=Adn0cQAgaL_EtkhbXFzyj5P9z8UNC4tyokNRh1oBQaX0VUV7t95VNk5u7ayJz3gvocbM46A-K9eOvPTD2hqkxd6I&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=zWNAj9n4VobxjL1CQLo9nQ&oh=01_Q5Aa2AEwhz14YO3SCAZzMU8jLHYA-pUcY0iw-YS8fQzAp0AcAg&oe=68AFDC14"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"763467629488481"},{"name":"template_text","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"buy at best price"},{"type":"BODY","text":"hello ,buy at best price"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"715343711298235"},{"name":"hello_world","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"Hello World"},{"type":"BODY","text":"Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."},{"type":"FOOTER","text":"WhatsApp Business Platform sample message"}],"language":"en_US","status":"APPROVED","category":"UTILITY","id":"2492593544437655"}],"paging":{"cursors":{"before":"MAZDZD","after":"MjQZD"}}}
+[29/7/2025, 12:36:04] Processing Meta template: template_carr1 (en)
+[29/7/2025, 12:36:05] Processing Meta template: template_text (en)
+[29/7/2025, 12:36:05] Processing Meta template: hello_world (en_US)
+[29/7/2025, 12:36:06] Fetched 3 templates for page 1 of 1
+[29/7/2025, 12:36:12] Meta API response for template sync: {"data":[{"name":"template_carr1","parameter_format":"POSITIONAL","components":[{"type":"BODY","text":"Hello carrousel"},{"type":"CAROUSEL","cards":[{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873227_1998613507571652_6242519443063286607_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=YYnQQkv1u_UQ7kNvwHrHJIv&_nc_oc=Adn81AsbS669JtdFo0asrPeyMuVLookvYuB14Tr4oRy0djWMGZqI2ZC1Dvfiy48gIAYPdQfUhywE3g0uZmvPya8N&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=3b26Knsd_5_MLKUTRFJdsQ&oh=01_Q5Aa2AHyPO4ebhzEOn6KHaGNClJo67qK7v21LYkHxl-BrLqmtQ&oe=68AFF50F"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]},{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873612_1288885909253670_5933319049841578051_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=K9t2gCE8vhgQ7kNvwF1Tm0E&_nc_oc=Adn0cQAgaL_EtkhbXFzyj5P9z8UNC4tyokNRh1oBQaX0VUV7t95VNk5u7ayJz3gvocbM46A-K9eOvPTD2hqkxd6I&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=3b26Knsd_5_MLKUTRFJdsQ&oh=01_Q5Aa2AEwvprwO48emVUx2iuYtEoaE9ZViRNHg-kZBFsLVWHFMQ&oe=68AFDC14"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"763467629488481"},{"name":"template_text","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"buy at best price"},{"type":"BODY","text":"hello ,buy at best price"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"715343711298235"},{"name":"hello_world","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"Hello World"},{"type":"BODY","text":"Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."},{"type":"FOOTER","text":"WhatsApp Business Platform sample message"}],"language":"en_US","status":"APPROVED","category":"UTILITY","id":"2492593544437655"}],"paging":{"cursors":{"before":"MAZDZD","after":"MjQZD"}}}
+[29/7/2025, 12:36:12] Processing Meta template: template_carr1 (en)
+[29/7/2025, 12:36:12] Processing Meta template: template_text (en)
+[29/7/2025, 12:36:13] Processing Meta template: hello_world (en_US)
+[29/7/2025, 12:36:13] Fetched 3 templates for page 1 of 1
+[29/7/2025, 12:36:19] Meta API response for template sync: {"data":[{"name":"template_carr1","parameter_format":"POSITIONAL","components":[{"type":"BODY","text":"Hello carrousel"},{"type":"CAROUSEL","cards":[{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873227_1998613507571652_6242519443063286607_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=YYnQQkv1u_UQ7kNvwHrHJIv&_nc_oc=Adn81AsbS669JtdFo0asrPeyMuVLookvYuB14Tr4oRy0djWMGZqI2ZC1Dvfiy48gIAYPdQfUhywE3g0uZmvPya8N&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=cHIGtm9xCseTAXRNFXEDMg&oh=01_Q5Aa2AENwylt2sBJ5aoP7vRN8XAmvQhG28EmzN0e71JknVfc8A&oe=68AFF50F"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]},{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873612_1288885909253670_5933319049841578051_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=K9t2gCE8vhgQ7kNvwF1Tm0E&_nc_oc=Adn0cQAgaL_EtkhbXFzyj5P9z8UNC4tyokNRh1oBQaX0VUV7t95VNk5u7ayJz3gvocbM46A-K9eOvPTD2hqkxd6I&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=cHIGtm9xCseTAXRNFXEDMg&oh=01_Q5Aa2AF1wqIQzM8GZbNb1NApipwbsHlUKJRSOZZvxV9ExqAoPA&oe=68AFDC14"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"763467629488481"},{"name":"template_text","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"buy at best price"},{"type":"BODY","text":"hello ,buy at best price"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"715343711298235"},{"name":"hello_world","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"Hello World"},{"type":"BODY","text":"Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."},{"type":"FOOTER","text":"WhatsApp Business Platform sample message"}],"language":"en_US","status":"APPROVED","category":"UTILITY","id":"2492593544437655"}],"paging":{"cursors":{"before":"MAZDZD","after":"MjQZD"}}}
+[29/7/2025, 12:36:19] Processing Meta template: template_carr1 (en)
+[29/7/2025, 12:36:19] Processing Meta template: template_text (en)
+[29/7/2025, 12:36:19] Processing Meta template: hello_world (en_US)
+[29/7/2025, 12:36:20] Fetched 3 templates for page 1 of 1
+[29/7/2025, 12:36:32] Socket lo6CoB2pmP86zRozAAAJ joined room: 688726580f70016036a6af53
+[29/7/2025, 12:36:32] Socket lo6CoB2pmP86zRozAAAJ joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:36:44] Fetched 3 templates for page 1 of 1
+[29/7/2025, 12:36:50] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:36:52] User disconnected: K4L9p_cysvOxCcA_AAAB
+[29/7/2025, 12:36:52] User disconnected: 8N7yWBds5BuAr1EbAAAL
+[29/7/2025, 12:36:52] User disconnected: lo6CoB2pmP86zRozAAAJ
+[29/7/2025, 12:36:53] A user connected: 1FGNgDEi5RW_hQt7AAAN
+[29/7/2025, 12:36:53] A user connected: f2Fq8WR3z-PFpL0WAAAP
+[29/7/2025, 12:36:53] A user connected: Va5J-tPFLbC-lI5hAAAR
+[29/7/2025, 12:36:54] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:37:10] ✅ Deleted template from Meta: template_text
+[29/7/2025, 12:37:10] Fetched 1 templates for page 1 of 1
+[29/7/2025, 12:37:18] Meta API response for template sync: {"data":[{"name":"template_carr1","parameter_format":"POSITIONAL","components":[{"type":"BODY","text":"Hello carrousel"},{"type":"CAROUSEL","cards":[{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873227_1998613507571652_6242519443063286607_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=YYnQQkv1u_UQ7kNvwHrHJIv&_nc_oc=Adn81AsbS669JtdFo0asrPeyMuVLookvYuB14Tr4oRy0djWMGZqI2ZC1Dvfiy48gIAYPdQfUhywE3g0uZmvPya8N&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=oA94bP7b3tTbmtTvx7m3aA&oh=01_Q5Aa2AE_buYZ0roxwohstlgCikryFiOarQhYlpjCahOCXt7d0Q&oe=68AFF50F"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]},{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873612_1288885909253670_5933319049841578051_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=K9t2gCE8vhgQ7kNvwF1Tm0E&_nc_oc=Adn0cQAgaL_EtkhbXFzyj5P9z8UNC4tyokNRh1oBQaX0VUV7t95VNk5u7ayJz3gvocbM46A-K9eOvPTD2hqkxd6I&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=oA94bP7b3tTbmtTvx7m3aA&oh=01_Q5Aa2AHiBZWU5pU8ob5omJHaRQGf3lMHlcD4RnEZ_IlWiFcLaw&oe=68AFDC14"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"763467629488481"},{"name":"hello_world","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"Hello World"},{"type":"BODY","text":"Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."},{"type":"FOOTER","text":"WhatsApp Business Platform sample message"}],"language":"en_US","status":"APPROVED","category":"UTILITY","id":"2492593544437655"}],"paging":{"cursors":{"before":"MAZDZD","after":"MjQZD"}}}
+[29/7/2025, 12:37:18] Processing Meta template: template_carr1 (en)
+[29/7/2025, 12:37:18] Processing Meta template: hello_world (en_US)
+[29/7/2025, 12:37:19] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:37:32] Meta API response for template sync: {"data":[{"name":"template_carr1","parameter_format":"POSITIONAL","components":[{"type":"BODY","text":"Hello carrousel"},{"type":"CAROUSEL","cards":[{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873227_1998613507571652_6242519443063286607_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=YYnQQkv1u_UQ7kNvwHrHJIv&_nc_oc=Adn81AsbS669JtdFo0asrPeyMuVLookvYuB14Tr4oRy0djWMGZqI2ZC1Dvfiy48gIAYPdQfUhywE3g0uZmvPya8N&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=mNjmkt151OGlJVNwX08vsw&oh=01_Q5Aa2AEs6wl-yJ_VjZNY2WMxu5KBNC1OOt-QT4TdD1bEWVg0Xg&oe=68AFF50F"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]},{"components":[{"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491873612_1288885909253670_5933319049841578051_n.jpg?ccb=1-7&_nc_sid=a80384&_nc_ohc=K9t2gCE8vhgQ7kNvwF1Tm0E&_nc_oc=Adn0cQAgaL_EtkhbXFzyj5P9z8UNC4tyokNRh1oBQaX0VUV7t95VNk5u7ayJz3gvocbM46A-K9eOvPTD2hqkxd6I&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=mNjmkt151OGlJVNwX08vsw&oh=01_Q5Aa2AEyoJdkpW5S3-C_nvuTTfD4nsp2_Ozw3CjRMUoNCqUv2Q&oe=68AFDC14"]}},{"type":"BODY","text":"Hello carrousel"},{"type":"BUTTONS","buttons":[{"type":"QUICK_REPLY","text":"Quick Reply"}]}]}]}],"language":"en","status":"PENDING","category":"MARKETING","id":"763467629488481"},{"name":"hello_world","parameter_format":"POSITIONAL","components":[{"type":"HEADER","format":"TEXT","text":"Hello World"},{"type":"BODY","text":"Welcome and congratulations!! This message demonstrates your ability to send a WhatsApp message notification from the Cloud API, hosted by Meta. Thank you for taking the time to test with us."},{"type":"FOOTER","text":"WhatsApp Business Platform sample message"}],"language":"en_US","status":"APPROVED","category":"UTILITY","id":"2492593544437655"}],"paging":{"cursors":{"before":"MAZDZD","after":"MjQZD"}}}
+[29/7/2025, 12:37:32] Processing Meta template: template_carr1 (en)
+[29/7/2025, 12:37:32] Processing Meta template: hello_world (en_US)
+[29/7/2025, 12:37:33] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:37:52] Socket f2Fq8WR3z-PFpL0WAAAP joined room: 688726580f70016036a6af53
+[29/7/2025, 12:37:52] Socket f2Fq8WR3z-PFpL0WAAAP joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:38:15] Socket bXHKuHiQancwI0QHAAAD joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:38:15] Socket bXHKuHiQancwI0QHAAAD joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:38:40] A user connected: s3jGvlifTl3NmMz-AAAT
+[29/7/2025, 12:38:41] A user connected: VOcEF51JoF7vk5LuAAAV
+[29/7/2025, 12:38:41] A user connected: WPr7xvROfhYerBVuAAAX
+[29/7/2025, 12:39:20] User disconnected: bXHKuHiQancwI0QHAAAD
+[29/7/2025, 12:39:20] User disconnected: q3WNv3vOJ5NDSC85AAAH
+[29/7/2025, 12:39:20] User disconnected: LxCv34ehQ7P179t1AAAF
+[29/7/2025, 12:39:43] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:39:47] Socket Va5J-tPFLbC-lI5hAAAR joined room: 688726580f70016036a6af53
+[29/7/2025, 12:39:47] Socket Va5J-tPFLbC-lI5hAAAR joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:39:59] User disconnected: Va5J-tPFLbC-lI5hAAAR
+[29/7/2025, 12:39:59] User disconnected: f2Fq8WR3z-PFpL0WAAAP
+[29/7/2025, 12:39:59] User disconnected: 1FGNgDEi5RW_hQt7AAAN
+[29/7/2025, 12:40:00] A user connected: e5XmHm1Ra9ve0NV7AAAb
+[29/7/2025, 12:40:00] A user connected: 2objjEX3g44ObjWaAAAc
+[29/7/2025, 12:40:00] A user connected: 40uQWTBcvW9rhVS1AAAd
+[29/7/2025, 12:40:00] Socket 40uQWTBcvW9rhVS1AAAd joined room: 688726580f70016036a6af53
+[29/7/2025, 12:40:00] Socket 40uQWTBcvW9rhVS1AAAd joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:40:12] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:40:16] Socket 40uQWTBcvW9rhVS1AAAd joined room: 688726580f70016036a6af53
+[29/7/2025, 12:40:16] Socket 40uQWTBcvW9rhVS1AAAd joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:40:42] token "688714615ce662ddebdba24d" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 12:40:54] Socket 40uQWTBcvW9rhVS1AAAd joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:40:54] Socket 40uQWTBcvW9rhVS1AAAd joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:41:12] User disconnected: e5XmHm1Ra9ve0NV7AAAb
+[29/7/2025, 12:41:12] User disconnected: 40uQWTBcvW9rhVS1AAAd
+[29/7/2025, 12:41:12] User disconnected: 2objjEX3g44ObjWaAAAc
+[29/7/2025, 12:41:13] A user connected: bjOgy3-6hRWt2zS8AAAh
+[29/7/2025, 12:41:13] A user connected: 398arzwNL5k8g7EiAAAi
+[29/7/2025, 12:41:13] A user connected: jWNcWbz7635z4hsUAAAj
+[29/7/2025, 12:41:16] Socket jWNcWbz7635z4hsUAAAj joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:41:16] Socket jWNcWbz7635z4hsUAAAj joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:41:48] Fetched 5 templates for page 1 of 1
+[29/7/2025, 12:42:01] token "688726580f70016036a6af53" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 12:42:11] Socket jWNcWbz7635z4hsUAAAj joined room: 688726580f70016036a6af53
+[29/7/2025, 12:42:11] Socket jWNcWbz7635z4hsUAAAj joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:42:28] Socket 398arzwNL5k8g7EiAAAi joined room: 688726580f70016036a6af53
+[29/7/2025, 12:42:28] Socket 398arzwNL5k8g7EiAAAi joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:42:39] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:42:41] Socket 398arzwNL5k8g7EiAAAi joined room: 688726580f70016036a6af53
+[29/7/2025, 12:42:41] Socket 398arzwNL5k8g7EiAAAi joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:42:47] User disconnected: jWNcWbz7635z4hsUAAAj
+[29/7/2025, 12:42:47] User disconnected: 398arzwNL5k8g7EiAAAi
+[29/7/2025, 12:42:47] User disconnected: bjOgy3-6hRWt2zS8AAAh
+[29/7/2025, 12:42:48] A user connected: 4wyUqhLsHb8HuJgMAAAn
+[29/7/2025, 12:42:48] A user connected: euLgU9Y3hE_IVuLkAAAo
+[29/7/2025, 12:42:48] A user connected: rwpokgTwhHumFAzyAAAp
+[29/7/2025, 12:42:48] Socket euLgU9Y3hE_IVuLkAAAo joined room: 688726580f70016036a6af53
+[29/7/2025, 12:42:48] Socket euLgU9Y3hE_IVuLkAAAo joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:43:00] token "688726580f70016036a6af53" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 12:43:11] Socket rwpokgTwhHumFAzyAAAp joined room: 688726580f70016036a6af53
+[29/7/2025, 12:43:11] Socket rwpokgTwhHumFAzyAAAp joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:43:26] A user connected: mfAlw1Z4xBPONssKAAAt
+[29/7/2025, 12:43:26] A user connected: sVj5kCXYcrUtuLIyAAAu
+[29/7/2025, 12:43:26] A user connected: z6ONqGsq6JUVVx9TAAAv
+[29/7/2025, 12:43:26] Socket sVj5kCXYcrUtuLIyAAAu joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:43:26] Socket sVj5kCXYcrUtuLIyAAAu joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:43:30] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:43:38] Socket euLgU9Y3hE_IVuLkAAAo joined room: 688726580f70016036a6af53
+[29/7/2025, 12:43:38] Socket euLgU9Y3hE_IVuLkAAAo joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:45:00] imgageId 
+[29/7/2025, 12:45:08] imgageId 
+[29/7/2025, 12:45:08] Header component found: {"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491878467_2317125712023525_8830204382430147073_n.jpg?ccb=1-7&_nc_sid=8b1bef&_nc_ohc=SdwDeofGR1UQ7kNvwHWzAXp&_nc_oc=AdmUF7AjMS6dUXQ8yopGA0rM5VDqFO54dlvL3AsI9J797b7df1tGZhWCfseKwxH2MZ05Uew1Lqwd17XAlerc5h7b&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=A1RnGESI8Z07csJ3m9nLdg&oh=01_Q5Aa2AENaWBEn8ROnKKSpX9oF04wJH2k-OWWtnDLLf-NZPt1gA&oe=68AFF014"]}}
+[29/7/2025, 12:45:08] Header component found: {"type":"HEADER","format":"IMAGE","example":{"header_handle":["https://scontent.whatsapp.net/v/t61.29466-34/491878467_2317125712023525_8830204382430147073_n.jpg?ccb=1-7&_nc_sid=8b1bef&_nc_ohc=SdwDeofGR1UQ7kNvwHWzAXp&_nc_oc=AdmUF7AjMS6dUXQ8yopGA0rM5VDqFO54dlvL3AsI9J797b7df1tGZhWCfseKwxH2MZ05Uew1Lqwd17XAlerc5h7b&_nc_zt=3&_nc_ht=scontent.whatsapp.net&edm=AH51TzQEAAAA&_nc_gid=A1RnGESI8Z07csJ3m9nLdg&oh=01_Q5Aa2AENaWBEn8ROnKKSpX9oF04wJH2k-OWWtnDLLf-NZPt1gA&oe=68AFF014"]}}
+[29/7/2025, 12:45:48] User disconnected: mfAlw1Z4xBPONssKAAAt
+[29/7/2025, 12:45:48] User disconnected: z6ONqGsq6JUVVx9TAAAv
+[29/7/2025, 12:45:48] User disconnected: sVj5kCXYcrUtuLIyAAAu
+[29/7/2025, 12:45:49] imgageId 
+[29/7/2025, 12:46:43] imgageId 
+[29/7/2025, 12:46:50] User disconnected: 4wyUqhLsHb8HuJgMAAAn
+[29/7/2025, 12:46:50] User disconnected: rwpokgTwhHumFAzyAAAp
+[29/7/2025, 12:46:50] User disconnected: euLgU9Y3hE_IVuLkAAAo
+[29/7/2025, 12:46:51] A user connected: b1WKLimt-5VPIA-3AAAx
+[29/7/2025, 12:46:51] A user connected: YXbPH5CrlGTWa88YAAAz
+[29/7/2025, 12:46:51] A user connected: ZInJc_mxFMMVdLwuAAA1
+[29/7/2025, 12:46:52] Socket YXbPH5CrlGTWa88YAAAz joined room: 688726580f70016036a6af53
+[29/7/2025, 12:46:52] Socket YXbPH5CrlGTWa88YAAAz joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:47:10] A user connected: U9Kh1F8xqjvzYK_6AAA5
+[29/7/2025, 12:47:10] A user connected: 8x5SNX33mfEPIhC1AAA6
+[29/7/2025, 12:47:10] A user connected: AMXUPyY-Mk5j8_kXAAA7
+[29/7/2025, 12:47:10] Socket 8x5SNX33mfEPIhC1AAA6 joined room: 688714615ce662ddebdba24d
+[29/7/2025, 12:47:10] Socket 8x5SNX33mfEPIhC1AAA6 joined room: project-6888664a8f18dee34bfdfb78
+[29/7/2025, 12:49:42] User disconnected: U9Kh1F8xqjvzYK_6AAA5
+[29/7/2025, 12:49:42] User disconnected: AMXUPyY-Mk5j8_kXAAA7
+[29/7/2025, 12:49:42] User disconnected: 8x5SNX33mfEPIhC1AAA6
+[29/7/2025, 12:49:51] imgageId 
+[29/7/2025, 12:50:33] User disconnected: s3jGvlifTl3NmMz-AAAT
+[29/7/2025, 12:50:33] User disconnected: WPr7xvROfhYerBVuAAAX
+[29/7/2025, 12:50:33] User disconnected: VOcEF51JoF7vk5LuAAAV
+[29/7/2025, 12:50:33] A user connected: 9U_Wu3TR8TR5b49TAAA-
+[29/7/2025, 12:50:33] A user connected: eRM-dpRIrc4Yps3sAABA
+[29/7/2025, 12:50:33] A user connected: WaER0Oxh9XgBxjiwAABB
+[29/7/2025, 12:50:34] User disconnected: 9U_Wu3TR8TR5b49TAAA-
+[29/7/2025, 12:50:34] User disconnected: WaER0Oxh9XgBxjiwAABB
+[29/7/2025, 12:50:34] User disconnected: eRM-dpRIrc4Yps3sAABA
+[29/7/2025, 12:50:39] User disconnected: b1WKLimt-5VPIA-3AAAx
+[29/7/2025, 12:50:39] User disconnected: YXbPH5CrlGTWa88YAAAz
+[29/7/2025, 12:50:39] User disconnected: ZInJc_mxFMMVdLwuAAA1
+[29/7/2025, 12:50:43] A user connected: Fe-ohRBzkdF93-2mAABF
+[29/7/2025, 12:50:43] A user connected: IFkERqzwGPyS7P7PAABG
+[29/7/2025, 12:50:43] A user connected: qOoKLF5I-agzQy0LAABH
+[29/7/2025, 12:50:45] User disconnected: Fe-ohRBzkdF93-2mAABF
+[29/7/2025, 12:50:45] User disconnected: qOoKLF5I-agzQy0LAABH
+[29/7/2025, 12:50:45] User disconnected: IFkERqzwGPyS7P7PAABG
+[29/7/2025, 12:51:43] A user connected: PJXaxVzjlyR9v-EdAABJ
+[29/7/2025, 12:51:43] A user connected: zqNCnw3LYvHfsbb9AABL
+[29/7/2025, 12:51:43] A user connected: Kms5dx_aXHiF3bfYAABN
+[29/7/2025, 12:51:47] User disconnected: PJXaxVzjlyR9v-EdAABJ
+[29/7/2025, 12:51:47] User disconnected: Kms5dx_aXHiF3bfYAABN
+[29/7/2025, 12:51:47] User disconnected: zqNCnw3LYvHfsbb9AABL
+[29/7/2025, 12:51:47] A user connected: SMvjCH76kOdyr5lnAABQ
+[29/7/2025, 12:51:47] A user connected: s0lPimTSWjZH3jzbAABR
+[29/7/2025, 12:51:47] A user connected: VBu9M_3t9f5LYNkJAABT
+[29/7/2025, 12:51:52] Socket s0lPimTSWjZH3jzbAABR joined room: 688726580f70016036a6af53
+[29/7/2025, 12:51:52] Socket s0lPimTSWjZH3jzbAABR joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:52:06] imgageId 
+[29/7/2025, 12:55:00] imgageId 
+[29/7/2025, 12:58:52] Socket SMvjCH76kOdyr5lnAABQ joined room: 688726580f70016036a6af53
+[29/7/2025, 12:58:52] Socket SMvjCH76kOdyr5lnAABQ joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:58:53] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:59:03] Socket SMvjCH76kOdyr5lnAABQ joined room: 688726580f70016036a6af53
+[29/7/2025, 12:59:03] Socket SMvjCH76kOdyr5lnAABQ joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:59:03] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:59:05] User disconnected: SMvjCH76kOdyr5lnAABQ
+[29/7/2025, 12:59:05] User disconnected: VBu9M_3t9f5LYNkJAABT
+[29/7/2025, 12:59:05] User disconnected: s0lPimTSWjZH3jzbAABR
+[29/7/2025, 12:59:06] A user connected: -YHm1MoShEFnTohTAABV
+[29/7/2025, 12:59:06] A user connected: cqT35dsoqpw02RnXAABX
+[29/7/2025, 12:59:06] A user connected: qAToRaKZOtviz0VEAABZ
+[29/7/2025, 12:59:06] Socket -YHm1MoShEFnTohTAABV joined room: 688726580f70016036a6af53
+[29/7/2025, 12:59:06] Socket -YHm1MoShEFnTohTAABV joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 12:59:07] Fetched 2 templates for page 1 of 1
+[29/7/2025, 12:59:28] Socket cqT35dsoqpw02RnXAABX joined room: 688726580f70016036a6af53
+[29/7/2025, 12:59:28] Socket cqT35dsoqpw02RnXAABX joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 13:00:18] Socket -YHm1MoShEFnTohTAABV joined room: 688726580f70016036a6af53
+[29/7/2025, 13:00:18] Socket -YHm1MoShEFnTohTAABV joined room: project-6887719884440f002a8f00c8
+[29/7/2025, 13:00:18] Fetched 2 templates for page 1 of 1
+[29/7/2025, 13:02:50] User disconnected: -YHm1MoShEFnTohTAABV
+[29/7/2025, 13:02:50] User disconnected: cqT35dsoqpw02RnXAABX
+[29/7/2025, 13:02:50] User disconnected: qAToRaKZOtviz0VEAABZ
+[29/7/2025, 15:46:38] Server running on port 5001
+[29/7/2025, 15:46:40] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 15:47:05] Server running on port 5001
+[29/7/2025, 15:47:05] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 15:47:29] Server running on port 5001
+[29/7/2025, 15:47:29] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net

@@ -1,7 +1,7 @@
 // // server/services/flowService.js
-// const Flow = require('../models/Flow');
-// const { statusCode, resMessage } = require('../config/constants');
-// const Project = require("../models/Project");
+const Flow = require('../models/Flow');
+const { statusCode, resMessage } = require('../config/constants');
+const Project = require("../models/project");
 
 exports.create = async (req) => {
     try {
@@ -17,7 +17,6 @@ exports.create = async (req) => {
             }
         }
 
-        // Validate nodes and edges
         if (!Array.isArray(nodes) || nodes.length === 0) {
             return {
                 status: statusCode.BAD_REQUEST,
@@ -46,7 +45,6 @@ exports.create = async (req) => {
             };
         }
 
-        // Check for duplicate flow name within the project/user/tenant scope
         const existingFlow = await Flow.findOne({ name, projectId, userId, tenantId });
         if (existingFlow) {
             return {
@@ -56,12 +54,11 @@ exports.create = async (req) => {
             };
         }
 
-        // The triggerKeyword is now a direct field, not derived from a specific node
         if (!triggerKeyword || triggerKeyword.trim() === '') {
              return {
                 status: statusCode.BAD_REQUEST,
                 success: false,
-                message: resMessage.No_valid_entry_point, // Renamed for clarity
+                message: resMessage.No_valid_entry_point,
             };
         }
 
@@ -161,118 +158,118 @@ exports.getFlowById = async ({ flowId, projectId, userId, tenantId }) => {
     }
 };
 
-exports.updateFlow = async ({ flowId, projectId, userId, tenantId }, updateData) => {
-    if (!flowId || !projectId || !userId || !tenantId || !updateData) {
-        return {
-            status: statusCode.BAD_REQUEST,
-            success: false,
-            message: resMessage.Missing_required_fields + " (flowId, projectId, userId, tenantId, and updateData are required)."
-        };
-    }
+// exports.updateFlow = async ({ flowId, projectId, userId, tenantId }, updateData) => {
+//     if (!flowId || !projectId || !userId || !tenantId || !updateData) {
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.Missing_required_fields + " (flowId, projectId, userId, tenantId, and updateData are required)."
+//         };
+//     }
 
-    try {
-        if (updateData.name) {
-            const existingFlow = await Flow.findOne({
-                name: updateData.name,
-                projectId,
-                userId,
-                tenantId,
-                _id: { $ne: flowId }
-            });
-            if (existingFlow) {
-                return {
-                    status: statusCode.CONFLICT,
-                    success: false,
-                    message: resMessage.Flow_name_exists,
-                };
-            }
-        }
+//     try {
+//         if (updateData.name) {
+//             const existingFlow = await Flow.findOne({
+//                 name: updateData.name,
+//                 projectId,
+//                 userId,
+//                 tenantId,
+//                 _id: { $ne: flowId }
+//             });
+//             if (existingFlow) {
+//                 return {
+//                     status: statusCode.CONFLICT,
+//                     success: false,
+//                     message: resMessage.Flow_name_exists,
+//                 };
+//             }
+//         }
 
-        // Validate triggerKeyword if it's being updated
-        if (updateData.triggerKeyword !== undefined && updateData.triggerKeyword.trim() === '') {
-             return {
-                status: statusCode.BAD_REQUEST,
-                success: false,
-                message: resMessage.No_valid_entry_point,
-            };
-        }
+//         // Validate triggerKeyword if it's being updated
+//         if (updateData.triggerKeyword !== undefined && updateData.triggerKeyword.trim() === '') {
+//              return {
+//                 status: statusCode.BAD_REQUEST,
+//                 success: false,
+//                 message: resMessage.No_valid_entry_point,
+//             };
+//         }
 
 
-        const updatedFlow = await Flow.findOneAndUpdate(
-            { _id: flowId, projectId, userId, tenantId },
-            updateData,
-            { new: true, runValidators: true } 
-        ).lean();
+//         const updatedFlow = await Flow.findOneAndUpdate(
+//             { _id: flowId, projectId, userId, tenantId },
+//             updateData,
+//             { new: true, runValidators: true } 
+//         ).lean();
 
-        if (!updatedFlow) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.No_data_found + " (Flow not found or unauthorized)."
-            };
-        }
+//         if (!updatedFlow) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: resMessage.No_data_found + " (Flow not found or unauthorized)."
+//             };
+//         }
 
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Flow_updated_successfully,
-            data: updatedFlow,
-        };
-    } catch (error) {
-        console.error("Error updating flow:", error);
-        if (error.name === "CastError") {
-            return {
-                status: statusCode.BAD_REQUEST,
-                success: false,
-                message: "Invalid Flow ID format.",
-            };
-        }
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message || resMessage.Server_error,
-        };
-    }
-};
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Flow_updated_successfully,
+//             data: updatedFlow,
+//         };
+//     } catch (error) {
+//         console.error("Error updating flow:", error);
+//         if (error.name === "CastError") {
+//             return {
+//                 status: statusCode.BAD_REQUEST,
+//                 success: false,
+//                 message: "Invalid Flow ID format.",
+//             };
+//         }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: error.message || resMessage.Server_error,
+//         };
+//     }
+// };
 
-exports.deleteFlow = async ({ flowId, projectId, userId, tenantId }) => {
-    if (!flowId || !projectId || !userId || !tenantId) {
-        return {
-            status: statusCode.BAD_REQUEST,
-            success: false,
-            message: resMessage.Missing_required_fields + " (flowId, projectId, userId, tenantId are required)."
-        };
-    }
+// exports.deleteFlow = async ({ flowId, projectId, userId, tenantId }) => {
+//     if (!flowId || !projectId || !userId || !tenantId) {
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.Missing_required_fields + " (flowId, projectId, userId, tenantId are required)."
+//         };
+//     }
 
-    try {
-        const deletedFlow = await Flow.findOneAndDelete({ _id: flowId, projectId, userId, tenantId });
+//     try {
+//         const deletedFlow = await Flow.findOneAndDelete({ _id: flowId, projectId, userId, tenantId });
 
-        if (!deletedFlow) {
-            return {
-                status: statusCode.NOT_FOUND,
-                success: false,
-                message: resMessage.No_data_found + " (Flow not found or unauthorized)."
-            };
-        }
+//         if (!deletedFlow) {
+//             return {
+//                 status: statusCode.NOT_FOUND,
+//                 success: false,
+//                 message: resMessage.No_data_found + " (Flow not found or unauthorized)."
+//             };
+//         }
 
-        return {
-            status: statusCode.OK,
-            success: true,
-            message: resMessage.Flow_deleted_successfully,
-        };
-    } catch (error) {
-        console.error("Error deleting flow:", error);
-        if (error.name === "CastError") {
-            return {
-                status: statusCode.BAD_REQUEST,
-                success: false,
-                message: "Invalid Flow ID format.",
-            };
-        }
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message || resMessage.Server_error,
-        };
-    }
-};
+//         return {
+//             status: statusCode.OK,
+//             success: true,
+//             message: resMessage.Flow_deleted_successfully,
+//         };
+//     } catch (error) {
+//         console.error("Error deleting flow:", error);
+//         if (error.name === "CastError") {
+//             return {
+//                 status: statusCode.BAD_REQUEST,
+//                 success: false,
+//                 message: "Invalid Flow ID format.",
+//             };
+//         }
+//         return {
+//             status: statusCode.INTERNAL_SERVER_ERROR,
+//             success: false,
+//             message: error.message || resMessage.Server_error,
+//         };
+//     }
+// };
