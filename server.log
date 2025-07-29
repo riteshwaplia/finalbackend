@@ -682,3 +682,120 @@
 [28/7/2025, 18:22:09] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
 [28/7/2025, 18:22:40] Server running on port 5001
 [28/7/2025, 18:22:40] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[28/7/2025, 18:34:58] token "6887138c5ce662ddebdba1f4" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[28/7/2025, 18:38:06] 🔐 [updateUser] Called
+[28/7/2025, 18:38:06] 🧾 [updateUser] Param User ID: 6887138c5ce662ddebdba1f4
+[28/7/2025, 18:38:06] 🧾 [updateUser] Token User ID: "6887138c5ce662ddebdba1f4"
+[28/7/2025, 18:38:06] 🧾 [updateUser] Tenant ID: "68870730cf57d11281eb4363"
+[28/7/2025, 18:38:06] 📥 [updateUser] Incoming Body: {"name":"yogesh","email":"yogesh@gmail.com","companySize":"","timezone":"","state":"RAJASTHAN","country":"India","industry":"","currency":"","firstName":"","lastName":"","gender":"","dob":"","profilePicture":""}
+[28/7/2025, 18:38:06] 🔍 [updateUser] Finding user with ID, tenantId, and email...
+[28/7/2025, 18:38:06] ✏️ [updateUser] Updating user fields...
+[28/7/2025, 18:38:06] ✅ [updateUser] User updated successfully
+[29/7/2025, 10:11:54] Server running on port 5001
+[29/7/2025, 10:11:55] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:12:00] A user connected: J2jMjKqaaNwW429eAAAB
+[29/7/2025, 10:12:03] A user connected: tmlouzdWdKRcFgWbAAAD
+[29/7/2025, 10:22:43] User disconnected: tmlouzdWdKRcFgWbAAAD
+[29/7/2025, 10:22:43] User disconnected: J2jMjKqaaNwW429eAAAB
+[29/7/2025, 10:22:46] A user connected: x9xDIIPc73kDfPJaAAAF
+[29/7/2025, 10:22:47] A user connected: k69MwmHv9mwnO7DDAAAH
+[29/7/2025, 10:27:53] A user connected: Lr31y4Xy-CmT8y77AAAK
+[29/7/2025, 10:27:53] A user connected: tFa6jWP9n2wpbIZhAAAL
+[29/7/2025, 10:28:25] User disconnected: Lr31y4Xy-CmT8y77AAAK
+[29/7/2025, 10:28:25] User disconnected: tFa6jWP9n2wpbIZhAAAL
+[29/7/2025, 10:28:27] A user connected: LrokwXrJeuUjWLM1AAAO
+[29/7/2025, 10:28:27] A user connected: 4YCr87QscKDB4Q36AAAP
+[29/7/2025, 10:31:13] User disconnected: 4YCr87QscKDB4Q36AAAP
+[29/7/2025, 10:31:13] User disconnected: LrokwXrJeuUjWLM1AAAO
+[29/7/2025, 10:31:16] A user connected: a3SggV5oU1596fx0AAAS
+[29/7/2025, 10:31:16] A user connected: p0S7uPLsh1YD0YEKAAAT
+[29/7/2025, 10:33:55] User disconnected: a3SggV5oU1596fx0AAAS
+[29/7/2025, 10:33:55] User disconnected: p0S7uPLsh1YD0YEKAAAT
+[29/7/2025, 10:33:58] A user connected: E0DWMNyVu-GnvC6lAAAW
+[29/7/2025, 10:33:58] A user connected: oFbY-4mn0POqvDhIAAAX
+[29/7/2025, 10:33:58] User disconnected: oFbY-4mn0POqvDhIAAAX
+[29/7/2025, 10:33:58] User disconnected: E0DWMNyVu-GnvC6lAAAW
+[29/7/2025, 10:34:03] User disconnected: x9xDIIPc73kDfPJaAAAF
+[29/7/2025, 10:34:03] User disconnected: k69MwmHv9mwnO7DDAAAH
+[29/7/2025, 10:34:07] A user connected: xw2R7Bf8Ul2qr1t6AAAZ
+[29/7/2025, 10:34:08] A user connected: VwCL1x54aLW1f_TqAAAb
+[29/7/2025, 10:36:47] A user connected: pYBw5w7u2aIDTqp7AAAe
+[29/7/2025, 10:36:47] A user connected: rfUKBPjyxV_wTF4TAAAf
+[29/7/2025, 10:38:35] User disconnected: VwCL1x54aLW1f_TqAAAb
+[29/7/2025, 10:38:35] User disconnected: xw2R7Bf8Ul2qr1t6AAAZ
+[29/7/2025, 10:38:37] A user connected: plTpMWvnQgRKhsKTAAAh
+[29/7/2025, 10:38:37] A user connected: eMPlUdjbv4_3J9-LAAAj
+[29/7/2025, 10:39:28] User disconnected: plTpMWvnQgRKhsKTAAAh
+[29/7/2025, 10:39:28] User disconnected: eMPlUdjbv4_3J9-LAAAj
+[29/7/2025, 10:40:27] A user connected: Tk0ZHZs1khspkRN6AAAm
+[29/7/2025, 10:40:27] A user connected: C6_Oiut7KQh0wU9JAAAn
+[29/7/2025, 10:40:31] User disconnected: rfUKBPjyxV_wTF4TAAAf
+[29/7/2025, 10:40:31] User disconnected: pYBw5w7u2aIDTqp7AAAe
+[29/7/2025, 10:40:37] A user connected: 3o6AGtWPjLf5wW-1AAAq
+[29/7/2025, 10:40:37] A user connected: yVmUnhLTisELjJFvAAAr
+[29/7/2025, 10:40:39] User disconnected: C6_Oiut7KQh0wU9JAAAn
+[29/7/2025, 10:40:39] User disconnected: Tk0ZHZs1khspkRN6AAAm
+[29/7/2025, 10:41:57] Server running on port 5001
+[29/7/2025, 10:41:59] A user connected: rqapYJXr5V6VWjspAAAB
+[29/7/2025, 10:41:59] A user connected: KZi6R-qudeUABEHlAAAD
+[29/7/2025, 10:42:00] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:42:02] Server running on port 5001
+[29/7/2025, 10:42:03] A user connected: OVKZr7XNtBqfshsKAAAB
+[29/7/2025, 10:42:03] A user connected: vDnP7yZDabYJ2fpSAAAD
+[29/7/2025, 10:42:03] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:42:06] Server running on port 5001
+[29/7/2025, 10:42:07] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:42:07] A user connected: NrcTydGymUiQ3IbeAAAB
+[29/7/2025, 10:42:08] A user connected: O4I_j7Yvr4eIzst9AAAD
+[29/7/2025, 10:42:23] Server running on port 5001
+[29/7/2025, 10:42:23] A user connected: UWO6-OhKWJWt7PK5AAAB
+[29/7/2025, 10:42:23] A user connected: kkWJdaXWb5eiQ9lsAAAD
+[29/7/2025, 10:42:26] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:42:29] Server running on port 5001
+[29/7/2025, 10:42:29] A user connected: xlxDuCDaTbW4pb_zAAAB
+[29/7/2025, 10:42:30] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:42:32] A user connected: IzD_8V7NnAnh_YBvAAAD
+[29/7/2025, 10:42:40] Server running on port 5001
+[29/7/2025, 10:42:40] A user connected: dcoZkEvxm3WAPW2yAAAB
+[29/7/2025, 10:42:40] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:42:42] A user connected: YJEi9Md7yFxBEV-kAAAD
+[29/7/2025, 10:42:51] Server running on port 5001
+[29/7/2025, 10:42:51] A user connected: fmEeJFr3fHJrdaNfAAAB
+[29/7/2025, 10:42:52] A user connected: ZKXvMxle7wIkzZRLAAAD
+[29/7/2025, 10:42:57] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:43:06] Server running on port 5001
+[29/7/2025, 10:43:06] A user connected: OVnl9CZzm-KBlMRuAAAB
+[29/7/2025, 10:43:07] A user connected: 5Em2KkRdipBstu5OAAAD
+[29/7/2025, 10:43:07] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 10:43:22] Server running on port 5001
+[29/7/2025, 10:43:22] A user connected: yoHj3X3n4ueEZ0onAAAB
+[29/7/2025, 10:43:22] A user connected: jL_Q4_C8v1m7AP89AAAD
+[29/7/2025, 10:43:23] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:43:46] Server running on port 5001
+[29/7/2025, 10:43:47] A user connected: WDoycgjnm5BFgKvmAAAB
+[29/7/2025, 10:43:47] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:43:48] A user connected: uYuBOBiiWIsYzz7OAAAD
+[29/7/2025, 10:43:50] Server running on port 5001
+[29/7/2025, 10:43:50] A user connected: NmnmacPPlPaM3o-zAAAB
+[29/7/2025, 10:43:51] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:43:52] A user connected: qgEMXp9EyXdWUQ1-AAAD
+[29/7/2025, 10:44:14] Server running on port 5001
+[29/7/2025, 10:44:14] A user connected: socrp67NDjnnr5VKAAAB
+[29/7/2025, 10:44:15] A user connected: dFXDYnzR1HRPCsXCAAAD
+[29/7/2025, 10:44:15] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 10:44:44] Server running on port 5001
+[29/7/2025, 10:44:44] A user connected: nd__MSySxH0EXHyPAAAB
+[29/7/2025, 10:44:44] A user connected: j60TxbPyVVciXib-AAAD
+[29/7/2025, 10:44:45] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 10:45:03] User disconnected: nd__MSySxH0EXHyPAAAB
+[29/7/2025, 10:45:03] User disconnected: j60TxbPyVVciXib-AAAD
+[29/7/2025, 10:45:03] A user connected: U_kJAsrBM_Wy6hhRAAAG
+[29/7/2025, 10:45:03] A user connected: CufhdpBLYMl-KF5GAAAH
+[29/7/2025, 10:45:20] User disconnected: U_kJAsrBM_Wy6hhRAAAG
+[29/7/2025, 10:45:20] User disconnected: CufhdpBLYMl-KF5GAAAH
+[29/7/2025, 10:45:21] A user connected: g0g6gwN1gjJjnMpxAAAK
+[29/7/2025, 10:45:21] A user connected: 4CN7Ir-oyyu5JShjAAAL
+[29/7/2025, 10:45:56] User disconnected: 4CN7Ir-oyyu5JShjAAAL
+[29/7/2025, 10:45:56] User disconnected: g0g6gwN1gjJjnMpxAAAK
+[29/7/2025, 10:45:59] A user connected: gwDgLTwJ6LenTIuBAAAO
+[29/7/2025, 10:45:59] A user connected: 8OsiDZwlYX8yTuA7AAAP
