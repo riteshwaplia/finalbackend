@@ -24,8 +24,8 @@ router.get('/bulk-send-jobs/:bulkSendJobId', protect, responseHandler(messageCon
 
 router.post('/bulk-send-group', protect, responseHandler(messageController.BulkSendGroupController));
 
-// router.post('/download-media', protect, messageController.downloadMediaController);
-router.post('/download-media', protect, messageController.downloadMediaControllerRaw); // ❌ not wrapped in responseHandler
+router.post('/download-media', protect, messageController.downloadMediaController);
+// router.post('/download-media', protect, messageController.downloadMediaControllerRaw); // ❌ not wrapped in responseHandler
 
 // You might add routes for message history, delivery reports later
 
