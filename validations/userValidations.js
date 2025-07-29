@@ -3,11 +3,11 @@ const Joi = require("joi");
 exports.register = Joi.object({
   username: Joi.string()
   .trim()
-  .pattern(/^[^<>]*$/)
+  .pattern(/^[a-zA-z0-9_]+$/)
   .required()
    .messages({
     "any.required": "Username is required",
-    "string.pattern.base": "Username must not contain '<' or '>' characters",
+    "string.pattern.base": "Username can only contain letters, numbers, and underscores",
   }),
   email: Joi.string().trim().email().required().messages({
     "any.required": "Email is required",
