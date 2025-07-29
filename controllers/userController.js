@@ -256,7 +256,10 @@ const getUserProfile = async (req, res) => {
             _id: req.user._id,
             username: req.user.username,
             email: req.user.email,
-            role: req.user.role
+            role: req.user.role,
+            firstName: req.user.firstName,
+            lastName: req.user.lastName,
+            mobileNumber: req.user.mobileNumber
         });
     } else {
         return res.status(404).json({ message: 'User not found' });

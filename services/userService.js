@@ -309,30 +309,19 @@ exports.updateUser = async (req) => {
         console.log("🔐 [updateUser] Called");
 
         const paramUserId = req.params.userId;
-        const tokenUserId = req.user._id;
+        const tokenUserId = req.user._id.toString();
         const tenantId = req.tenant._id;
 
-        console.log("🧾 [updateUser] Param User ID:", paramUserId);
-        console.log("🧾 [updateUser] Token User ID:", tokenUserId);
-        console.log("🧾 [updateUser] Tenant ID:", tenantId);
-
-        // 👇 Destructure using incoming field names (from validation)
         const {
             email,
-            userName,          // <-- mapped to username in schema
+            username,
             firstName,
             lastName,
-            mobile,            // <-- mapped to mobileNumber in schema
-            profilePicture,
-            gender,
-            dob
+            mobileNumber
         } = req.body;
 
-        console.log("📥 [updateUser] Incoming Body:", req.body);
-
-        // Step 1: Check user ID matches
-        if (paramUserId !== tokenUserId.toString()) {
-            console.warn("❌ [updateUser] Unauthorized access attempt");
+        // Step 1: Check user ID matches token user
+        if (paramUserId !== tokenUserId) {
             return {
                 status: statusCode.UNAUTHORIZED,
                 success: false,
@@ -341,9 +330,8 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 2: Validate email presence
+        // Step 2: Email is required to match before update
         if (!email) {
-            console.warn("⚠️ [updateUser] Email not provided");
             return {
                 status: statusCode.BAD_REQUEST,
                 success: false,
@@ -352,12 +340,10 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 3: Find the user
-        console.log("🔍 [updateUser] Finding user with ID, tenantId, and email...");
-        const user = await User.findOne({ _id: paramUserId, tenantId, email });
+        // Step 3: Find user using ID, tenant, and email for verification
+        const user = await User.findOne({ _id: paramUserId, tenantId });
 
-        if (!user) {
-            console.warn("❌ [updateUser] User not found or email mismatch");
+        if (!user || user.email !== email) {
             return {
                 status: statusCode.NOT_FOUND,
                 success: false,
@@ -366,29 +352,13 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 4: Prevent email update
-        if (req.body.email !== user.email) {
-            console.warn("❌ [updateUser] Email update attempt blocked");
-            return {
-                status: statusCode.BAD_REQUEST,
-                success: false,
-                message: 'Email update is not allowed.',
-                statusCode: statusCode.BAD_REQUEST
-            };
-        }
-
-        // Step 5: Map and update only provided fields
-        console.log("✏️ [updateUser] Updating user fields...");
-        if (userName !== undefined) user.username = userName;
+        // Step 4: Only update allowed fields
+        if (username !== undefined) user.username = username;
         if (firstName !== undefined) user.firstName = firstName;
         if (lastName !== undefined) user.lastName = lastName;
-        if (mobile !== undefined) user.mobileNumber = mobile;
-        if (profilePicture !== undefined) user.profilePicture = profilePicture;
-        if (gender !== undefined) user.gender = gender;
-        if (dob !== undefined) user.dob = dob;
+        if (mobileNumber !== undefined) user.mobileNumber = mobileNumber;
 
         await user.save();
-        console.log("✅ [updateUser] User updated successfully");
 
         return {
             status: statusCode.OK,
@@ -401,14 +371,12 @@ exports.updateUser = async (req) => {
                 lastName: user.lastName,
                 mobileNumber: user.mobileNumber,
                 email: user.email,
-                profilePicture: user.profilePicture,
-                gender: user.gender,
-                dob: user.dob
+                role: user.role,
+                isActive: user.isActive
             },
             statusCode: statusCode.OK
         };
     } catch (error) {
-        console.error("💥 [updateUser] Error:", error.message);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
