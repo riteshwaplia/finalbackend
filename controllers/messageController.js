@@ -24,6 +24,19 @@ exports.BulkSendGroupController = async (req) => {
     return await messageService.BulkSendGroupService(req);
 };
 
-exports.downloadMediaController = async (req) => {
-    return await messageService.downloadMedia(req);
+exports.downloadMediaControllerRaw = async (req, res) => {
+  const result = await messageService.downloadMedia(req);
+ 
+  if (!result.success) {
+    return res.status(result.status).json({
+      success: false,
+      message: result.message,
+      error: result.error,
+    });
+  }
+ 
+  res.setHeader('Content-Type', result.mimeType);
+  res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
+  result.stream.pipe(res);
 };
+ 
