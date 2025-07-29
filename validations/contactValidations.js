@@ -1,7 +1,12 @@
 const Joi = require("joi");
 
+const nameField = Joi.string()
+  .trim()
+  .pattern(/^[^<>]*$/, { name: 'no angle brackets' })
+  .message('Name must not contain "<" or ">"');
+
 const baseContactSchema = {
-  name: Joi.string().trim().allow(''),
+  name: nameField.allow(''),
   email: Joi.string().email().trim().lowercase().allow('', null),
   countryCode: Joi.string().trim().allow(''),
   mobileNumber: Joi.string().trim().required().messages({
