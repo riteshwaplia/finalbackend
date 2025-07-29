@@ -2,8 +2,8 @@ const express = require('express');
 const { protect, authorizeRoles } = require('../middleware/auth');
 const userController = require('../controllers/userController');
 const { responseHandler } = require('../middleware/responseHandler');
-const validateRequest = require('../middleware/validateRequest');
-const {register,login, forgotPassword, resetPassword, verifyOtp, update,} = require('../validations/userValidations');
+const validateRequest = require('../middleware/validate');
+const {register,login, forgotPassword, resetPassword, verifyOtp, update, resetPasswordWithOtp} = require('../validations/userValidations');
 const router = express.Router();
 
 router.post('/register', validateRequest(register), responseHandler(userController.registerController));
@@ -18,7 +18,7 @@ router.get('/business-profiles', protect, userController.getAllBusinessProfilesF
 router.put('/business-profiles/:id', protect, responseHandler(userController.updateBusinessProfileController));
 router.put('/reset-password', protect, validateRequest(resetPassword), userController.resetPasswordController);
 router.post('/forgot-password', validateRequest(forgotPassword), responseHandler(userController.forgotPasswordController));
-router.post('/update-password-with-otp', validateRequest(resetPassword), responseHandler(userController.updatePasswordWithOtpController));
+router.post('/update-password-with-otp', validateRequest(resetPasswordWithOtp), responseHandler(userController.updatePasswordWithOtpController));
 router.put('/update-self/:userId', protect, validateRequest(update), responseHandler(userController.updateUserController));
 
 module.exports = router;
