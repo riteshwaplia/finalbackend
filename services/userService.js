@@ -312,10 +312,6 @@ exports.updateUser = async (req) => {
         const tokenUserId = req.user._id.toString();
         const tenantId = req.tenant._id;
 
-        console.log("🧾 [updateUser] Param User ID:", paramUserId);
-        console.log("🧾 [updateUser] Token User ID:", tokenUserId);
-        console.log("🧾 [updateUser] Tenant ID:", tenantId);
-
         const {
             email,
             username,
@@ -324,11 +320,8 @@ exports.updateUser = async (req) => {
             mobileNumber
         } = req.body;
 
-        console.log("📥 [updateUser] Incoming Body:", req.body);
-
         // Step 1: Check user ID matches token user
         if (paramUserId !== tokenUserId) {
-            console.warn("❌ [updateUser] Unauthorized access attempt");
             return {
                 status: statusCode.UNAUTHORIZED,
                 success: false,
@@ -339,7 +332,6 @@ exports.updateUser = async (req) => {
 
         // Step 2: Email is required to match before update
         if (!email) {
-            console.warn("⚠️ [updateUser] Email not provided");
             return {
                 status: statusCode.BAD_REQUEST,
                 success: false,
@@ -352,7 +344,6 @@ exports.updateUser = async (req) => {
         const user = await User.findOne({ _id: paramUserId, tenantId });
 
         if (!user || user.email !== email) {
-            console.warn("❌ [updateUser] User not found or email mismatch");
             return {
                 status: statusCode.NOT_FOUND,
                 success: false,
@@ -362,14 +353,12 @@ exports.updateUser = async (req) => {
         }
 
         // Step 4: Only update allowed fields
-        console.log("✏️ [updateUser] Updating user fields...");
         if (username !== undefined) user.username = username;
         if (firstName !== undefined) user.firstName = firstName;
         if (lastName !== undefined) user.lastName = lastName;
         if (mobileNumber !== undefined) user.mobileNumber = mobileNumber;
 
         await user.save();
-        console.log("✅ [updateUser] User updated successfully");
 
         return {
             status: statusCode.OK,
@@ -388,7 +377,6 @@ exports.updateUser = async (req) => {
             statusCode: statusCode.OK
         };
     } catch (error) {
-        console.error("💥 [updateUser] Error:", error.message);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
