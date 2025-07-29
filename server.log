@@ -1254,3 +1254,58 @@
 [29/7/2025, 15:47:05] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
 [29/7/2025, 15:47:29] Server running on port 5001
 [29/7/2025, 15:47:29] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:01:49] Server running on port 5001
+[29/7/2025, 16:01:52] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:06:20] Server running on port 5001
+[29/7/2025, 16:06:20] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:06:55] Server running on port 5001
+[29/7/2025, 16:06:56] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 16:07:01] Server running on port 5001
+[29/7/2025, 16:07:01] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:07:21] Server running on port 5001
+[29/7/2025, 16:07:22] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 16:08:54] token "688726580f70016036a6af53" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[29/7/2025, 16:09:21] Server running on port 5001
+[29/7/2025, 16:09:21] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:09:23] Server running on port 5001
+[29/7/2025, 16:09:23] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:09:30] Server running on port 5001
+[29/7/2025, 16:09:30] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:10:00] Server running on port 5001
+[29/7/2025, 16:10:01] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:15:42] Server running on port 5001
+[29/7/2025, 16:15:43] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:28:22] Server running on port 5001
+[29/7/2025, 16:28:23] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:31:25] Server running on port 5001
+[29/7/2025, 16:31:26] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:31:34] Server running on port 5001
+[29/7/2025, 16:31:34] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:31:37] Server running on port 5001
+[29/7/2025, 16:31:38] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 16:32:13] Server running on port 5001
+[29/7/2025, 16:32:14] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:32:19] Server running on port 5001
+[29/7/2025, 16:32:20] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:32:58] Server running on port 5001
+[29/7/2025, 16:32:59] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[29/7/2025, 16:33:57] A user connected: vEiHagKrL30nU30SAAAC
+[29/7/2025, 16:33:57] A user connected: seGa0ZrcT1XVJ8JnAAAD
+[29/7/2025, 16:33:57] A user connected: gjMMXtzGBwOVwnGAAAAF
+[29/7/2025, 16:33:57] Resolving tenant for domain: http://localhost:5173
+[29/7/2025, 16:35:37] Server running on port 5001
+[29/7/2025, 16:35:37] A user connected: sCNKawova1WMhdpMAAAB
+[29/7/2025, 16:35:38] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[29/7/2025, 16:35:38] A user connected: uZ-Xt83BuWFMswXLAAAD
+[29/7/2025, 16:35:38] A user connected: YFSqNwvlfms6Y33OAAAF
+[29/7/2025, 16:37:07] User disconnected: sCNKawova1WMhdpMAAAB
+[29/7/2025, 16:37:07] User disconnected: YFSqNwvlfms6Y33OAAAF
+[29/7/2025, 16:37:07] User disconnected: uZ-Xt83BuWFMswXLAAAD
+[29/7/2025, 16:38:13] Server running on port 5001
+[29/7/2025, 16:38:14] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[29/7/2025, 16:38:41] A user connected: vRxe_-NT3sabb1yKAAAB
+[29/7/2025, 16:38:41] A user connected: K-vNu-Da-Qe6_6TLAAAD
+[29/7/2025, 16:38:41] A user connected: VwSN3UkWYfNAfiTvAAAF
+[29/7/2025, 16:39:36] User disconnected: vRxe_-NT3sabb1yKAAAB
+[29/7/2025, 16:39:36] User disconnected: VwSN3UkWYfNAfiTvAAAF
+[29/7/2025, 16:39:36] User disconnected: K-vNu-Da-Qe6_6TLAAAD
