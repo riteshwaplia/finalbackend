@@ -13,11 +13,18 @@ exports.register = Joi.object({
     "any.required": "Email is required",
     "string.email": "Please provide a valid email",
   }),
-  password: Joi.string().trim().min(6).required().messages({
-    "any.required": "Password is required",
-    "string.min": "Password must be at least 6 characters long",
-  }),
-});
+  password: Joi.string()
+    .trim()
+    .min(6)
+    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$"))
+    .required()
+    .messages({
+      "any.required": "Password is required",
+      "string.min": "Password must be at least 6 characters long",
+      "string.pattern.base":
+        "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character",
+    }),
+  });
 
 exports.login = Joi.object({
   email: Joi.string().trim().email().required().messages({
