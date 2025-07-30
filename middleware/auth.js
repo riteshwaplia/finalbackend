@@ -26,7 +26,7 @@ const protect = async (req, res, next) => {
                 return res.status(401).json({ 
                     status: 401,
                     success: false,
-                    message: 'Password recently changed. Please log in again.'
+                    message: 'Token Expired'
                 });
             }
         }

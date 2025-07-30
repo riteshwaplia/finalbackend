@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendEmail } = require('../functions/functions');
 const generateToken = require('../utils/generateToken');
@@ -188,7 +189,7 @@ exports.resetPassword = async (req) => {
 
         user.password = newPassword;
         user.passwordChangedAt = new Date();
-        user.token = null;
+        user.token = "";
         await user.save();
 
         return {
@@ -445,4 +446,47 @@ exports.updateBusinessProfile = async (req) => {
       message: error.message || resMessage.Server_error
     };
   }
+};
+
+exports.logoutUser = async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Token_is_required,
+        statusCode: statusCode.BAD_REQUEST
+      }
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        if (!user) {
+          return {
+            status: statusCode.NOT_FOUND,
+            success: false,
+            message: resMessage.USER_NOT_FOUND,
+            statusCode: statusCode.NOT_FOUND
+          }
+        }
+
+        user.passwordChangedAt = new Date();
+        user.token = "";
+        await user.save();
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Logged_out_successfully,
+            statusCode: statusCode.OK
+        };
+    } catch (err) {
+      console.error("Error in Logout User:", err);
+      return {
+        status: statusCode.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: err.message || resMessage.Server_error
+      };
+    }
 };

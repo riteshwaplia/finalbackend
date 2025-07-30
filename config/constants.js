@@ -127,7 +127,10 @@ Flow_created_successfully: 'Flow created successfully.',
     otp_verified_successfully: "OTP verified successfully.",
 
     Business_profile_not_found: "Selected Business Profile not found or does not belong to your account.",
-    Business_profile_updated_successfully: "Business Profile updated successfully."
+    Business_profile_updated_successfully: "Business Profile updated successfully.",
+    Token_is_required: "Token is required for logout",
+    USER_NOT_FOUND: "User not found",
+    Logged_out_successfully: "Logged out successfully",
 };
 
 module.exports = {

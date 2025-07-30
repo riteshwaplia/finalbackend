@@ -1335,3 +1335,19 @@
 [30/7/2025, 13:45:38] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
 [30/7/2025, 13:46:07] Server running on port 5001
 [30/7/2025, 13:46:07] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[30/7/2025, 13:53:33] Server running on port 5001
+[30/7/2025, 13:53:34] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[30/7/2025, 13:53:42] token "6889c561377c01f08d6f9ef2" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[30/7/2025, 13:55:04] Server running on port 5001
+[30/7/2025, 13:55:04] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[30/7/2025, 13:56:05] Server running on port 5001
+[30/7/2025, 13:56:05] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[30/7/2025, 14:02:25] Server running on port 5001
+[30/7/2025, 14:02:26] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[30/7/2025, 14:02:39] Server running on port 5001
+[30/7/2025, 14:02:40] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[30/7/2025, 14:02:44] token "6889c561377c01f08d6f9ef2" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[30/7/2025, 14:03:21] Server running on port 5001
+[30/7/2025, 14:03:21] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[30/7/2025, 14:03:44] Server running on port 5001
+[30/7/2025, 14:03:45] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net

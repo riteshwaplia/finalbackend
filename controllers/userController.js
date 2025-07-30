@@ -9,6 +9,7 @@ const { sendEmail } = require('../functions/functions');
 const BlacklistedTokenSchema = require('../models/BlacklistedTokenSchema');
 const { getEmailTemplate } = require('../utils/getEmailTemplate');
 const jwt = require('jsonwebtoken');
+
 const registerController = async (req) => {
     try {
         return await userService.register(req);
@@ -229,26 +230,17 @@ const authUser = async (req, res) => {
     }
 };
 
-const logoutUser = async (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1];
-    console.log('Logout token:', token);
-    if (!token) {
-        return res.status(400).json({ message: 'Token is required for logout' });
-    }
-
+const logoutUserController = async (req) => {
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        console.log('Decoded token:', decoded);
-        const blsck= await BlacklistedTokenSchema.create({
-            token,
-            expiresAt: new Date(decoded.exp * 1000)
-        });
-        console.log('Blacklisted token:', blsck);
-        return res.status(200).json({ message: 'Logged out successfully' });
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid or expired token' });
+        return await userService.logoutUser(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
     }
-};
+}
 
 const getUserProfile = async (req, res) => {
     if (req.user && req.user.tenantId.toString() === req.tenant._id.toString()) {
@@ -369,7 +361,7 @@ const updateUserController = async (req) => {
 
 module.exports = {
     authUser,
-    logoutUser,
+    logoutUserController,
     getUserProfile,
     updateUserProfile,
     getAllUsersForTenant,

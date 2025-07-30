@@ -20,6 +20,6 @@ router.put('/reset-password', protect, validateRequest(resetPassword), userContr
 router.post('/forgot-password', validateRequest(forgotPassword), responseHandler(userController.forgotPasswordController));
 router.post('/update-password-with-otp', validateRequest(resetPasswordWithOtp), responseHandler(userController.updatePasswordWithOtpController));
 router.put('/update-self/:userId', protect, validateRequest(update), responseHandler(userController.updateUserController));
-router.post('/logout', protect, userController.logoutUser);
+router.post('/logout', protect, responseHandler(userController.logoutUserController));
 
 module.exports = router;
