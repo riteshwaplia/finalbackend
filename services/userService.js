@@ -179,10 +179,10 @@ exports.resetPassword = async (req) => {
 
         if (!isMatch) {
             return {
-                status: statusCode.UNAUTHORIZED,
+                status: statusCode.BAD_REQUEST,
                 success: false,
                 message: resMessage.INVALID_OLD_PASSWORD || 'Old password is incorrect.',
-                statusCode: statusCode.UNAUTHORIZED
+                statusCode: statusCode.BAD_REQUEST
             };
         }
 
