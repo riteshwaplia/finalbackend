@@ -10,7 +10,7 @@ const baseContactSchema = {
   mobileNumber: Joi.string().trim().pattern(/^[0-9]+$/).required().messages({
     "any.required": "Mobile number is required",
   }),
-  whatsappId: Joi.string().trim()..pattern(/^[0-9]+$/).allow('', null),
+  whatsappId: Joi.string().trim().pattern(/^[0-9]+$/).allow('', null),
   profileName: Joi.string().trim().allow('', null),
   isBlocked: Joi.boolean(),
   groupIds: Joi.array()

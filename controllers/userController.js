@@ -231,19 +231,19 @@ const authUser = async (req, res) => {
 
 const logoutUser = async (req, res) => {
     const token = req.headers.authorization?.split(' ')[1];
-console.log('Logout token:', token);
+    console.log('Logout token:', token);
     if (!token) {
         return res.status(400).json({ message: 'Token is required for logout' });
     }
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-console.log('Decoded token:', decoded);
-       const blsck= await BlacklistedTokenSchema.create({
+        console.log('Decoded token:', decoded);
+        const blsck= await BlacklistedTokenSchema.create({
             token,
             expiresAt: new Date(decoded.exp * 1000)
         });
-console.log('Blacklisted token:', blsck);
+        console.log('Blacklisted token:', blsck);
         return res.status(200).json({ message: 'Logged out successfully' });
     } catch (err) {
         return res.status(401).json({ message: 'Invalid or expired token' });
