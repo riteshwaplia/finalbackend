@@ -20,13 +20,26 @@ const protect = async (req, res, next) => {
             return res.status(403).json({ message: 'Not authorized for this tenant.' });
         }
 
+        const tokenIssuedAt = decoded.iat;
+
         if (user.passwordChangedAt) {
-            const changedTimestamp = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
-            if (decoded.iat < changedTimestamp) {
-                return res.status(401).json({ 
+            const passwordChangedAt = parseInt(user.passwordChangedAt.getTime() / 1000, 10);
+            if (tokenIssuedAt < passwordChangedAt) {
+                return res.status(401).json({
                     status: 401,
                     success: false,
-                    message: 'Token Expired'
+                    message: 'Token expired due to password change.'
+                });
+            }
+        }
+
+        if (user.lastLoginAt) {
+            const lastLoginAt = parseInt(user.lastLoginAt.getTime() / 1000, 10);
+            if (tokenIssuedAt < lastLoginAt) {
+                return res.status(401).json({
+                    status: 401,
+                    success: false,
+                    message: 'Token expired due to new login.'
                 });
             }
         }
@@ -38,7 +51,6 @@ const protect = async (req, res, next) => {
         return res.status(401).json({ message: 'Not authorized, token failed' });
     }
 };
-
 
 const authorizeRoles = (...roles) => {
     return (req, res, next) => {

@@ -194,25 +194,26 @@ const authUser = async (req, res) => {
         const user = await User.findOne({ email, tenantId, isEmailVerified: true });
 
         if (user && (await user.matchPassword(password))) {
+            user.lastLoginAt = new Date();
+            await user.save();
+
             const token = generateToken(user._id, email);
-            const subject ='New Login Detected'
+
+            const subject = 'New Login Detected';
             const text = `Hello ${user.username},\n\n`;
 
             const html = `
-            <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
-                <p>Hello <strong>${user.username}</strong>,</p>
-                <p>A new login was detected to your <strong>Wachat</strong> account.</p>
-                <p>If this was not you, please <a href="https://yourapp.com/reset-password" target="_blank">reset your password</a> immediately.</p>
-                <p><strong>Login time:</strong> ${new Date().toLocaleString()}</p>
-                <br />
-                <p>Regards,<br />Wachat Security Team</p>
-            </div>
+                <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
+                    <p>Hello <strong>${user.username}</strong>,</p>
+                    <p>A new login was detected to your <strong>Wachat</strong> account.</p>
+                    <p>If this was not you, please <a href="https://yourapp.com/reset-password" target="_blank">reset your password</a> immediately.</p>
+                    <p><strong>Login time:</strong> ${new Date().toLocaleString()}</p>
+                    <br />
+                    <p>Regards,<br />Wachat Security Team</p>
+                </div>
             `;
 
-            await sendEmail(email, subject, text,getEmailTemplate(html) );
-            
-            user.token = token;
-            await user.save();
+            await sendEmail(email, subject, text, getEmailTemplate(html));
 
             return res.json({
                 _id: user._id,

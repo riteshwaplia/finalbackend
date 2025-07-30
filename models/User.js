@@ -67,6 +67,10 @@ const UserSchema = new mongoose.Schema({
         default: false
     },
     token: String,
+    lastLoginAt: {
+        type: Date,
+        default: null
+    },
     createdAt: {
         type: Date,
         default: Date.now
