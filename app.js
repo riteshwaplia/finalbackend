@@ -36,7 +36,7 @@ const allowedOrigins = [
   "http://192.168.1.86:5173/",
   "http://172.16.0.2:5173/",
   "https://sabnode.netlify.app",
-  "https://resonant-sunshine-84cba8.netlify.app"
+  "https://grand-chebakia-1cba30.netlify.app"
 ];
 
 app.use(cors({
