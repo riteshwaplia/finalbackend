@@ -187,6 +187,8 @@ exports.resetPassword = async (req) => {
         }
 
         user.password = newPassword;
+        user.passwordChangedAt = new Date();
+        user.token = null;
         await user.save();
 
         return {
