@@ -16,7 +16,7 @@ exports.register = Joi.object({
   password: Joi.string()
     .trim()
     .min(6)
-    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$"))
+    .pattern(new RegExp("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^A-Za-z\\d])[A-Za-z\\d\\W_]+$"))
     .required()
     .messages({
       "any.required": "Password is required",
