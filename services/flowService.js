@@ -6,7 +6,6 @@ const Project = require("../models/project");
 exports.create = async (req) => {
     try {
         const { name, nodes, edges } = req.body;
-        
         const checkProject = await Project.findOne({ _id: req.params.projectId, userId: req.user._id, tenantId: req.tenant._id });
         if (!checkProject) {
             return {
@@ -35,7 +34,6 @@ exports.create = async (req) => {
 
         const entryNode = nodes.find(n => n.id === 'node_0' && n.data?.message);
         const entryPoint = entryNode?.data?.message?.toLowerCase();
-        console.log("Entry Point:", entryPoint);
 
         if (!entryPoint) {
             return {
@@ -45,7 +43,7 @@ exports.create = async (req) => {
             };
         }
 
-        const existingFlow = await Flow.findOne({ name, projectId, userId, tenantId });
+        const existingFlow = await Flow.findOne({ name, projectId: req.params.projectId, userId: req.user._id, tenantId: req.tenant._id });
         if (existingFlow) {
             return {
                 status: statusCode.CONFLICT,
@@ -53,15 +51,6 @@ exports.create = async (req) => {
                 message: resMessage.Flow_name_exists,
             };
         }
-
-        if (!triggerKeyword || triggerKeyword.trim() === '') {
-             return {
-                status: statusCode.BAD_REQUEST,
-                success: false,
-                message: resMessage.No_valid_entry_point,
-            };
-        }
-
 
         const savedFlow = await Flow.create({
             projectId: req.params.projectId,
