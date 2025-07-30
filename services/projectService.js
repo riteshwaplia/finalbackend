@@ -268,7 +268,7 @@ exports.updateWhatsappBusinessProfileOnMeta = async ({ projectId, userId, tenant
 
     try {
         const project = await Project.findOne({ _id: projectId, userId, tenantId }).populate('businessProfileId');
-console.log("project to update WhatsApp Business Profile:", project);
+        console.log("project to update WhatsApp Business Profile:", project);
         if (!project) {
             return {
                 status: statusCode.NOT_FOUND,
@@ -290,19 +290,19 @@ console.log("project to update WhatsApp Business Profile:", project);
                 message: resMessage.Meta_API_credentials_not_configured + " for the linked Business Profile."
             };
         }
-  const  facebookUrl = 'https://graph.facebook.com'
-  const  graphVersion = 'v19.0'
+        const  facebookUrl = 'https://graph.facebook.com'
+        const  graphVersion = 'v19.0'
 
-  console.log("Using Meta API credentials:", {
+        console.log("Using Meta API credentials:", {
             accessToken: project.businessProfileId.metaAccessToken,
             facebookUrl,
             graphVersion
         });
         const { metaPhoneNumberID } = project;
         const { metaAccessToken } = project.businessProfileId;
-console.log("Meta API credentials:", { metaAccessToken, facebookUrl, graphVersion });
+        console.log("Meta API credentials:", { metaAccessToken, facebookUrl, graphVersion });
         const url = `${facebookUrl}/${graphVersion}/${metaPhoneNumberID}/whatsapp_business_profile`;
-console.log("Meta API URL:", url);
+        console.log("Meta API URL:", url);
         const metaPayload = {
             messaging_product: "whatsapp",
             ...profileData

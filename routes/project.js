@@ -22,6 +22,7 @@ router.route('/')
 router.get('/:id/dashboard', protect, authorizeRoles('user'), responseHandler(projectController.getProjectByIdController));
 router.delete('/:projectId', protect, responseHandler(projectController.deleteProjectController));
 router.put('/:projectId/whatsapp-business-profile', protect, responseHandler(projectController.updateWhatsappBusinessProfileController));
+
 // router
 //   .put("/:id",
 //     protect,
