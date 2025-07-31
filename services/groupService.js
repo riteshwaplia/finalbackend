@@ -1,6 +1,7 @@
-const Project = require('../models/Project');
+const Project = require('../models/project');
 const Group = require('../models/Group');
 const { statusCode, resMessage } = require("../config/constants");
+const Contact = require('../models/Contact');
 
 exports.multiDelete = async (req) => {
     try {
@@ -116,3 +117,51 @@ exports.unarchive = async (req, res) => {
         });
     }
 };
+
+exports.deleteById = async (req) => {
+    try {
+        const userId = req.user._id;
+        const tenantId = req.tenant._id;
+        const projectId = req.params.projectId;
+        const groupId = req.params.groupId;
+    
+        const data = await Group.findOneAndDelete({ _id: groupId, tenantId, userId, projectId });
+        if (data === null) {
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: resMessage.No_groups_found,
+                statusCode: statusCode.NOT_FOUND
+            };
+        }
+
+        const contacts = await Contact.find({ groupIds: { $elemMatch: { $eq: groupId } }, tenantId, userId, projectId });
+
+        for (const contact of contacts) {
+            const groupIdCount = contact.groupIds.length;
+
+            if (groupIdCount === 1 && contact.groupIds[0].toString() === groupId) {
+                await Contact.findByIdAndDelete(contact._id);
+            } else {
+                await Contact.findByIdAndUpdate(contact._id, {
+                    $pull: { groupIds: groupId }
+                });
+            }
+        }
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Group_deleted_successfully,
+            statusCode: statusCode.OK
+        };
+    } catch (error) {
+        console.error("Error deleting group:", error);
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        };
+    }
+}

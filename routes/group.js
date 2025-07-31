@@ -13,7 +13,7 @@ router.delete("/", protect, groupController.multiDeleteController);
 router.get("/archiveList", protect, groupController.archiveListController);
 router.get("/:groupId", protect, groupController.editGetController);
 router.put("/:groupId", protect, validateRequest(groupValidation.updateGroup), groupController.editController);
-router.delete("/:groupId", protect, groupController.deleteController);
+router.delete("/:groupId", protect, responseHandler(groupController.deleteController));
 router.put("/archive/:groupId", protect, groupController.updateFalseStatusController);
 router.put("/removeArchive/:groupId", protect, groupController.updateTrueStatusController);
 router.post("/bulk-delete", protect, responseHandler(groupController.bulkDeleteController));
