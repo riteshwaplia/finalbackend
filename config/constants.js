@@ -16,7 +16,7 @@ const resMessage = {
     edges_array_is_required: "Edges array is required",
     No_valid_entry_point: "No valid entry point",
 
-    Project_already_exists: "Project with this name already exists.",
+    Project_already_exists: "Project with this number already exists.",
     Project_created_successfully: "Project created successfully.",
     Projects_fetched_successfully: "Projects fetched successfully.",
     No_data_found: "No data found.",
