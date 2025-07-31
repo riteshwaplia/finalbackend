@@ -510,7 +510,7 @@ const sendBulkMessageService = async (req) => {
 // @access  Private
 
 const BulkSendGroupService = async (req) => {
-  const { templateName, message = {}, groupId, contactfields = [] } = req.body;
+  const { templateName, message = {}, groupId, contactfields = [], imageId } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
@@ -639,11 +639,10 @@ const BulkSendGroupService = async (req) => {
       const headerTemplate = templateComponents.find(c => c.type === "HEADER");
       if (headerTemplate) {
         if (headerTemplate.format === "IMAGE") {
-          const imageLink = headerTemplate.example?.header_handle?.[0];
-          if (imageLink) {
+          if (imageId) {
             components.push({
               type: "HEADER",
-              parameters: [{ type: "image", image: { link: imageLink } }],
+              parameters: [{ type: "image", image: { id: imageId } }],
             });
           }
         } else if (headerTemplate.format === "TEXT") {
@@ -683,6 +682,13 @@ const BulkSendGroupService = async (req) => {
         language: baseMessage.language,
         components,
       };
+
+      console.log("============to", to);
+      console.log("============templateMessage", templateMessage);
+      console.log("============phoneNumberId", phoneNumberId);
+      console.log("============accessToken", accessToken);
+      console.log("============facebookUrl", facebookUrl);
+      console.log("============graphVersion", graphVersion);
 
       try {
         const sendResult = await sendWhatsAppMessage({
