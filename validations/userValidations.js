@@ -46,7 +46,7 @@ exports.update = Joi.object({
       "string.email": "Please provide a valid email",
     }),
 
-  userName:  Joi.string()
+  username:  Joi.string()
     .trim()
     .pattern(/^[^<>]*$/)
     .optional()
