@@ -62,7 +62,7 @@ exports.update = Joi.object({
     .trim()
     .optional(),
 
-  mobile: Joi.string()
+  mobileNumber: Joi.string()
     .trim()
     .min(10)
     .max(13)
