@@ -31,19 +31,18 @@ exports.getFlowByIdController = async (req) => {
     return await flowService.getFlowById({ flowId, projectId, userId, tenantId });
 };
 
-// /**
-//  * @desc    Update an existing conversational flow.
-//  * @route   PUT /api/projects/:projectId/flows/:flowId
-//  * @access  Private (User/Team Member)
-//  */
-// exports.updateFlowController = async (req) => {
-//     const { projectId, flowId } = req.params;
-//     const updateData = req.body; // Contains fields to update (name, nodes, edges, status, etc.)
-//     const userId = req.user._id;
-//     const tenantId = req.tenant._id;
-
-//     return await flowService.updateFlow({ flowId, projectId, userId, tenantId }, updateData);
-// };
+exports.updateFlowController = async (req) => {
+    try {
+        return await flowService.update(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        }
+    }
+};
 
 // /**
 //  * @desc    Delete a conversational flow.

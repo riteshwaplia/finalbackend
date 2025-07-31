@@ -1418,3 +1418,98 @@
 [31/7/2025, 14:02:44] A user connected: oLY3kRRiWkcbCjtHAAAL
 [31/7/2025, 14:02:54] token "688af4dbf09cf091a043b2d5" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
 [31/7/2025, 14:03:21] Fetched 6 templates for page 1 of 2
+[31/7/2025, 14:27:22] Server running on port 5001
+[31/7/2025, 14:27:23] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[31/7/2025, 14:27:24] A user connected: kXnmKX_3x890oeAFAAAB
+[31/7/2025, 14:29:57] Server running on port 5001
+[31/7/2025, 14:29:58] A user connected: EyvSZa1lC8khaepNAAAB
+[31/7/2025, 14:29:59] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[31/7/2025, 14:30:01] User disconnected: EyvSZa1lC8khaepNAAAB
+[31/7/2025, 14:30:05] A user connected: 1eJF0AEEmh-xo5FJAAAD
+[31/7/2025, 14:30:06] A user connected: bFD1NuXESQi7waAaAAAF
+[31/7/2025, 14:30:07] A user connected: -maUntlgoE4vPwMLAAAH
+[31/7/2025, 14:30:07] token "688af4dbf09cf091a043b2d5" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[31/7/2025, 14:30:17] A user connected: 70ZfPzbtqPSdtYSgAAAL
+[31/7/2025, 14:30:17] A user connected: xnl6YAcR53hH1XTsAAAM
+[31/7/2025, 14:30:17] A user connected: 1-TDBqyCYCzrfXAlAAAN
+[31/7/2025, 14:30:44] User disconnected: bFD1NuXESQi7waAaAAAF
+[31/7/2025, 14:30:44] User disconnected: -maUntlgoE4vPwMLAAAH
+[31/7/2025, 14:30:44] User disconnected: 1eJF0AEEmh-xo5FJAAAD
+[31/7/2025, 14:30:46] A user connected: j4UX38IXii1dAaBjAAAQ
+[31/7/2025, 14:30:46] A user connected: g2gbLhPP344N_vCBAAAR
+[31/7/2025, 14:30:46] A user connected: pgQT33juPv9mFlAOAAAT
+[31/7/2025, 14:30:49] A user connected: A3S5uWgdgFhckaBpAAAX
+[31/7/2025, 14:30:49] A user connected: pIYKSsZaF3dP7IZdAAAY
+[31/7/2025, 14:30:49] A user connected: H3Ojr0d9K9bS6sTuAAAZ
+[31/7/2025, 14:31:32] User disconnected: xnl6YAcR53hH1XTsAAAM
+[31/7/2025, 14:31:32] User disconnected: 1-TDBqyCYCzrfXAlAAAN
+[31/7/2025, 14:31:32] User disconnected: 70ZfPzbtqPSdtYSgAAAL
+[31/7/2025, 14:31:34] User disconnected: H3Ojr0d9K9bS6sTuAAAZ
+[31/7/2025, 14:31:34] User disconnected: pIYKSsZaF3dP7IZdAAAY
+[31/7/2025, 14:31:34] User disconnected: A3S5uWgdgFhckaBpAAAX
+[31/7/2025, 14:31:35] User disconnected: g2gbLhPP344N_vCBAAAR
+[31/7/2025, 14:31:35] User disconnected: pgQT33juPv9mFlAOAAAT
+[31/7/2025, 14:31:35] User disconnected: j4UX38IXii1dAaBjAAAQ
+[31/7/2025, 14:31:37] A user connected: wCsYTgSrIQGeINuCAAAd
+[31/7/2025, 14:31:37] A user connected: k7XE17wVn-NCIK_mAAAe
+[31/7/2025, 14:31:37] A user connected: gAy6Mn-GudIDhXZzAAAf
+[31/7/2025, 14:31:40] A user connected: QphJLUJndHJQ2v4WAAAj
+[31/7/2025, 14:31:40] A user connected: Lire81UoJis-xLquAAAk
+[31/7/2025, 14:31:40] A user connected: P5Fd7OHJ40zKUY9sAAAl
+[31/7/2025, 14:31:53] User disconnected: P5Fd7OHJ40zKUY9sAAAl
+[31/7/2025, 14:31:53] User disconnected: Lire81UoJis-xLquAAAk
+[31/7/2025, 14:31:53] User disconnected: QphJLUJndHJQ2v4WAAAj
+[31/7/2025, 14:31:54] User disconnected: wCsYTgSrIQGeINuCAAAd
+[31/7/2025, 14:31:54] User disconnected: gAy6Mn-GudIDhXZzAAAf
+[31/7/2025, 14:31:54] User disconnected: k7XE17wVn-NCIK_mAAAe
+[31/7/2025, 14:31:58] A user connected: ih-EEnGJUWlyNGxLAAAp
+[31/7/2025, 14:31:58] A user connected: LjXFrWNEQ_BazR4dAAAq
+[31/7/2025, 14:31:58] A user connected: LpI8aZRtFbHhnF5QAAAr
+[31/7/2025, 14:32:15] Fetched 6 templates for page 1 of 2
+[31/7/2025, 14:32:18] Socket ih-EEnGJUWlyNGxLAAAp joined room: 688af4dbf09cf091a043b2d5
+[31/7/2025, 14:32:18] Socket ih-EEnGJUWlyNGxLAAAp joined room: project-688af6cf54f48017fb3c7745
+[31/7/2025, 14:32:18] Fetched 9 templates for page 1 of 1
+[31/7/2025, 14:33:01] Server running on port 5001
+[31/7/2025, 14:33:01] A user connected: QQYiLWj3NDwlRY8DAAAB
+[31/7/2025, 14:33:02] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[31/7/2025, 14:33:03] User disconnected: QQYiLWj3NDwlRY8DAAAB
+[31/7/2025, 14:33:03] A user connected: mjKAoiqJ0_yzFgJnAAAE
+[31/7/2025, 14:33:03] A user connected: iulCKlTMv3X7lPl4AAAF
+[31/7/2025, 14:33:03] A user connected: 0WdQRi6MS41mFMP-AAAH
+[31/7/2025, 14:33:09] token "688af4dbf09cf091a043b2d5" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[31/7/2025, 14:33:20] A user connected: AQPj1b86bcJon2AQAAAL
+[31/7/2025, 14:33:20] A user connected: kSilEWh1Ba5P84RlAAAM
+[31/7/2025, 14:33:20] A user connected: jKXQ17lgD9nYX8kSAAAN
+[31/7/2025, 14:33:35] User disconnected: iulCKlTMv3X7lPl4AAAF
+[31/7/2025, 14:33:35] User disconnected: 0WdQRi6MS41mFMP-AAAH
+[31/7/2025, 14:33:35] User disconnected: mjKAoiqJ0_yzFgJnAAAE
+[31/7/2025, 14:33:36] A user connected: PjyKKOEqwVpZ72MwAAAQ
+[31/7/2025, 14:33:36] A user connected: muPk4Wx8uXEUu97WAAAR
+[31/7/2025, 14:33:36] A user connected: Y_7qhkvchkijVIWcAAAT
+[31/7/2025, 14:33:51] User disconnected: muPk4Wx8uXEUu97WAAAR
+[31/7/2025, 14:33:51] User disconnected: Y_7qhkvchkijVIWcAAAT
+[31/7/2025, 14:33:51] User disconnected: PjyKKOEqwVpZ72MwAAAQ
+[31/7/2025, 14:33:52] A user connected: CIqkL_7xr-o2ZdlMAAAW
+[31/7/2025, 14:33:52] A user connected: 1lXZzGSTYefgSrCdAAAY
+[31/7/2025, 14:33:52] A user connected: FcmE18V3EM_CoI7iAAAZ
+[31/7/2025, 14:34:14] User disconnected: CIqkL_7xr-o2ZdlMAAAW
+[31/7/2025, 14:34:14] User disconnected: FcmE18V3EM_CoI7iAAAZ
+[31/7/2025, 14:34:14] User disconnected: 1lXZzGSTYefgSrCdAAAY
+[31/7/2025, 14:34:15] A user connected: iSKoCoHEFQyqDDVLAAAc
+[31/7/2025, 14:34:15] A user connected: 4RCXXPLgjFdi1UeTAAAd
+[31/7/2025, 14:34:15] A user connected: D82cIYVhbc3NrSiSAAAf
+[31/7/2025, 14:34:31] User disconnected: iSKoCoHEFQyqDDVLAAAc
+[31/7/2025, 14:34:31] User disconnected: D82cIYVhbc3NrSiSAAAf
+[31/7/2025, 14:34:31] User disconnected: 4RCXXPLgjFdi1UeTAAAd
+[31/7/2025, 14:34:31] A user connected: _gSmFal96giSPjAHAAAh
+[31/7/2025, 14:34:31] A user connected: o8KqbdGp3BpOGfj0AAAj
+[31/7/2025, 14:34:31] A user connected: e-UDU59f1TeuXzqCAAAl
+[31/7/2025, 14:34:43] User disconnected: AQPj1b86bcJon2AQAAAL
+[31/7/2025, 14:34:43] User disconnected: jKXQ17lgD9nYX8kSAAAN
+[31/7/2025, 14:34:43] User disconnected: kSilEWh1Ba5P84RlAAAM
+[31/7/2025, 14:34:43] A user connected: Jx6XtP71yeLlypikAAAp
+[31/7/2025, 14:34:43] A user connected: FHdwx6pGNm9caSUxAAAq
+[31/7/2025, 14:34:43] A user connected: 9ds38lo6JKdU5zzZAAAr
+[31/7/2025, 14:34:51] User disconnected: Jx6XtP71yeLlypikAAAp
+[31/7/2025, 14:34:51] User disconnected: 9ds38lo6JKdU5zzZAAAr
+[31/7/2025, 14:34:51] User disconnected: FHdwx6pGNm9caSUxAAAq
