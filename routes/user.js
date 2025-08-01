@@ -4,11 +4,12 @@ const userController = require('../controllers/userController');
 const { responseHandler } = require('../middleware/responseHandler');
 const validateRequest = require('../middleware/validate');
 const {register,login, forgotPassword, resetPassword, verifyOtp, update, resetPasswordWithOtp} = require('../validations/userValidations');
+const loginLimiter = require("../middleware/rateLimiter");
 const router = express.Router();
 
 router.post('/register', validateRequest(register), responseHandler(userController.registerController));
 router.post('/verifyOtp', validateRequest(verifyOtp), responseHandler(userController.verifyOtpController));
-router.post('/login', validateRequest(login), userController.authUser);
+router.post('/login', validateRequest(login), loginLimiter, userController.authUser);
 router.get('/profile', protect, userController.getUserProfile);
 router.put('/profile', protect, validateRequest(update), userController.updateUserProfile);
 router.get('/', protect, authorizeRoles('tenant_admin', 'super_admin'), userController.getAllUsersForTenant);
