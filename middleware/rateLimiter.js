@@ -1,10 +1,11 @@
 const rateLimit = require("express-rate-limit");
+const { ipKeyGenerator } = require("express-rate-limit");
 
 const loginLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 10,
   keyGenerator: (req) => {
-    return req.body.email || req.ip;
+    return req.body.email || ipKeyGenerator(req);
   },
   standardHeaders: true,
   legacyHeaders: false,

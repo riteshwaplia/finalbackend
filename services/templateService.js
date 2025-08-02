@@ -870,7 +870,6 @@ exports.getAllTemplates = async (req) => {
   }
 };
 
-
 exports.getAllApprovedTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
@@ -879,8 +878,14 @@ exports.getAllApprovedTemplates = async (req) => {
   const query = {
     tenantId,
     userId,
-    metaStatus: 'APPROVED', // ✅ Only approved
-    type: { $ne: 'CAROUSEL' } // ✅ Exclude carousel
+    metaStatus: 'APPROVED',
+    components: {
+      $not: {
+        $elemMatch: {
+          type: "CAROUSEL"
+        }
+      }
+    }
   };
 
   if (businessProfileId) {
@@ -921,6 +926,7 @@ exports.getAllApprovedTemplates = async (req) => {
     };
   }
 };
+
 exports.getAllCarouselTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;

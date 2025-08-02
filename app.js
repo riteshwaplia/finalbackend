@@ -59,7 +59,7 @@ app.use(cors({
     'X-Tenant-Domain'
   ]
 }));
-
+app.set('trust proxy', true);
 
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/site', siteRoutes);
