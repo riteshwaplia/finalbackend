@@ -1625,3 +1625,19 @@
 [1/8/2025, 15:52:06] A user connected: 3C-TMNTFSMQcoQ0DAAAB
 [1/8/2025, 15:52:06] A user connected: Ed4EJixIFqbpOCpXAAAD
 [1/8/2025, 15:52:07] A user connected: qWJ3iI8HKgF5STy0AAAF
+[1/8/2025, 17:26:26] Server running on port 5001
+[1/8/2025, 17:26:27] A user connected: 1KK7lcpZdBF_HcoDAAAB
+[1/8/2025, 17:26:27] A user connected: rH4edxTWm1GsXeYoAAAD
+[1/8/2025, 17:26:27] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[1/8/2025, 17:26:28] A user connected: 5ENjGCRPrAAjeXpwAAAF
+[1/8/2025, 17:36:05] User disconnected: 5ENjGCRPrAAjeXpwAAAF
+[1/8/2025, 17:36:05] User disconnected: 1KK7lcpZdBF_HcoDAAAB
+[1/8/2025, 17:36:05] User disconnected: rH4edxTWm1GsXeYoAAAD
+[1/8/2025, 17:51:55] Server running on port 5001
+[1/8/2025, 17:51:55] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[1/8/2025, 17:52:40] Server running on port 5001
+[1/8/2025, 17:52:40] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[1/8/2025, 18:03:22] Server running on port 5001
+[1/8/2025, 18:03:23] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[1/8/2025, 18:04:11] Server running on port 5001
+[1/8/2025, 18:04:11] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net

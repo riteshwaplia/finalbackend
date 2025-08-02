@@ -507,277 +507,375 @@ const sendBulkMessageService = async (req) => {
 };
 
 // const BulkSendGroupService = async (req) => {
-//   const { templateName, message = {}, groupId, contactfields = [], imageId } = req.body;
-//   const userId = req.user._id;
-//   const tenantId = req.tenant._id;
-//   const projectId = req.params.projectId;
+//     const { templateName, message = {}, groupId, contactfields = [], imageId } = req.body;
+//     const userId = req.user._id;
+//     const tenantId = req.tenant._id;
+//     const projectId = req.params.projectId;
 
-//   if (!templateName || !groupId) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.Missing_required_fields + " (templateName and groupId are required for group bulk send).",
-//     };
-//   }
-
-//   const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
-//   console.log("📁 Project loaded:", project ? project._id : null);
- 
-//   if (!project || !project.isWhatsappVerified || !project.metaPhoneNumberID) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.Project_whatsapp_number_not_configured,
-//     };
-//   }
-//   const phoneNumberId = project.metaPhoneNumberID;
-//   const businessProfile = project.businessProfileId;
-
-//   if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.Meta_API_credentials_not_configured,
-//     };
-//   }
-
-//   const accessToken = businessProfile.metaAccessToken;
-//   const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
-//   const graphVersion = businessProfile.graphVersion || "v16.0";
-
-//   const contacts = await Contact.find({
-//     groupIds: groupId,
-//     userId,
-//     tenantId,
-//     projectId,
-//     isBlocked: false,
-//   });
-
-//   console.log("👥 Contacts fetched:", contacts.length);
-//   if (!contacts.length) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.No_valid_contacts_for_bulk_send + " (No contacts found for the group).",
-//     };
-//   }
-
-//   let parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
-//   let templateComponents = parsedMessage.components;
-//   console.log("🧩 Initial template components:", templateComponents);
-//   let templateLanguageCode = parsedMessage.language?.code || "en_US";
-
-//   if (!templateComponents || templateComponents.length === 0) {
-//     const localTemplate = await Template.findOne({
-//       tenantId,
-//       userId,
-//       businessProfileId: project.businessProfileId,
-//       name: templateName,
-//       metaStatus: "APPROVED",
-//     });
-//     if (localTemplate) {
-//       templateComponents = localTemplate.components;
-//       templateLanguageCode = localTemplate.language;
-//     } else {
-//       return {
-//         status: statusCode.BAD_REQUEST,
-//         success: false,
-//         message: `Template '${templateName}' not found or not approved.`,
-//       };
+//     if (!templateName || !groupId) {
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.Missing_required_fields + " (templateName and groupId are required for group bulk send).",
+//         };
 //     }
-//   }
 
-//   const bulkSendJob = await BulkSendJob.create({
-//     tenantId,
-//     userId,
-//     projectId,
-//     templateName,
-//     groupId,
-//     totalContacts: contacts.length,
-//     status: "in_progress",
-//     startTime: new Date(),
-//     templateDetails: {
-//       components: templateComponents,
-//       language: templateLanguageCode,
-//     },
-//   });
+//     const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+//     console.log("📁 Project loaded:", project ? project._id : null);
+    
+//     if (!project || !project.isWhatsappVerified || !project.metaPhoneNumberID) {
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.Project_whatsapp_number_not_configured,
+//         };
+//     }
+//     const phoneNumberId = project.metaPhoneNumberID;
+//     const businessProfile = project.businessProfileId;
 
-//   const baseMessage = {
-//     name: templateName,
-//     language: { code: templateLanguageCode },
-//     components: [],
-//   };
+//     if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.Meta_API_credentials_not_configured,
+//         };
+//     }
 
-//   const contactBatches = chunkArray(contacts, BATCH_SIZE);
+//     const accessToken = businessProfile.metaAccessToken;
+//     const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
+//     const graphVersion = businessProfile.graphVersion || "v16.0";
 
-//   let totalSent = 0;
-//   let totalFailed = 0;
-//   const errorsSummary = [];
-
-//   for (const [batchIndex, batch] of contactBatches.entries()) {
-//     const sendPromises = batch.map(async (contact, i) => {
-//       const mobileNumber = String(contact.mobileNumber || "");
-//       const to = String(contact.mobileNumber || "");
-
-//       if (!mobileNumber || mobileNumber.length < 5) {
-//         totalFailed++;
-//         errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format." });
-//         return;
-//       }
-
-//       if (!to.startsWith("91") && process.env.NODE_ENV !== "production") {
-//         totalFailed++;
-//         errorsSummary.push({ to, error: "Not in test number list (sandbox)." });
-//         return;
-//       }
-
-//       const components = [];
-
-//       const carouselTemplate = templateComponents.find(c => c.type === 'CAROUSEL');
-//       if (carouselTemplate) {
-//         const carouselCards = [];
-//         for (const [i, cardTemplate] of carouselTemplate.cards.entries()) {
-//           const cardComponents = [];
-                    
-//           // CAROUSEL HEADER (Image)
-//           const cardHeaderTemplate = cardTemplate.components.find(c => c.type === 'HEADER' && c.format === 'IMAGE');
-//           if (cardHeaderTemplate && imageId) {
-//             cardComponents.push({
-//               type: 'header',
-//               parameters: [{ type: 'image', image: { id: imageId } }],
-//             });
-//           }
-                    
-//           // CAROUSEL BODY (no dynamic parameters here in your provided template)
-                    
-//           carouselCards.push({
-//             card_index: i,
-//             components: cardComponents,
-//           });
-//         }
-                
-//         if (carouselCards.length) {
-//           components.push({
-//             type: 'carousel',
-//             cards: carouselCards,
-//           });
-//         }
-//       } else {
-//         // HEADER (text or image) - for non-carousel templates
-//         const headerTemplate = templateComponents.find(c => c.type === 'HEADER');
-//         if (headerTemplate) {
-//           if (headerTemplate.format === 'IMAGE') {
-//             if (imageId) {
-//               components.push({
-//                 type: 'header',
-//                 parameters: [{ type: 'image', image: { id: imageId } }],
-//               });
-//             }
-//           } else if (headerTemplate.format === 'TEXT') {
-//             const expectedHeaderParams = (headerTemplate.text?.match(/{{\d+}}/g) || []).length;
-//             if (expectedHeaderParams > 0) {
-//               const headerKey = contactfields[0] || 'First name';
-//               const headerValue = contact.customFields?.[headerKey] || 'User';
-//               components.push({
-//                 type: 'header',
-//                 parameters: [{ type: 'text', text: headerValue }],
-//               });
-//             } 
-//           }
-//         }
-                
-//         // BODY
-//         const bodyTemplate = templateComponents.find(c => c.type === 'BODY');
-//         const expectedBodyParams = (bodyTemplate?.text?.match(/{{\d+}}/g) || []).length;
-//         if (bodyTemplate && expectedBodyParams > 0) {
-//           const bodyParams = [];
-//           for (let i = 0; i < expectedBodyParams; i++) {
-//             const key = contactfields[i + 1] || `field${i + 1}`;
-//             const value = contact.customFields?.[key] || '...';
-//             bodyParams.push({ type: 'text', text: value });
-//           }
-//           components.push({
-//             type: 'body',
-//             parameters: bodyParams,
-//           });
-//         }
-//       }
-
-//       const templateMessage = {
-//         name: baseMessage.name,
-//         language: baseMessage.language,
-//         components,
-//       };
-
-//       console.log('============to', to);
-//       console.log('============templateMessage', JSON.stringify(templateMessage, null, 2));
-
-//       try {
-//         const sendResult = await sendWhatsAppMessage({
-//           to,
-//           type: "template",
-//           message: templateMessage,
-//           phoneNumberId,
-//           accessToken,
-//           facebookUrl,
-//           graphVersion,
-//         });
-
-//         const messageLog = new Message({
-//           to,
-//           type: "template",
-//           message: templateMessage,
-//           status: sendResult.success ? "sent" : "failed",
-//           name: contact.name || "",
-//           metaResponse: sendResult.data,
-//           userId,
-//           tenantId,
-//           projectId,
-//           metaPhoneNumberID: phoneNumberId,
-//           direction: "outbound",
-//           bulkSendJobId: bulkSendJob._id,
-//           templateName,
-//           templateLanguage: templateLanguageCode,
-//         });
-
-//         if (!sendResult.success && sendResult.error) {
-//           messageLog.errorDetails = sendResult.error;
-//           totalFailed++;
-//           errorsSummary.push({ to, error: sendResult.error });
-//         } else {
-//           totalSent++;
-//         }
- 
-//         await messageLog.save();
-//       } catch (err) {
-//         totalFailed++;
-//         errorsSummary.push({ to, error: err.message || "Unhandled exception" });
-//       }
+//     const contacts = await Contact.find({
+//         groupIds: groupId,
+//         userId,
+//         tenantId,
+//         projectId,
+//         isBlocked: false,
 //     });
 
-//     await Promise.allSettled(sendPromises);
-//   }
+//     console.log("👥 Contacts fetched:", contacts.length);
+//     if (!contacts.length) {
+//         return {
+//             status: statusCode.BAD_REQUEST,
+//             success: false,
+//             message: resMessage.No_valid_contacts_for_bulk_send + " (No contacts found for the group).",
+//         };
+//     }
 
-//   bulkSendJob.totalSent = totalSent;
-//   bulkSendJob.totalFailed = totalFailed;
-//   bulkSendJob.errorsSummary = errorsSummary;
-//   bulkSendJob.endTime = new Date();
-//   bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
-//   await bulkSendJob.save();
+//     let parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
+//     let templateComponents = parsedMessage.components;
+//     console.log("🧩 Initial template components:", templateComponents);
+//     let templateLanguageCode = parsedMessage.language?.code || "en_US";
 
-//   return {
-//     status: statusCode.OK,
-//     success: true,
-//     message: totalFailed > 0
-//       ? resMessage.Bulk_send_completed_with_errors
-//       : resMessage.Bulk_messages_sent_successfully,
-//     data: {
-//       bulkSendJobId: bulkSendJob._id,
-//       totalSent,
-//       totalFailed,
-//       errorsSummary,
-//     },
-//   };
+//     if (!templateComponents || templateComponents.length === 0) {
+//         const localTemplate = await Template.findOne({
+//             tenantId,
+//             userId,
+//             businessProfileId: project.businessProfileId,
+//             name: templateName,
+//             metaStatus: "APPROVED",
+//         });
+//         if (localTemplate) {
+//             templateComponents = localTemplate.components;
+//             templateLanguageCode = localTemplate.language;
+//         } else {
+//             return {
+//                 status: statusCode.BAD_REQUEST,
+//                 success: false,
+//                 message: `Template '${templateName}' not found or not approved.`,
+//             };
+//         }
+//     }
+
+//     const bulkSendJob = await BulkSendJob.create({
+//         tenantId,
+//         userId,
+//         projectId,
+//         templateName,
+//         groupId,
+//         totalContacts: contacts.length,
+//         status: "in_progress",
+//         startTime: new Date(),
+//         templateDetails: {
+//             components: templateComponents,
+//             language: templateLanguageCode,
+//         },
+//     });
+
+//     const baseMessage = {
+//         name: templateName,
+//         language: { code: templateLanguageCode },
+//     };
+
+//     const contactBatches = chunkArray(contacts, BATCH_SIZE);
+
+//     let totalSent = 0;
+//     let totalFailed = 0;
+//     const errorsSummary = [];
+
+//     for (const [batchIndex, batch] of contactBatches.entries()) {
+//         const sendPromises = batch.map(async (contact) => {
+//             const mobileNumber = String(contact.mobileNumber || '');
+//             const to = mobileNumber;
+
+//             if (!mobileNumber || mobileNumber.length < 5) {
+//                 totalFailed++;
+//                 errorsSummary.push({ to: mobileNumber, error: 'Invalid mobile number format.' });
+//                 return;
+//             }
+
+//             const components = [];
+            
+//             // Check if the template contains a CAROUSEL
+//             const carouselTemplate = templateComponents.find(c => c.type === 'CAROUSEL');
+            
+//             if (carouselTemplate) {
+//                 // If it's a carousel, build a single carousel component
+//                 const carouselCards = [];
+//                 for (const [i, cardTemplate] of carouselTemplate.cards.entries()) {
+//                     const cardComponents = [];
+                    
+//                     // CAROUSEL HEADER
+//                     const cardHeaderTemplate = cardTemplate.components.find(c => c.type === 'HEADER');
+//                     if (cardHeaderTemplate) {
+//                         if (cardHeaderTemplate.format === 'IMAGE') {
+//                             // If there is a dynamic image ID, use it.
+//                             if (imageId) {
+//                                 cardComponents.push({
+//                                     type: 'header',
+//                                     parameters: [{ type: 'image', image: { id: imageId } }],
+//                                 });
+//                             }
+//                             // Otherwise, use the static image link from the template's example.
+//                             else if (cardHeaderTemplate.example?.header_handle?.[0]) {
+//                                 cardComponents.push({
+//                                     type: 'header',
+//                                     parameters: [{
+//                                         type: 'image',
+//                                         image: { link: cardHeaderTemplate.example.header_handle[0] }
+//                                     }],
+//                                 });
+//                             }
+//                         } else if (cardHeaderTemplate.format === 'TEXT') {
+//                             const expectedHeaderParams = (cardHeaderTemplate.text?.match(/{{\d+}}/g) || []).length;
+//                             if (expectedHeaderParams > 0) {
+//                                 const headerKey = contactfields[0] || 'First name';
+//                                 const headerValue = contact.customFields?.[headerKey] || 'User';
+//                                 cardComponents.push({
+//                                     type: 'header',
+//                                     parameters: [{ type: 'text', text: headerValue }],
+//                                 });
+//                             }
+//                         }
+//                     }
+                    
+//                     // // CAROUSEL BODY - Removed as per user request
+//                     // const cardBodyTemplate = cardTemplate.components.find(c => c.type === 'BODY');
+//                     // if (cardBodyTemplate) {
+//                     //     const expectedBodyParams = (cardBodyTemplate?.text?.match(/{{\d+}}/g) || []).length;
+//                     //     const bodyParams = [];
+//                     //     if (expectedBodyParams > 0) {
+//                     //         for (let i = 0; i < expectedBodyParams; i++) {
+//                     //             const key = contactfields[i + 1] || `field${i + 1}`;
+//                     //             const value = contact.customFields?.[key] || '...';
+//                     //             bodyParams.push({ type: 'text', text: value });
+//                     //         }
+//                     //     }
+//                     //     cardComponents.push({
+//                     //         type: 'body',
+//                     //         parameters: bodyParams,
+//                     //     });
+//                     // }
+
+//                     // CAROUSEL BUTTONS
+//                     const cardButtonTemplate = cardTemplate.components.find(c => c.type === 'BUTTONS');
+//                     if (cardButtonTemplate) {
+//                         const dynamicButtons = [];
+//                         for (const btn of cardButtonTemplate.buttons) {
+//                             if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
+//                                 const urlParamKey = contactfields[contactfields.length - 1] || 'url';
+//                                 const urlParamValue = contact.customFields?.[urlParamKey] || 'default_url';
+//                                 dynamicButtons.push({
+//                                     type: 'url',
+//                                     parameters: [{ type: 'text', text: urlParamValue }]
+//                                 });
+//                             }
+//                         }
+//                         if (dynamicButtons.length > 0) {
+//                             cardComponents.push({
+//                                 type: 'button',
+//                                 sub_type: 'url',
+//                                 index: '0', // Assuming a single dynamic URL button per card
+//                                 parameters: dynamicButtons[0].parameters
+//                             });
+//                         }
+//                     }
+
+//                     // The BUTTONS component for carousels is handled by the API itself for static quick replies.
+                    
+//                     carouselCards.push({
+//                         card_index: i,
+//                         components: cardComponents,
+//                     });
+//                 }
+                
+//                 if (carouselCards.length) {
+//                     components.push({
+//                         type: 'carousel',
+//                         cards: carouselCards,
+//                     });
+//                 }
+//             } else {
+//                 // If it's not a carousel, build individual top-level components
+//                 const headerTemplate = templateComponents.find(c => c.type === 'HEADER');
+//                 if (headerTemplate) {
+//                     if (headerTemplate.format === 'IMAGE') {
+//                         // If there is a dynamic image ID, use it.
+//                         if (imageId) {
+//                             components.push({
+//                                 type: 'header',
+//                                 parameters: [{ type: 'image', image: { id: imageId } }],
+//                             });
+//                         }
+//                         // Otherwise, use the static image link from the template's example.
+//                         else if (headerTemplate.example?.header_handle?.[0]) {
+//                             components.push({
+//                                 type: 'header',
+//                                 parameters: [{
+//                                     type: 'image',
+//                                     image: { link: headerTemplate.example.header_handle[0] }
+//                                 }],
+//                             });
+//                         }
+//                     } else if (headerTemplate.format === 'TEXT') {
+//                         const expectedHeaderParams = (headerTemplate.text?.match(/{{\d+}}/g) || []).length;
+//                         if (expectedHeaderParams > 0) {
+//                             const headerKey = contactfields[0] || 'First name';
+//                             const headerValue = contact.customFields?.[headerKey] || 'User';
+//                             components.push({
+//                                 type: 'header',
+//                                 parameters: [{ type: 'text', text: headerValue }],
+//                             });
+//                         } 
+//                     }
+//                 }
+                        
+//                 const bodyTemplate = templateComponents.find(c => c.type === 'BODY');
+//                 if (bodyTemplate) {
+//                     const expectedBodyParams = (bodyTemplate?.text?.match(/{{\d+}}/g) || []).length;
+//                     if (expectedBodyParams > 0) {
+//                         const bodyParams = [];
+//                         for (let i = 0; i < expectedBodyParams; i++) {
+//                             const key = contactfields[i + 1] || `field${i + 1}`;
+//                             const value = contact.customFields?.[key] || '...';
+//                             bodyParams.push({ type: 'text', text: value });
+//                         }
+//                         components.push({
+//                             type: 'body',
+//                             parameters: bodyParams,
+//                         });
+//                     }
+//                 }
+                
+//                 const buttonsTemplate = templateComponents.find(c => c.type === 'BUTTONS');
+//                 if (buttonsTemplate) {
+//                     const dynamicButtons = [];
+//                     for (const btn of buttonsTemplate.buttons) {
+//                         if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
+//                             const urlParamKey = contactfields[contactfields.length - 1] || 'url';
+//                             const urlParamValue = contact.customFields?.[urlParamKey] || 'default_url';
+//                             dynamicButtons.push({
+//                                 type: 'url',
+//                                 parameters: [{ type: 'text', text: urlParamValue }]
+//                             });
+//                         }
+//                     }
+//                     if (dynamicButtons.length > 0) {
+//                         components.push({
+//                             type: 'button',
+//                             sub_type: 'url',
+//                             index: '0',
+//                             parameters: dynamicButtons[0].parameters
+//                         });
+//                     }
+//                 }
+//             }
+
+//             const templateMessage = {
+//                 name: baseMessage.name,
+//                 language: baseMessage.language,
+//                 components,
+//             };
+    
+//             console.log('============to', to);
+//             console.log('============templateMessage', JSON.stringify(templateMessage, null, 2));
+
+//             try {
+//                 const sendResult = await sendWhatsAppMessage({
+//                     to,
+//                     type: 'template',
+//                     message: templateMessage,
+//                     phoneNumberId,
+//                     accessToken,
+//                     facebookUrl,
+//                     graphVersion,
+//                 });
+
+//                 const messageLog = new Message({
+//                     to,
+//                     type: "template",
+//                     message: templateMessage,
+//                     status: sendResult.success ? "sent" : "failed",
+//                     name: contact.name || "",
+//                     metaResponse: sendResult.data,
+//                     userId,
+//                     tenantId,
+//                     projectId,
+//                     metaPhoneNumberID: phoneNumberId,
+//                     direction: "outbound",
+//                     bulkSendJobId: bulkSendJob._id,
+//                     templateName,
+//                     templateLanguage: templateLanguageCode,
+//                 });
+
+//                 if (!sendResult.success && sendResult.error) {
+//                     messageLog.errorDetails = sendResult.error;
+//                     totalFailed++;
+//                     errorsSummary.push({ to, error: sendResult.error });
+//                 } else {
+//                     totalSent++;
+//                 }
+                
+//                 await messageLog.save();
+//             } catch (err) {
+//                 totalFailed++;
+//                 errorsSummary.push({ to, error: err.message || 'Unhandled exception' });
+//             }
+//         });
+
+//         await Promise.allSettled(sendPromises);
+//     }
+    
+//     bulkSendJob.totalSent = totalSent;
+//     bulkSendJob.totalFailed = totalFailed;
+//     bulkSendJob.errorsSummary = errorsSummary;
+//     bulkSendJob.endTime = new Date();
+//     bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
+//     await bulkSendJob.save();
+
+//     return {
+//         status: totalFailed > 0 ? 500 : 200,
+//         success: totalFailed === 0,
+//         message: totalFailed > 0
+//             ? 'Bulk send completed with errors.'
+//             : 'Bulk messages sent successfully.',
+//         data: {
+//             bulkSendJobId: bulkSendJob._id,
+//             totalSent,
+//             totalFailed,
+//             errorsSummary,
+//         },
+//     };
 // };
 
 const BulkSendGroupService = async (req) => {
@@ -804,6 +902,7 @@ const BulkSendGroupService = async (req) => {
             message: resMessage.Project_whatsapp_number_not_configured,
         };
     }
+
     const phoneNumberId = project.metaPhoneNumberID;
     const businessProfile = project.businessProfileId;
 
@@ -836,9 +935,18 @@ const BulkSendGroupService = async (req) => {
         };
     }
 
-    let parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
+    let parsedMessage;
+    try {
+        parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
+    } catch (err) {
+        return {
+            status: statusCode.BAD_REQUEST,
+            success: false,
+            message: 'Invalid message JSON format.',
+        };
+    }
+
     let templateComponents = parsedMessage.components;
-    console.log("🧩 Initial template components:", templateComponents);
     let templateLanguageCode = parsedMessage.language?.code || "en_US";
 
     if (!templateComponents || templateComponents.length === 0) {
@@ -881,47 +989,43 @@ const BulkSendGroupService = async (req) => {
         language: { code: templateLanguageCode },
     };
 
-    const contactBatches = chunkArray(contacts, BATCH_SIZE);
+    const parsedImageIds = typeof imageId === 'object' && !Array.isArray(imageId)
+        ? imageId
+        : (typeof imageId === 'string' ? { '0': imageId } : {});
 
+    const contactBatches = chunkArray(contacts, BATCH_SIZE);
     let totalSent = 0;
     let totalFailed = 0;
     const errorsSummary = [];
 
-    for (const [batchIndex, batch] of contactBatches.entries()) {
+    for (const batch of contactBatches) {
         const sendPromises = batch.map(async (contact) => {
-            const mobileNumber = String(contact.mobileNumber || '');
-            const to = mobileNumber;
-
-            if (!mobileNumber || mobileNumber.length < 5) {
+            const to = String(contact.mobileNumber || '');
+            if (!to || to.length < 5) {
                 totalFailed++;
-                errorsSummary.push({ to: mobileNumber, error: 'Invalid mobile number format.' });
+                errorsSummary.push({ to, error: 'Invalid mobile number format.' });
                 return;
             }
 
             const components = [];
-            
-            // Check if the template contains a CAROUSEL
             const carouselTemplate = templateComponents.find(c => c.type === 'CAROUSEL');
-            
+
             if (carouselTemplate) {
-                // If it's a carousel, build a single carousel component
                 const carouselCards = [];
+
                 for (const [i, cardTemplate] of carouselTemplate.cards.entries()) {
                     const cardComponents = [];
-                    
-                    // CAROUSEL HEADER
+
                     const cardHeaderTemplate = cardTemplate.components.find(c => c.type === 'HEADER');
                     if (cardHeaderTemplate) {
                         if (cardHeaderTemplate.format === 'IMAGE') {
-                            // If there is a dynamic image ID, use it.
-                            if (imageId) {
+                            const currentCardImageId = parsedImageIds[String(i)];
+                            if (currentCardImageId) {
                                 cardComponents.push({
                                     type: 'header',
-                                    parameters: [{ type: 'image', image: { id: imageId } }],
+                                    parameters: [{ type: 'image', image: { id: currentCardImageId } }],
                                 });
-                            }
-                            // Otherwise, use the static image link from the template's example.
-                            else if (cardHeaderTemplate.example?.header_handle?.[0]) {
+                            } else if (cardHeaderTemplate.example?.header_handle?.[0]) {
                                 cardComponents.push({
                                     type: 'header',
                                     parameters: [{
@@ -931,8 +1035,8 @@ const BulkSendGroupService = async (req) => {
                                 });
                             }
                         } else if (cardHeaderTemplate.format === 'TEXT') {
-                            const expectedHeaderParams = (cardHeaderTemplate.text?.match(/{{\d+}}/g) || []).length;
-                            if (expectedHeaderParams > 0) {
+                            const expectedParams = (cardHeaderTemplate.text?.match(/{{\d+}}/g) || []).length;
+                            if (expectedParams > 0) {
                                 const headerKey = contactfields[0] || 'First name';
                                 const headerValue = contact.customFields?.[headerKey] || 'User';
                                 cardComponents.push({
@@ -942,57 +1046,29 @@ const BulkSendGroupService = async (req) => {
                             }
                         }
                     }
-                    
-                    // // CAROUSEL BODY - Removed as per user request
-                    // const cardBodyTemplate = cardTemplate.components.find(c => c.type === 'BODY');
-                    // if (cardBodyTemplate) {
-                    //     const expectedBodyParams = (cardBodyTemplate?.text?.match(/{{\d+}}/g) || []).length;
-                    //     const bodyParams = [];
-                    //     if (expectedBodyParams > 0) {
-                    //         for (let i = 0; i < expectedBodyParams; i++) {
-                    //             const key = contactfields[i + 1] || `field${i + 1}`;
-                    //             const value = contact.customFields?.[key] || '...';
-                    //             bodyParams.push({ type: 'text', text: value });
-                    //         }
-                    //     }
-                    //     cardComponents.push({
-                    //         type: 'body',
-                    //         parameters: bodyParams,
-                    //     });
-                    // }
 
-                    // CAROUSEL BUTTONS
                     const cardButtonTemplate = cardTemplate.components.find(c => c.type === 'BUTTONS');
                     if (cardButtonTemplate) {
-                        const dynamicButtons = [];
                         for (const btn of cardButtonTemplate.buttons) {
                             if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
                                 const urlParamKey = contactfields[contactfields.length - 1] || 'url';
                                 const urlParamValue = contact.customFields?.[urlParamKey] || 'default_url';
-                                dynamicButtons.push({
-                                    type: 'url',
-                                    parameters: [{ type: 'text', text: urlParamValue }]
+                                cardComponents.push({
+                                    type: 'button',
+                                    sub_type: 'url',
+                                    index: '0',
+                                    parameters: [{ type: 'text', text: urlParamValue }],
                                 });
                             }
                         }
-                        if (dynamicButtons.length > 0) {
-                            cardComponents.push({
-                                type: 'button',
-                                sub_type: 'url',
-                                index: '0', // Assuming a single dynamic URL button per card
-                                parameters: dynamicButtons[0].parameters
-                            });
-                        }
                     }
 
-                    // The BUTTONS component for carousels is handled by the API itself for static quick replies.
-                    
                     carouselCards.push({
                         card_index: i,
                         components: cardComponents,
                     });
                 }
-                
+
                 if (carouselCards.length) {
                     components.push({
                         type: 'carousel',
@@ -1000,19 +1076,16 @@ const BulkSendGroupService = async (req) => {
                     });
                 }
             } else {
-                // If it's not a carousel, build individual top-level components
                 const headerTemplate = templateComponents.find(c => c.type === 'HEADER');
                 if (headerTemplate) {
                     if (headerTemplate.format === 'IMAGE') {
-                        // If there is a dynamic image ID, use it.
-                        if (imageId) {
+                        const singleImageId = parsedImageIds['0'];
+                        if (singleImageId) {
                             components.push({
                                 type: 'header',
-                                parameters: [{ type: 'image', image: { id: imageId } }],
+                                parameters: [{ type: 'image', image: { id: singleImageId } }],
                             });
-                        }
-                        // Otherwise, use the static image link from the template's example.
-                        else if (headerTemplate.example?.header_handle?.[0]) {
+                        } else if (headerTemplate.example?.header_handle?.[0]) {
                             components.push({
                                 type: 'header',
                                 parameters: [{
@@ -1022,18 +1095,18 @@ const BulkSendGroupService = async (req) => {
                             });
                         }
                     } else if (headerTemplate.format === 'TEXT') {
-                        const expectedHeaderParams = (headerTemplate.text?.match(/{{\d+}}/g) || []).length;
-                        if (expectedHeaderParams > 0) {
+                        const expectedParams = (headerTemplate.text?.match(/{{\d+}}/g) || []).length;
+                        if (expectedParams > 0) {
                             const headerKey = contactfields[0] || 'First name';
                             const headerValue = contact.customFields?.[headerKey] || 'User';
                             components.push({
                                 type: 'header',
                                 parameters: [{ type: 'text', text: headerValue }],
                             });
-                        } 
+                        }
                     }
                 }
-                        
+
                 const bodyTemplate = templateComponents.find(c => c.type === 'BODY');
                 if (bodyTemplate) {
                     const expectedBodyParams = (bodyTemplate?.text?.match(/{{\d+}}/g) || []).length;
@@ -1050,27 +1123,20 @@ const BulkSendGroupService = async (req) => {
                         });
                     }
                 }
-                
+
                 const buttonsTemplate = templateComponents.find(c => c.type === 'BUTTONS');
                 if (buttonsTemplate) {
-                    const dynamicButtons = [];
                     for (const btn of buttonsTemplate.buttons) {
                         if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
                             const urlParamKey = contactfields[contactfields.length - 1] || 'url';
                             const urlParamValue = contact.customFields?.[urlParamKey] || 'default_url';
-                            dynamicButtons.push({
-                                type: 'url',
-                                parameters: [{ type: 'text', text: urlParamValue }]
+                            components.push({
+                                type: 'button',
+                                sub_type: 'url',
+                                index: '0',
+                                parameters: [{ type: 'text', text: urlParamValue }],
                             });
                         }
-                    }
-                    if (dynamicButtons.length > 0) {
-                        components.push({
-                            type: 'button',
-                            sub_type: 'url',
-                            index: '0',
-                            parameters: dynamicButtons[0].parameters
-                        });
                     }
                 }
             }
@@ -1080,9 +1146,6 @@ const BulkSendGroupService = async (req) => {
                 language: baseMessage.language,
                 components,
             };
-    
-            console.log('============to', to);
-            console.log('============templateMessage', JSON.stringify(templateMessage, null, 2));
 
             try {
                 const sendResult = await sendWhatsAppMessage({
@@ -1119,7 +1182,7 @@ const BulkSendGroupService = async (req) => {
                 } else {
                     totalSent++;
                 }
-                
+
                 await messageLog.save();
             } catch (err) {
                 totalFailed++;
@@ -1129,7 +1192,7 @@ const BulkSendGroupService = async (req) => {
 
         await Promise.allSettled(sendPromises);
     }
-    
+
     bulkSendJob.totalSent = totalSent;
     bulkSendJob.totalFailed = totalFailed;
     bulkSendJob.errorsSummary = errorsSummary;
