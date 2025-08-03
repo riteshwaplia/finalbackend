@@ -268,7 +268,6 @@ exports.updateWhatsappBusinessProfileOnMeta = async ({ projectId, userId, tenant
 
     try {
         const project = await Project.findOne({ _id: projectId, userId, tenantId }).populate('businessProfileId');
-        console.log("project to update WhatsApp Business Profile:", project);
         if (!project) {
             return {
                 status: statusCode.NOT_FOUND,
@@ -293,22 +292,13 @@ exports.updateWhatsappBusinessProfileOnMeta = async ({ projectId, userId, tenant
         const  facebookUrl = 'https://graph.facebook.com'
         const  graphVersion = 'v19.0'
 
-        console.log("Using Meta API credentials:", {
-            accessToken: project.businessProfileId.metaAccessToken,
-            facebookUrl,
-            graphVersion
-        });
         const { metaPhoneNumberID } = project;
         const { metaAccessToken } = project.businessProfileId;
-        console.log("Meta API credentials:", { metaAccessToken, facebookUrl, graphVersion });
         const url = `${facebookUrl}/${graphVersion}/${metaPhoneNumberID}/whatsapp_business_profile`;
-        console.log("Meta API URL:", url);
         const metaPayload = {
             messaging_product: "whatsapp",
             ...profileData
         };
-
-        console.log(`[WhatsApp Business Profile Update] Sending payload to Meta: ${JSON.stringify(metaPayload)}`);
 
         const response = await axios.post(url, metaPayload, {
             headers: {
@@ -317,9 +307,14 @@ exports.updateWhatsappBusinessProfileOnMeta = async ({ projectId, userId, tenant
             }
         });
 
-        if (response.data.success) {
-            Object.assign(project, profileData);
+        if (response.status === 200) {
+            Object.entries(profileData).forEach(([key, value]) => {
+                project[key] = value;
+                project.markModified(key);
+            }); 
+
             await project.save();
+            const savedProject = await Project.findById(project._id).lean();
 
             return {
                 status: statusCode.OK,
