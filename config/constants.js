@@ -131,6 +131,7 @@ const resMessage = {
     Token_is_required: "Token is required for logout",
     USER_NOT_FOUND: "User not found",
     Logged_out_successfully: "Logged out successfully",
+    Otp_expired: "OTP has expired"
 };
 
 module.exports = {

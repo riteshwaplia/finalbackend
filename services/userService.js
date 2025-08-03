@@ -127,7 +127,26 @@ exports.verifyOtp = async (req) => {
         };
       }
 
+      if (!user.otpExpiresAt || Date.now() > user.otpExpiresAt) {
+        return {
+          status: statusCode.UNAUTHORIZED,
+          success: false,
+          message: resMessage.Otp_expired,
+          statusCode: statusCode.UNAUTHORIZED
+        };
+      }
+
+      if (user.otp !== otp) {
+        return {
+          status: statusCode.UNAUTHORIZED,
+          success: false,
+          message: resMessage.Invalid_otp,
+          statusCode: statusCode.UNAUTHORIZED
+        };
+      }
+
       user.otp = null;
+      user.otpExpiresAt = null;
       user.isEmailVerified = true;
       await user.save();
 
@@ -227,13 +246,14 @@ exports.forgotPassword = async (req) => {
     const otp = Array.from({ length: 6 }, () =>
       String.fromCharCode(
         Math.random() < 0.5
-          ? 65 + Math.floor(Math.random() * 26)  // A-Z
-          : 97 + Math.floor(Math.random() * 26)  // a-z
+          ? 65 + Math.floor(Math.random() * 26)
+          : 97 + Math.floor(Math.random() * 26)
       )
     ).join('');
 
 
     user.otp = otp;
+    user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
     await user.save();
 
     const subject = 'Wachat Password Reset OTP';
@@ -242,7 +262,7 @@ exports.forgotPassword = async (req) => {
       <h2>Hello ${user.username},</h2>
       <p>Your OTP to reset your password is:</p>
       <h3>${otp}</h3>
-      <p>This OTP will expire soon. Please use it promptly.</p>
+      <p>This OTP will expire after 10 min. Please use it promptly.</p>
     `;
 
     await sendEmail(email, subject, text, html);
