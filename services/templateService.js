@@ -935,7 +935,11 @@ exports.getAllCarouselTemplates = async (req) => {
   const query = {
     tenantId,
     userId,
-    type: 'CAROUSEL',
+    components: {
+      $elemMatch: {
+        type: "CAROUSEL"
+      }
+    },
     metaStatus: 'APPROVED',
   };
 
