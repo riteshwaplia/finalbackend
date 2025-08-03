@@ -118,36 +118,51 @@ exports.handleWebhookPayload = async (req) => {
                             }
                             businessProfileData = await Businessprofile.findById(project.businessProfileId);
  
+                            const parsedPhoneNumber = fromPhoneNumber.replace(/^\+/, '');
+
                             let contact = await Contact.findOne({
+                                tenantId: project.tenantId,
                                 projectId: project._id,
-                                userId: project.userId,
-                                whatsappId: whatsappId
+                                mobileNumber: parsedPhoneNumber
                             });
- 
+
                             if (!contact) {
-                                const parsedPhoneNumber = fromPhoneNumber.replace(/^\+/, '');
                                 let defaultCountryCode = '';
                                 let defaultMobileNumber = parsedPhoneNumber;
+
                                 if (parsedPhoneNumber.length > 10) {
                                     defaultCountryCode = parsedPhoneNumber.substring(0, parsedPhoneNumber.length - 10);
                                     defaultMobileNumber = parsedPhoneNumber.substring(parsedPhoneNumber.length - 10);
                                 }
+
                                 contact = await Contact.create({
                                     tenantId: project.tenantId,
                                     userId: project.userId,
                                     projectId: project._id,
                                     name: profileName,
                                     countryCode: defaultCountryCode,
-                                    mobileNumber: fromPhoneNumber,
-                                    whatsappId: whatsappId,
-                                    profileName: profileName
+                                    mobileNumber: parsedPhoneNumber,
+                                    whatsappId,
+                                    profileName
                                 });
-                            } else if (contact.profileName !== profileName || contact.mobileNumber !== fromPhoneNumber.replace(/^\+/, '')) {
-                                contact.profileName = profileName;
-                                contact.mobileNumber = fromPhoneNumber.replace(/^\+/, '');
-                                await contact.save();
                             } else {
-                                console.log(`[Inbound Message] Existing contact found: ${contact._id}`);
+                                let updated = false;
+
+                                if (profileName && contact.profileName !== profileName) {
+                                    contact.profileName = profileName;
+                                    updated = true;
+                                }
+
+                                if (profileName && contact.name !== profileName) {
+                                    contact.name = profileName;
+                                    updated = true;
+                                }
+
+                                if (updated) {
+                                    await contact.save();
+                                } else {
+                                    console.log(`[Inbound Message] Contact already up-to-date: ${contact._id}`);
+                                }
                             }
  
                             let conversation = await Conversation.findOne({
@@ -304,10 +319,8 @@ exports.handleWebhookPayload = async (req) => {
         }
         return { status: statusCode.OK, success: true, message: resMessage.WEBHOOK_RECEIVE_SUCCESS };
     } catch (error) {
-        console.error("--- Error processing webhook payload ---");
         console.error("Error details:", error.message);
         console.error("Stack trace:", error.stack);
-        console.error("---------------------------------------");
         return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
     }
 };
