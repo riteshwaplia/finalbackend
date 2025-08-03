@@ -41,12 +41,14 @@ exports.getDashboardStats = async ({ userId, tenantId }) => {
         const { currentPeriodCount: newContactsThisWeek, percentageChange: newContactsPercentageChange } = await calculateWeeklyChange(Contact, baseQuery, 'createdAt', 7);
 
         const totalGroups = await Group.countDocuments(baseQuery);
-        const thirtyDaysAgo = new Date(new Date().setDate(new Date().getDate() - 30));
         const activeGroupsCount = await Group.countDocuments({
             ...baseQuery,
-            lastActivityAt: { $gte: thirtyDaysAgo }
+            isActive: true
         });
-        const inactiveGroupsCount = totalGroups - activeGroupsCount;
+        const inactiveGroupsCount = await Group.countDocuments({
+            ...baseQuery,
+            isActive: false
+        });
 
         const totalTemplates = await Template.countDocuments(baseQuery);
         const approvedTemplates = await Template.countDocuments({ ...baseQuery, metaStatus: 'APPROVED' });
