@@ -1,14 +1,22 @@
 const Joi = require("joi");
 
 const baseContactSchema = {
-  name: Joi.string().trim().pattern(/^[a-zA-Z0-9_]+$/).messages({
-    "string.pattern.base": "Name can only contain letters, numbers, and underscores",
+  name: Joi.string()
+  .trim()
+  .pattern(/^[a-zA-Z0-9_ ]+$/) 
+  .messages({
+    "string.pattern.base": "Name can only contain letters, numbers, underscores, and spaces",
     "string.base": "Name must be a string",
   }),
   email: Joi.string().email().trim().lowercase().allow('', null),
   countryCode: Joi.string().trim().allow('', null),
-  mobileNumber: Joi.string().trim().pattern(/^[0-9]+$/).required().messages({
+  mobileNumber: Joi.string()
+  .trim()
+  .pattern(/^[0-9]{12,14}$/)
+  .required()
+  .messages({
     "any.required": "Mobile number is required",
+    "string.pattern.base": "Mobile number must be between 12 to 14 digits and contain only numbers",
   }),
   whatsappId: Joi.string().trim().pattern(/^[0-9]+$/).allow('', null),
   profileName: Joi.string().trim().allow('', null),
