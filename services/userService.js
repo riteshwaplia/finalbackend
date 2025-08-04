@@ -30,6 +30,7 @@ exports.register = async (req) => {
             }
 
             existingUser.otp = otp;
+            existingUser.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
             await existingUser.save();
 
             const subject = 'Wachat Account OTP Verification';
@@ -65,6 +66,7 @@ exports.register = async (req) => {
             password,
             role: 'user',
             otp: otp,
+            otpExpiresAt: new Date(Date.now() + 5 * 60 * 1000)
         });
 
         const subject = 'Wachat Account OTP Verification';
@@ -73,7 +75,7 @@ exports.register = async (req) => {
             <h2>Hello ${username},</h2>
             <p>Your OTP for Wachat registration is:</p>
             <h3>${otp}</h3>
-            <p>This OTP will expire in 10 minutes.</p>
+            <p>This OTP will expire in 5 minutes.</p>
         `;
 
         await sendEmail(email, subject, text, html);
