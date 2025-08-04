@@ -542,15 +542,6 @@ exports.createTemplate = async (req) => {
   }
 };
 
-
-/**
- * @desc    Create a new WhatsApp Carousel Message Template on Meta Graph API.
- * This is a specialized function for CAROUSEL type templates.
- * @route   POST /api/whatsapp/carousel-templates (new route)
- * @access  Private (User/Project Owner)
- * @param {Object} req - The request object containing template data, user, and tenant info.
- * @returns {Object} Success status and the created template data.
- */
 exports.createCarouselTemplate = async (req) => {
   const { name, language, category, components, businessProfileId, projectId } =
     req.body;
@@ -574,7 +565,6 @@ exports.createCarouselTemplate = async (req) => {
     };
   }
 
-  // Validate that the main component is of type CAROUSEL and has cards
   const carouselComponent = components.find((comp) => comp.type === "CAROUSEL");
   if (
     !carouselComponent ||
@@ -587,6 +577,15 @@ exports.createCarouselTemplate = async (req) => {
       message:
         "Carousel template must have a 'CAROUSEL' component with at least one card.",
     };
+  }
+
+  if(carouselComponent.cards.length > 10) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Carousel_limit_exceed,
+      statusCode: statusCode.BAD_REQUEST
+    }
   }
 
   try {
@@ -606,15 +605,11 @@ exports.createCarouselTemplate = async (req) => {
     const { accessToken, wabaId } = metaCredentials;
     const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
-    // The components for carousel templates are structured differently.
-    // Meta expects the 'CAROUSEL' component at the top level,
-    // and each card has its own 'components' array.
-    // Ensure the payload matches the exact structure provided by Meta.
     const payload = {
       name,
       language,
       category,
-      components: components, // Assuming the frontend sends the components in the correct Meta carousel format
+      components: components,
     };
 
     console.log(
@@ -631,21 +626,20 @@ exports.createCarouselTemplate = async (req) => {
 
     console.log("Meta API carousel template creation response:", response.data);
 
-    // Save template to your database
     const newTemplate = await Template.create({
       name,
       category,
       language,
-      components: components || [], // Store original components (including mediaHandle) locally
+      components: components || [],
       tenantId,
       userId,
       businessProfileId,
-      metaTemplateId: response.data.id, // Meta's template ID
-      metaStatus: response.data.status, // Meta's status (e.g., PENDING, APPROVED)
-      metaCategory: response.data.category, // Meta's category
-      isSynced: true, // Mark as synced
+      metaTemplateId: response.data.id,
+      metaStatus: response.data.status,
+      metaCategory: response.data.category,
+      isSynced: true,
       lastSyncedAt: new Date(),
-      type: "CAROUSEL", // Explicitly mark as carousel type
+      type: "CAROUSEL",
     });
 
     return {

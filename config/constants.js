@@ -73,7 +73,6 @@ const resMessage = {
     No_valid_contacts_for_bulk_send: "No valid contacts found for bulk messaging.",
     Project_whatsapp_number_not_configured: "Project WhatsApp number (for sending messages) is not configured. Please set it in your project settings.",
 
-    // NEW Webhook-specific messages
     WEBHOOK_VERIFIED: "WEBHOOK_VERIFIED",
     WEBHOOK_RECEIVE_SUCCESS: "Webhook received successfully.",
     WEBHOOK_INVALID_VERIFY_TOKEN: "Invalid verify token.",
@@ -86,7 +85,6 @@ const resMessage = {
     Team_member_deleted_successfully: "Team member deleted successfully.",
     Unauthorized_action: "Unauthorized action.",
 
-   // NEW WhatsApp Number Registration messages (updated for direct input)
     WhatsApp_numbers_fetched_successfully: "WhatsApp phone numbers fetched successfully.",
     No_whatsapp_numbers_found: "No WhatsApp phone numbers found for the provided WABA ID. Please ensure the WABA ID and Access Token are correct.",
     Failed_to_fetch_whatsapp_numbers: "Failed to fetch WhatsApp phone numbers from Meta API. Check WABA ID and Access Token.",
@@ -112,7 +110,7 @@ const resMessage = {
     Flow_not_found: 'Flow not found for the provided ID.',
     nodes_array_is_required: 'Nodes array is required and cannot be empty.',
     edges_array_is_required: 'Edges array is required.',
-    No_valid_entry_point: 'Flow must have a valid trigger keyword.', // Renamed for clarity
+    No_valid_entry_point: 'Flow must have a valid trigger keyword.',
     
     WhatsApp_Business_Profile_updated_successfully: 'WhatsApp Business Profile updated successfully on Meta.',
     WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
@@ -131,7 +129,8 @@ const resMessage = {
     Token_is_required: "Token is required for logout",
     USER_NOT_FOUND: "User not found",
     Logged_out_successfully: "Logged out successfully",
-    Otp_expired: "OTP has expired"
+    Otp_expired: "OTP has expired",
+    Carousel_limit_exceed: "Carousel component cannot have more than 10 cards."
 };
 
 module.exports = {

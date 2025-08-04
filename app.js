@@ -60,6 +60,18 @@ app.use(cors({
   ]
 }));
 app.set('trust proxy', true);
+app.use((req, res, next) => {
+  const referer = req.headers.referer;
+  if(referer && /WAITFOR|SLEEP|DELAY|BENCHMARK|--/i.test(referer)) {
+    console.warn('Potential SQL injection attempt in Referer header: ', referer);
+    return res.status(400).json({
+      status: 400,
+      success: false,
+      message: "Bad Request"
+    });
+  }
+  next();
+});
 
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/site', siteRoutes);
