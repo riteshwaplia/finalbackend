@@ -176,3 +176,22 @@ exports.verifyOtp = Joi.object({
     }),
 });
 
+exports.resendOtp = Joi.object({
+  email: Joi.string()
+    .trim()
+    .email()
+    .required()
+    .messages({
+      "any.required": "Email is required",
+      "string.email": "Please provide a valid email",
+    }),
+
+  type: Joi.string()
+    .valid("register", "forgot_password")
+    .required()
+    .messages({
+      "any.required": "Type is required",
+      "any.only": "Type must be either 'register' or 'forgot_password'",
+    }),
+});
+

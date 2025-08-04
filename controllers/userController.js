@@ -360,6 +360,20 @@ const updateUserController = async (req) => {
     return result;
 };
 
+const resendOtpController = async (req) => {
+  try {
+    return await userService.resendOtp(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+      statusCode: statusCode.INTERNAL_SERVER_ERROR
+    };
+  }
+};
+
+
 module.exports = {
     authUser,
     logoutUserController,
@@ -377,5 +391,6 @@ module.exports = {
     forgotPasswordController,
     updatePasswordWithOtpController,
     updateUserController,
-    updateBusinessProfileController
+    updateBusinessProfileController,
+    resendOtpController
 };
