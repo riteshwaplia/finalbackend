@@ -588,6 +588,9 @@ const BulkSendGroupService = async (req) => {
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
 
+    const userBatchSize = await User.findOne({ _id: req.user._id, tenantId: req.tenant._id }).select('batch_size');
+    const BATCH_SIZE = userBatchSize?.batch_size || 20;
+
     if (!templateName || !groupId) {
         return {
             status: statusCode.BAD_REQUEST,
