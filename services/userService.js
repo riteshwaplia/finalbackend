@@ -541,3 +541,36 @@ exports.getBatchSize = async (req, res) => {
       };
   }
 }
+
+exports.updateBatchSize = async (req, res) => {
+  try {
+    const { batch_size } = req.body;
+    const userData = await User.findOne({ _id: req.user._id, tenantId: req.tenant._id }).select('batch_size');
+    
+    if(!userData) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.USER_NOT_FOUND,
+        statusCode: statusCode.BAD_REQUEST
+      }
+    }
+
+    userData.batch_size = batch_size;
+    await userData.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Data_fetch_successfully,
+      statusCode: statusCode.BAD_REQUEST
+    }
+  } catch (error) {
+    console.error("Error in Logout User:", err);
+      return {
+        status: statusCode.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: err.message || resMessage.Server_error
+      };
+  }
+}

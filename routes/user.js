@@ -3,7 +3,7 @@ const { protect, authorizeRoles } = require('../middleware/auth');
 const userController = require('../controllers/userController');
 const { responseHandler } = require('../middleware/responseHandler');
 const validateRequest = require('../middleware/validate');
-const {register,login, forgotPassword, resetPassword, verifyOtp, update, resetPasswordWithOtp} = require('../validations/userValidations');
+const {register,login, forgotPassword, resetPassword, verifyOtp, update, resetPasswordWithOtp, updateBatchSize } = require('../validations/userValidations');
 const { loginLimiter } = require("../middleware/rateLimiter");
 const router = express.Router();
 
@@ -23,6 +23,6 @@ router.post('/update-password-with-otp', validateRequest(resetPasswordWithOtp), 
 router.put('/update-self/:userId', protect, validateRequest(update), responseHandler(userController.updateUserController));
 router.post('/logout', protect, responseHandler(userController.logoutUserController));
 router.get('/batch-size', protect, responseHandler(userController.getBatchSizeController));
-// router.put('/batch-size', protect, responseHandler(userController));
+router.put('/batch-size', protect, validateRequest(updateBatchSize), responseHandler(userController.updateBatchSizeController));
 
 module.exports = router;

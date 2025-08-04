@@ -176,3 +176,8 @@ exports.verifyOtp = Joi.object({
     }),
 });
 
+exports.updateBatchSize = Joi.object({
+  batch_size: Joi.number().optional().messages({
+    'number.base': 'Batch size must be a number',
+  }),
+});

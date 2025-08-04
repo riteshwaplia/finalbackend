@@ -103,6 +103,6 @@ ProjectSchema.pre('save', function(next) {
     next();
 });
 
-const projectModel = mongoose.model('project', ProjectSchema);
+const projectModel = mongoose.models.project || mongoose.model('project', ProjectSchema);
 
 module.exports = projectModel;
