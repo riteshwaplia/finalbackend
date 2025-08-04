@@ -4,7 +4,7 @@ const userController = require('../controllers/userController');
 const { responseHandler } = require('../middleware/responseHandler');
 const validateRequest = require('../middleware/validate');
 const {register,login, forgotPassword, resetPassword, verifyOtp, update, resetPasswordWithOtp} = require('../validations/userValidations');
-const loginLimiter = require("../middleware/rateLimiter");
+const { loginLimiter } = require("../middleware/rateLimiter");
 const router = express.Router();
 
 router.post('/register', validateRequest(register), responseHandler(userController.registerController));
