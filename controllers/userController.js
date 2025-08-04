@@ -360,7 +360,20 @@ const updateUserController = async (req) => {
     return result;
 };
 
+const getBatchSizeController = async (req) => {
+    try {
+        return await userService.getBatchSize(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+}
+
 module.exports = {
+    getBatchSizeController,
     authUser,
     logoutUserController,
     getUserProfile,
