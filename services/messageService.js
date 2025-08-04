@@ -11,8 +11,7 @@ const BulkSendJob = require("../models/BulkSendJob");
 const { statusCode, resMessage } = require("../config/constants");
 const { chunkArray } = require("../utils/helpers");
 const { v4: uuidv4 } = require("uuid");
-
-const BATCH_SIZE = 20; 
+const User = require("../models/User");
 
 const sendWhatsAppMessage = async ({
   to,
@@ -231,6 +230,9 @@ const sendBulkMessageService = async (req) => {
   const projectId = req.params.projectId;
   const fileName = req.file?.originalname || "manual_upload.xlsx";
 
+  const userBatchSize = await User.findOne({ _id: req.user._id, tenantId: req.tenant._id }).select('batch_size');
+  const BATCH_SIZE = userBatchSize?.batch_size || 20;
+
   if (!templateName || !req.file) {
     return {
       status: statusCode.BAD_REQUEST,
@@ -326,9 +328,10 @@ const sendBulkMessageService = async (req) => {
 
   let templateComponents = parsedMessage.components;
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
+  let localTemplate;
 
   if (!templateComponents || templateComponents.length === 0) {
-    const localTemplate = await Template.findOne({
+    localTemplate = await Template.findOne({
       tenantId,
       userId,
       businessProfileId: project.businessProfileId,
@@ -447,29 +450,30 @@ const sendBulkMessageService = async (req) => {
       } else {
         const headerTemplate = templateComponents.find(c => c.type === 'HEADER');
         if (headerTemplate) {
-          if (headerTemplate.format === 'IMAGE') {
-            const singleImageId = parsedImageIds['0'];
-            if (singleImageId) {
-              components.push({
-                type: 'header',
-                parameters: [{ type: 'image', image: { id: singleImageId } }],
-              });
-            } else if (headerTemplate.example?.header_handle?.[0]) {
-              components.push({
-                type: 'header',
-                parameters: [{
-                  type: 'image',
-                  image: { link: headerTemplate.example.header_handle[0] },
-                }],
-              });
+            if (headerTemplate.format === 'IMAGE' && headerTemplate.example?.header_handle) {
+                const singleImageId = parsedImageIds['0'];
+                if (singleImageId) {
+                    components.push({
+                        type: 'header',
+                        parameters: [{ type: 'image', image: { id: singleImageId } }],
+                    });
+                } else {
+                    components.push({
+                        type: 'header',
+                        parameters: [{
+                            type: 'image',
+                            image: { link: headerTemplate.example.header_handle[0] },
+                        }],
+                    });
+                }
             }
-          } else if (headerTemplate.format === 'TEXT') {
-            const headerValue = contactRow.header_text || 'User';
-            components.push({
-              type: 'header',
-              parameters: [{ type: 'text', text: headerValue }],
-            });
-          }
+            else if (headerTemplate.format === 'TEXT' && headerTemplate.text?.includes('{{1}}')) {
+                const headerValue = contactRow.header_text || 'User';
+                components.push({
+                    type: 'header',
+                    parameters: [{ type: 'text', text: headerValue }],
+                });
+            }
         }
 
         const bodyParams = [];
@@ -577,7 +581,6 @@ const sendBulkMessageService = async (req) => {
     },
   };
 };
-
 
 const BulkSendGroupService = async (req) => {
     const { templateName, message = {}, groupId, contactfields = [], imageId } = req.body;
