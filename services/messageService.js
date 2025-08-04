@@ -388,53 +388,71 @@ const sendBulkMessageService = async (req) => {
       }
 
       const components = [];
+      const bodyTemplate = templateComponents.find(c => c.type === 'BODY');
       const carouselTemplate = templateComponents.find(c => c.type === 'CAROUSEL');
+
+      if (bodyTemplate) {
+        const bodyParameters = [];
+        const hasVariables = bodyTemplate.text?.includes('{{');
+        if (hasVariables) {
+            if (contactRow.body_name) bodyParameters.push({ type: 'text', text: contactRow.body_name });
+            if (contactRow.body_email) bodyParameters.push({ type: 'text', text: contactRow.body_email });
+        }
+        
+        if (bodyParameters.length > 0) {
+          components.push({
+            type: 'body',
+            parameters: bodyParameters,
+          });
+        } else if (!hasVariables && bodyTemplate.text) {
+          components.push({
+            type: 'body',
+            parameters: [],
+          });
+        }
+      }
 
       if (carouselTemplate) {
         const carouselCards = [];
-
+        
         for (const [i, cardTemplate] of carouselTemplate.cards.entries()) {
           const cardComponents = [];
-          const cardHeader = cardTemplate.components.find(c => c.type === 'HEADER');
-          if (cardHeader) {
-            if (cardHeader.format === 'IMAGE') {
-              const currentCardImageId = parsedImageIds[String(i)];
+          
+          const cardHeaderTemplate = cardTemplate.components.find(c => c.type === 'HEADER');
+          if (cardHeaderTemplate) {
+              const currentCardImageId = parsedImageIds[String(i)] || parsedImageIds['0'];
               if (currentCardImageId) {
                 cardComponents.push({
                   type: 'header',
                   parameters: [{ type: 'image', image: { id: currentCardImageId } }],
                 });
-              } else if (cardHeader.example?.header_handle?.[0]) {
-                cardComponents.push({
-                  type: 'header',
-                  parameters: [{
-                    type: 'image',
-                    image: { link: cardHeader.example.header_handle[0] },
-                  }],
-                });
               }
-            } else if (cardHeader.format === 'TEXT') {
-              const headerValue = contactRow.header_text || 'User';
-              cardComponents.push({
-                type: 'header',
-                parameters: [{ type: 'text', text: headerValue }],
-              });
-            }
           }
 
-          const cardButtons = cardTemplate.components.find(c => c.type === 'BUTTONS');
-          if (cardButtons) {
-            for (const btn of cardButtons.buttons) {
-              if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
-                const urlParam = contactRow.dynamic_url || 'https://example.com';
+          const cardBodyTemplate = cardTemplate.components.find(c => c.type === 'BODY');
+          if (cardBodyTemplate) {
+              const cardBodyParams = [];
+              const hasCardVariables = cardBodyTemplate.text?.includes('{{');
+
+              if (hasCardVariables) {
+                  if (i === 0 && contactRow.body_name) {
+                    cardBodyParams.push({ type: 'text', text: contactRow.body_name });
+                  } else if (i === 1 && contactRow.body_email) {
+                    cardBodyParams.push({ type: 'text', text: contactRow.body_email });
+                  }
+              }
+              
+              if (cardBodyParams.length > 0) {
                 cardComponents.push({
-                  type: 'button',
-                  sub_type: 'url',
-                  index: '0',
-                  parameters: [{ type: 'text', text: urlParam }],
+                  type: 'body',
+                  parameters: cardBodyParams,
+                });
+              } else if (!hasCardVariables && cardBodyTemplate.text) {
+                cardComponents.push({
+                    type: 'body',
+                    parameters: [],
                 });
               }
-            }
           }
 
           carouselCards.push({
@@ -447,63 +465,6 @@ const sendBulkMessageService = async (req) => {
           type: 'carousel',
           cards: carouselCards,
         });
-      } else {
-        const headerTemplate = templateComponents.find(c => c.type === 'HEADER');
-        if (headerTemplate) {
-            if (headerTemplate.format === 'IMAGE' && headerTemplate.example?.header_handle) {
-                const singleImageId = parsedImageIds['0'];
-                if (singleImageId) {
-                    components.push({
-                        type: 'header',
-                        parameters: [{ type: 'image', image: { id: singleImageId } }],
-                    });
-                } else {
-                    components.push({
-                        type: 'header',
-                        parameters: [{
-                            type: 'image',
-                            image: { link: headerTemplate.example.header_handle[0] },
-                        }],
-                    });
-                }
-            }
-            else if (headerTemplate.format === 'TEXT' && headerTemplate.text?.includes('{{1}}')) {
-                const headerValue = contactRow.header_text || 'User';
-                components.push({
-                    type: 'header',
-                    parameters: [{ type: 'text', text: headerValue }],
-                });
-            }
-        }
-
-        const bodyParams = [];
-        Object.entries(contactRow).forEach(([key, value]) => {
-          if (key.startsWith("body_") && value) {
-            bodyParams.push({ type: "text", text: value });
-          }
-        });
-
-        if (bodyParams.length > 0) {
-          components.push({
-            type: 'body',
-            parameters: bodyParams,
-          });
-        }
-
-        const buttonsTemplate = templateComponents.find(c => c.type === 'BUTTONS');
-        if (buttonsTemplate) {
-          for (const btn of buttonsTemplate.buttons) {
-            if (btn.type === 'URL' && btn.url.includes('{{1}}')) {
-              const dynamicUrl = contactRow.dynamic_url || 'https://example.com';
-              components.push({
-                type: 'button',
-                sub_type: 'url',
-                index: '0',
-                parameters: [{ type: 'text', text: dynamicUrl }],
-              });
-            }
-          }
-        }
       }
 
       const templateMessage = {
@@ -523,7 +484,7 @@ const sendBulkMessageService = async (req) => {
           graphVersion,
         });
 
-        const messageLog = new Message({ 
+        const messageLog = new Message({
           to,
           type: "template",
           message: templateMessage,
@@ -581,6 +542,7 @@ const sendBulkMessageService = async (req) => {
     },
   };
 };
+
 
 const BulkSendGroupService = async (req) => {
     const { templateName, message = {}, groupId, contactfields = [], imageId } = req.body;
