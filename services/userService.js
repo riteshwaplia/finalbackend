@@ -527,6 +527,7 @@ exports.getBatchSize = async (req, res) => {
     }
 
     return {
+      data: userData,
       status: statusCode.OK,
       success: true,
       message: resMessage.Data_fetch_successfully,
