@@ -37,7 +37,27 @@ const sendGroupMessageLimiter = rateLimit({
   }
 });
 
+const otpLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minutes
+  max: 7, // allow max 5 OTP actions (send/verify) per 10 minutes per email
+  keyGenerator: (req) => {
+    return req.body.email || ipKeyGenerator(req);
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+
+  handler: (req, res, next, options) => {
+    return res.status(options.statusCode).json({
+      status: options.statusCode,
+      success: false,
+      message: 'Too many OTP attempts. Please try again after 10 minutes.',
+    });
+  }
+});
+
+
 module.exports = {
   loginLimiter,
-  sendGroupMessageLimiter
+  sendGroupMessageLimiter,
+  otpLimiter
 }
