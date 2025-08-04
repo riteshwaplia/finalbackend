@@ -39,7 +39,7 @@ const sendGroupMessageLimiter = rateLimit({
 
 const otpLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minutes
-  max: 7, // allow max 5 OTP actions (send/verify) per 10 minutes per email
+  max: 5, // allow max 5 OTP actions (send/verify) per 10 minutes per email
   keyGenerator: (req) => {
     return req.body.email || ipKeyGenerator(req);
   },
