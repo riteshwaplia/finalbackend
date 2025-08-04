@@ -765,54 +765,21 @@ exports.submitTemplateToMeta = async (req) => {
   }
 };
 
-// @desc    Get all templates for the authenticated user, optionally filtered by businessProfileId
-// @access  Private (User/Team Member)
-// exports.getAllTemplates = async (req) => {
-//   const tenantId = req.tenant._id;
-//   const userId = req.user._id;
-//   const { businessProfileId } = req.query; // Allow filtering by businessProfileId
-
-//   let query = { tenantId, userId };
-//   if (businessProfileId) {
-//     query.businessProfileId = businessProfileId;
-//   }
-
-//   try {
-//     const templates = await Template.find(query).lean();
-//     if (templates.length === 0) {
-//       return {
-//         status: statusCode.OK,
-//         success: true,
-//         message:
-//           resMessage.No_data_found +
-//           (businessProfileId ? " for the selected business profile." : ""),
-//         data: [],
-//       };
-//     }
-//     return {
-//       status: statusCode.OK,
-//       success: true,
-//       message: resMessage.Template_fetched,
-//       data: templates,
-//     };
-//   } catch (error) {
-//     console.error("Error fetching templates:", error);
-//     return {
-//       status: statusCode.INTERNAL_SERVER_ERROR,
-//       success: false,
-//       message: error.message || resMessage.Server_error,
-//     };
-//   }
-// };
-
 exports.getAllTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
-  const { businessProfileId, page = 1, limit = 10 } = req.query;
+  const { businessProfileId, page = 1, limit = 10, type } = req.query;
 
   const query = { tenantId, userId };
   if (businessProfileId) {
     query.businessProfileId = businessProfileId;
+  }
+
+  if(type === "carousel") {
+    query['components.type'] = "CAROUSEL"
+  }
+  else if(type === "regular") {
+    query['components.type'] = { $ne: "CAROUSEL" };
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
