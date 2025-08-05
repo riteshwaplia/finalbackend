@@ -1346,19 +1346,9 @@ exports.syncTemplatesFromMeta = async (req) => {
 };
 
 exports.getPlainTextTemplates = async (req) => {
-  console.log("📍 getPlainTextTemplates triggered");
-
   const tenantId = req.tenant?._id;
   const userId = req.user?._id;
   const { businessProfileId, page = 1, limit = 10 } = req.query;
-
-  console.log("📥 Incoming Request Query:", {
-    tenantId,
-    userId,
-    businessProfileId,
-    page,
-    limit
-  });
 
   if (!tenantId || !userId) {
     return {
@@ -1368,27 +1358,22 @@ exports.getPlainTextTemplates = async (req) => {
     };
   }
 
-  const matchStage = {
+ const matchStage = {
     tenantId,
     userId,
-    type: 'STANDARD'
-  };
+    $or: [
+      { type: { $exists: false } },
+      { type: 'STANDARD' }
+    ]
+  }
 
   if (businessProfileId) {
     matchStage.businessProfileId = businessProfileId;
   }
 
-  console.log("🔍 MongoDB Match Stage (Initial Filter):", matchStage);
-
   const pageNum = parseInt(page);
   const pageLimit = parseInt(limit);
   const skip = (pageNum - 1) * pageLimit;
-
-  console.log("📄 Pagination Details:", {
-    skip,
-    pageLimit,
-    currentPage: pageNum
-  });
 
   try {
     const aggregationPipeline = [
@@ -1401,8 +1386,8 @@ exports.getPlainTextTemplates = async (req) => {
             $not: {
               $elemMatch: {
                 $or: [
-                  { type: 'BUTTONS' },
-                  { format: { $in: ['IMAGE', 'VIDEO', 'AUDIO'] } },
+                  { type: "CAROUSEL" },
+                  { format: { $in: ['IMAGE', 'VIDEO', 'AUDIO' ,'CAROUSEL' ] } },
                   { text: { $regex: "{{.*}}", $options: "i" } }
                 ]
               }
@@ -1423,21 +1408,11 @@ exports.getPlainTextTemplates = async (req) => {
       }
     ];
 
-    console.log("🧱 MongoDB Aggregation Pipeline:", JSON.stringify(aggregationPipeline, null, 2));
-
     const result = await Template.aggregate(aggregationPipeline);
-    console.log("📦 Raw Aggregation Result:", JSON.stringify(result, null, 2));
 
     const templates = result?.[0]?.templates || [];
     const totalCount = result?.[0]?.totalCount?.[0]?.count || 0;
     const totalPages = Math.ceil(totalCount / pageLimit);
-
-    console.log("📊 Final Computed Results:", {
-      templateCount: templates.length,
-      totalCount,
-      totalPages,
-      currentPage: pageNum
-    });
 
     return {
       status: 200,
