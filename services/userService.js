@@ -512,3 +512,89 @@ exports.logoutUser = async (req, res) => {
       };
     }
 };
+
+exports.resendOtp = async (req) => {
+  const { email, type } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.EMAIL_NOT_FOUND || 'User not found',
+        statusCode: statusCode.NOT_FOUND
+      };
+    }
+
+    if (type === 'register') {
+      if (user.isEmailVerified) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: resMessage.Email_already_registered || 'Email already verified',
+          statusCode: statusCode.BAD_REQUEST
+        };
+      }
+    }
+
+    if (type === 'forgot_password') {
+      if (!user.isEmailVerified) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: 'Email is not verified. Cannot proceed with password reset.',
+          statusCode: statusCode.BAD_REQUEST
+        };
+      }
+    }
+
+    const otp = Array.from({ length: 6 }, () =>
+      String.fromCharCode(
+        Math.random() < 0.5
+          ? 65 + Math.floor(Math.random() * 26)  // A-Z
+          : 97 + Math.floor(Math.random() * 26)  // a-z
+      )
+    ).join('');
+
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          otp: otp,
+          otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes from now
+        }
+      }
+    );
+
+    const subject = type === 'register'
+      ? 'Wachat Registration OTP'
+      : 'Wachat Password Reset OTP';
+
+    const html = `
+      <h2>Hello ${user.username || 'User'},</h2>
+      <p>Your OTP for Wachat ${type === 'register' ? 'registration' : 'password reset'} is:</p>
+      <h3>${otp}</h3>
+      <p>This OTP will expire in 10 minutes.</p>
+    `;
+
+    const text = `Hello ${user.username || 'User'},\n\nYour OTP is: ${otp}`;
+
+    await sendEmail(email, subject, text, html);
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: 'OTP resent successfully',
+      statusCode: statusCode.OK
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+      statusCode: statusCode.INTERNAL_SERVER_ERROR
+    };
+  }
+};

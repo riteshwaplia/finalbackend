@@ -175,3 +175,28 @@ exports.verifyOtp = Joi.object({
       "string.pattern.base": "OTP must contain only letters (A-Z, a-z)",
     }),
 });
+
+exports.resendOtp = Joi.object({
+  email: Joi.string()
+    .trim()
+    .email()
+    .required()
+    .messages({
+      "any.required": "Email is required",
+      "string.email": "Please provide a valid email",
+    }),
+
+  type: Joi.string()
+    .valid("register", "forgot_password")
+    .required()
+    .messages({
+      "any.required": "Type is required",
+      "any.only": "Type must be either 'register' or 'forgot_password'",
+    }),
+});
+
+exports.updateBatchSize = Joi.object({
+  batch_size: Joi.number().optional().messages({
+    'number.base': 'Batch size must be a number',
+  }),
+});
