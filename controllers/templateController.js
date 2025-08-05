@@ -56,3 +56,9 @@ exports.authTemplateController = async (req) => {
         }
     }
 }
+
+exports.getPlainTextController = async (req) => {
+    console.log("here ");
+    
+  return await templateService.getPlainTextTemplates(req);
+};

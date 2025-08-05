@@ -3,6 +3,7 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 const FormData = require("form-data"); // Ensure you have installed this: npm install form-data
+const mongoose = require('mongoose');
 
 const BusinessProfile = require("../models/BusinessProfile");
 const { statusCode, resMessage } = require("../config/constants");
@@ -1340,6 +1341,125 @@ exports.syncTemplatesFromMeta = async (req) => {
       message: `Failed to synchronize templates from Meta: ${
         error.response?.data?.error?.message || error.message
       }. Ensure your selected business profile has correct WABA ID and Access Token.`,
+    };
+  }
+};
+
+exports.getPlainTextTemplates = async (req) => {
+  console.log("📍 getPlainTextTemplates triggered");
+
+  const tenantId = req.tenant?._id;
+  const userId = req.user?._id;
+  const { businessProfileId, page = 1, limit = 10 } = req.query;
+
+  console.log("📥 Incoming Request Query:", {
+    tenantId,
+    userId,
+    businessProfileId,
+    page,
+    limit
+  });
+
+  if (!tenantId || !userId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing tenantId or userId in request"
+    };
+  }
+
+  const matchStage = {
+    tenantId,
+    userId,
+    type: 'STANDARD'
+  };
+
+  if (businessProfileId) {
+    matchStage.businessProfileId = businessProfileId;
+  }
+
+  console.log("🔍 MongoDB Match Stage (Initial Filter):", matchStage);
+
+  const pageNum = parseInt(page);
+  const pageLimit = parseInt(limit);
+  const skip = (pageNum - 1) * pageLimit;
+
+  console.log("📄 Pagination Details:", {
+    skip,
+    pageLimit,
+    currentPage: pageNum
+  });
+
+  try {
+    const aggregationPipeline = [
+      {
+        $match: matchStage
+      },
+      {
+        $match: {
+          components: {
+            $not: {
+              $elemMatch: {
+                $or: [
+                  { type: 'BUTTONS' },
+                  { format: { $in: ['IMAGE', 'VIDEO', 'AUDIO'] } },
+                  { text: { $regex: "{{.*}}", $options: "i" } }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $facet: {
+          templates: [
+            { $skip: skip },
+            { $limit: pageLimit }
+          ],
+          totalCount: [
+            { $count: 'count' }
+          ]
+        }
+      }
+    ];
+
+    console.log("🧱 MongoDB Aggregation Pipeline:", JSON.stringify(aggregationPipeline, null, 2));
+
+    const result = await Template.aggregate(aggregationPipeline);
+    console.log("📦 Raw Aggregation Result:", JSON.stringify(result, null, 2));
+
+    const templates = result?.[0]?.templates || [];
+    const totalCount = result?.[0]?.totalCount?.[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / pageLimit);
+
+    console.log("📊 Final Computed Results:", {
+      templateCount: templates.length,
+      totalCount,
+      totalPages,
+      currentPage: pageNum
+    });
+
+    return {
+      status: 200,
+      success: true,
+      message: templates.length
+        ? resMessage.Template_fetched
+        : resMessage.No_data_found +
+            (businessProfileId ? ' for the selected business profile.' : ''),
+      data: templates,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: pageNum
+      }
+    };
+
+  } catch (error) {
+    console.error("❌ Error in getPlainTextTemplates:", error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || "Server error"
     };
   }
 };
