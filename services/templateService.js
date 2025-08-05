@@ -1361,6 +1361,7 @@ exports.getPlainTextTemplates = async (req) => {
  const matchStage = {
     tenantId,
     userId,
+    metaStatus: 'APPROVED',
     $or: [
       { type: { $exists: false } },
       { type: 'STANDARD' }
