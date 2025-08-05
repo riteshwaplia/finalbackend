@@ -315,17 +315,6 @@ const sendBulkMessageService = async (req) => {
     };
   }
 
-  // let parsedImageIds = {};
-  // if (typeof imageId === 'string') {
-  //   try {
-  //     parsedImageIds = JSON.parse(imageId);
-  //   } catch (e) {
-  //     parsedImageIds = { '0': imageId };
-  //   }
-  // } else if (typeof imageId === 'object' && !Array.isArray(imageId)) {
-  //   parsedImageIds = imageId;
-  // }
-
   let templateComponents = parsedMessage.components;
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
   let localTemplate;
@@ -391,40 +380,50 @@ const sendBulkMessageService = async (req) => {
 
       for (const comp of templateComponents) {
         if (comp.type === 'HEADER') {
+          const headerParameters = [];
+          const hasVariables = comp.text?.includes('{{');
+
           if (comp.format === 'IMAGE' && imageId) {
             components.push({
               type: 'header',
               parameters: [{ type: 'image', image: { id: imageId } }],
             });
-          }
-          else if (comp.format === 'TEXT' && comp.text) {
-             const headerParameters = [];
-             const hasVariables = comp.text.includes('{{');
-             if (hasVariables && contactRow.header_variable) {
-                 headerParameters.push({ type: 'text', text: contactRow.header_variable });
-             }
-             components.push({
-                 type: 'header',
-                 parameters: headerParameters,
-             });
+          } else if (comp.format === 'TEXT' && hasVariables) {
+            const variableValue = contactRow['header_Example 1'];
+
+            if (variableValue) {
+              headerParameters.push({ type: 'text', text: variableValue });
+            }
+            components.push({
+              type: 'header',
+              parameters: headerParameters,
+            });
+          } else if (comp.format === 'TEXT' && comp.text) {
+            components.push({
+              type: 'header',
+              parameters: [{ type: 'text', text: comp.text }],
+            });
           }
         } else if (comp.type === 'BODY') {
           const bodyParameters = [];
-          const hasVariables = comp.text?.includes('{{');
-          if (hasVariables) {
-            if (contactRow.body_name) bodyParameters.push({ type: 'text', text: contactRow.body_name });
-            if (contactRow.body_email) bodyParameters.push({ type: 'text', text: contactRow.body_email });
+          const bodyVariables = comp.text?.match(/{{(\d)}}/g);
+
+          if (bodyVariables) {
+            for (const variable of bodyVariables) {
+              const varIndex = variable.match(/{{(\d)}}/)[1];
+              const variableValue = contactRow[`body_Example_${varIndex}`];
+
+              if (variableValue) {
+                bodyParameters.push({ type: 'text', text: variableValue });
+              }
+            }
           }
-          if (bodyParameters.length > 0) {
-            components.push({
-              type: 'body',
-              parameters: bodyParameters,
-            });
-          } else {
-            components.push({
-              type: 'body',
-            });
-          }
+          
+          components.push({
+            type: 'body',
+            parameters: bodyParameters,
+          });
+
         } else if (comp.type === 'FOOTER') {
           components.push({
             type: 'footer',
@@ -443,59 +442,6 @@ const sendBulkMessageService = async (req) => {
               }
             });
           }
-        } else if (comp.type === 'CAROUSEL') {
-          const carouselCards = [];
-          
-          for (const [i, cardTemplate] of comp.cards.entries()) {
-            const cardComponents = [];
-            
-            const cardHeaderTemplate = cardTemplate.components.find(c => c.type === 'HEADER');
-            if (cardHeaderTemplate) {
-                const currentCardImageId = parsedImageIds[String(i)] || parsedImageIds['0'];
-                if (currentCardImageId) {
-                  cardComponents.push({
-                    type: 'header',
-                    parameters: [{ type: 'image', image: { id: currentCardImageId } }],
-                  });
-                }
-            }
-
-            const cardBodyTemplate = cardTemplate.components.find(c => c.type === 'BODY');
-            if (cardBodyTemplate) {
-                const cardBodyParams = [];
-                const hasCardVariables = cardBodyTemplate.text?.includes('{{');
-
-                if (hasCardVariables) {
-                    if (i === 0 && contactRow.body_name) {
-                      cardBodyParams.push({ type: 'text', text: contactRow.body_name });
-                    } else if (i === 1 && contactRow.body_email) {
-                      cardBodyParams.push({ type: 'text', text: contactRow.body_email });
-                    }
-                }
-                
-                if (cardBodyParams.length > 0) {
-                  cardComponents.push({
-                    type: 'body',
-                    parameters: cardBodyParams,
-                  });
-                } else if (!hasCardVariables && cardBodyTemplate.text) {
-                  cardComponents.push({
-                      type: 'body',
-                      parameters: [],
-                  });
-                }
-            }
-
-            carouselCards.push({
-              card_index: i,
-              components: cardComponents,
-            });
-          }
-
-          components.push({
-            type: 'carousel',
-            cards: carouselCards,
-          });
         }
       }
       
@@ -505,8 +451,12 @@ const sendBulkMessageService = async (req) => {
         components,
       };
 
-      console.log("===========to", to);
-      console.log("===========templateMessage", templateMessage);
+      const messagePayload = {
+        messaging_product: "whatsapp",
+        to: to,
+        type: "template",
+        template: templateMessage,
+      };
 
       try {
         const sendResult = await sendWhatsAppMessage({
@@ -577,8 +527,6 @@ const sendBulkMessageService = async (req) => {
     },
   };
 };
-
-
 
 const extractAndMapParameters = (text, contact, contactfields) => {
     const params = [];
