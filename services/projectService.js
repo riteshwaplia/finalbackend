@@ -391,7 +391,7 @@ exports.updateBatchSize = async (req, res) => {
     return {
       status: statusCode.OK,
       success: true,
-      message: resMessage.Data_fetch_successfully,
+      message: resMessage.Data_updated,
       statusCode: statusCode.BAD_REQUEST
     }
   } catch (error) {
