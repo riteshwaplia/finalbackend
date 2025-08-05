@@ -1358,19 +1358,24 @@ exports.getPlainTextTemplates = async (req) => {
     };
   }
 
- const matchStage = {
+  if (!businessProfileId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing businessProfileId in request"
+    };
+  }
+
+  const matchStage = {
     tenantId,
     userId,
     metaStatus: 'APPROVED',
+    businessProfileId: new mongoose.Types.ObjectId(businessProfileId), 
     $or: [
       { type: { $exists: false } },
       { type: 'STANDARD' }
     ]
-  }
-
-  if (businessProfileId) {
-    matchStage.businessProfileId = businessProfileId;
-  }
+  };
 
   const pageNum = parseInt(page);
   const pageLimit = parseInt(limit);
@@ -1388,7 +1393,7 @@ exports.getPlainTextTemplates = async (req) => {
               $elemMatch: {
                 $or: [
                   { type: "CAROUSEL" },
-                  { format: { $in: ['IMAGE', 'VIDEO', 'AUDIO' ,'CAROUSEL' ] } },
+                  { format: { $in: ['IMAGE', 'VIDEO', 'AUDIO', 'CAROUSEL'] } },
                   { text: { $regex: "{{.*}}", $options: "i" } }
                 ]
               }
@@ -1420,8 +1425,7 @@ exports.getPlainTextTemplates = async (req) => {
       success: true,
       message: templates.length
         ? resMessage.Template_fetched
-        : resMessage.No_data_found +
-            (businessProfileId ? ' for the selected business profile.' : ''),
+        : resMessage.No_data_found + ' for the selected business profile.',
       data: templates,
       pagination: {
         totalCount,
