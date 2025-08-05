@@ -1095,19 +1095,6 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
       }
     });
  
-    if (response.data && to && type === 'text') {
-      await Chat.create({
-        from: 'Wachat',
-        to,
-        direction: 'outgoing',
-        text: payload.text?.body,
-        status: 'sent',
-        type,
-        messageId: response.data.messages?.[0]?.id || null
-      });
-    }
- 
- 
     return { success: true, data: response.data };
   } catch (err) {
     const error = err.response?.data || err.message;

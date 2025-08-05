@@ -4,7 +4,8 @@ const router = express.Router();
 const projectController = require('../controllers/projectController');
 const { responseHandler } = require('../middleware/responseHandler');
 const validate = require('../middleware/validate');
-const { createProjectSchema } = require('../validations/projectValidation');
+const { createProjectSchema, updateBatchSize } = require('../validations/projectValidation');
+const validateRequest = require('../middleware/validate');
 
 router.route('/')
   .post(
@@ -22,6 +23,8 @@ router.route('/')
 router.get('/:id/dashboard', protect, authorizeRoles('user'), responseHandler(projectController.getProjectByIdController));
 router.delete('/:projectId', protect, responseHandler(projectController.deleteProjectController));
 router.put('/:projectId/whatsapp-business-profile', protect, responseHandler(projectController.updateWhatsappBusinessProfileController));
+router.get('/:projectId/batch-size', protect, responseHandler(projectController.getBatchSizeController));
+router.put('/:projectId/batch-size', protect, validateRequest(updateBatchSize), responseHandler(projectController.updateBatchSizeController));
 
 // router
 //   .put("/:id",

@@ -231,18 +231,6 @@ const authUser = async (req, res) => {
     }
 };
 
-const logoutUserController = async (req) => {
-    try {
-        return await userService.logoutUser(req);
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message,
-        };
-    }
-}
-
 const getUserProfile = async (req, res) => {
     if (req.user && req.user.tenantId.toString() === req.tenant._id.toString()) {
         return res.json({
@@ -360,6 +348,18 @@ const updateUserController = async (req) => {
     return result;
 };
 
+const logoutUserController = async (req) => {
+    try {
+        return await userService.logoutUser(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+}
+
 const resendOtpController = async (req) => {
   try {
     return await userService.resendOtp(req);
@@ -373,35 +373,9 @@ const resendOtpController = async (req) => {
   }
 };
 
-const getBatchSizeController = async (req) => {
-    try {
-        return await userService.getBatchSize(req);
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message,
-        };
-    }
-}
-
-const updateBatchSizeController = async (req) => {
-    try {
-        return await userService.updateBatchSize(req);
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message,
-        };
-    }
-}
-
 module.exports = {
-    updateBatchSizeController,
-    getBatchSizeController,
-    authUser,
     logoutUserController,
+    authUser,
     getUserProfile,
     updateUserProfile,
     getAllUsersForTenant,

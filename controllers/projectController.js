@@ -42,3 +42,27 @@ exports.updateWhatsappBusinessProfileController = async (req) => {
         profileData
     });
 };
+
+exports.getBatchSizeController = async (req) => {
+    try {
+        return await projectService.getBatchSize(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+}
+
+exports.updateBatchSizeController = async (req) => {
+    try {
+        return await projectService.updateBatchSize(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+}

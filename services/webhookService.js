@@ -8,7 +8,7 @@ const Businessprofile = require("../models/BusinessProfile");
 const Flow = require("../models/Flow");
 const { traverseFlow } = require('../functions/functions');
 const {sendWhatsAppMessages} = require("../services/messageService");
-const ConversationSession = require('../models/ConversationSchema');
+const ConversationSession = require('../models/ConversationSessionSchema');
  
 exports.handleWebhookPayload = async (req) => {
     const io = req.app.get('io');
@@ -214,7 +214,12 @@ exports.handleWebhookPayload = async (req) => {
                                 const userNumber = fromPhoneNumber;
 
                                 try {;
-                                    const flow = await Flow.findOne({ entryPoint: userText });
+                                    const flow = await Flow.findOne({ 
+                                        tenantId: project.tenantId,
+                                        userId: project.userId,
+                                        projectId: project._id,
+                                        entryPoint: userText
+                                    });
 
                                     if (flow) {
                                         const replies = await traverseFlow(userText, flow.nodes, flow.edges);

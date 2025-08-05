@@ -12,69 +12,62 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
 
   let current = nodeMap.get(edges.find(e => e.source === entryNode.id)?.target);
 
-  while (current) {
-    const type = current.type;
-    const delay = current.data?.meta?.delay || 0;
+  while (current && current.data) {
+  const { type, data } = current;
+  const delay = data.meta?.delay || 0;
 
-    if (type === 'text') {
-      const text = current.data?.message;
-      if (text) {
-        messages.push({
-          type: 'text',
-          text,
-          delay
-        });
-      }
-
-    } else if (type === 'image') {
-      const mediaId = current.data?.id;
-      const url = current.data?.imageUrl || current.data?.url;
-      const caption = current.data?.message || current.data?.caption || '';
-      
-      if (url || mediaId) {
-        messages.push({
-          type: 'image',
-          id: mediaId,
-          link: url,
-          caption,
-          delay
-        });
-      }
-
-    } else if (type === 'template') {
-      const templateId = current.data?.selectedTemplateId;
-      const templateName = current.data?.selectedTemplateName;
-      const templateLang = current.data?.selectedTemplateLanguage;
-      const parameters = current.data?.parameters || [];
-
-      if (templateId && templateName) {
-        messages.push({
-          type: 'template',
-          templateId,
-          templateName,
-          templateLang,
-          parameters,
-          delay
-        });
-      }
-    } else if (type === 'VideoEditorNode') {
-      const url = current.data?.videoUrl;
-      const caption = current.data?.message || '';
-      if (url) {
-        messages.push({
-          type: 'video',
-          link: url,
-          caption,
-          delay
-        });
-      }
+  if (type === 'text') {
+    const text = data.message;
+    if (text) {
+      messages.push({ type: 'text', text, delay });
     }
 
-    const nextEdge = edges.find(e => e.source === current.id);
-    if (!nextEdge) break;
+  } else if (type === 'image') {
+    const mediaId = data.id;
+    const url = data.imageUrl || data.url;
+    const caption = data.message || data.caption || '';
 
-    current = nodeMap.get(nextEdge.target);
+    if (url || mediaId) {
+      messages.push({
+        type: 'image',
+        id: mediaId,
+        link: url,
+        caption,
+        delay
+      });
+    }
+
+  } else if (type === 'template') {
+    const { selectedTemplateId, selectedTemplateName, selectedTemplateLanguage, parameters = [] } = data;
+    if (selectedTemplateId && selectedTemplateName) {
+      messages.push({
+        type: 'template',
+        templateId: selectedTemplateId,
+        templateName: selectedTemplateName,
+        templateLang: selectedTemplateLanguage,
+        parameters,
+        delay
+      });
+    }
+
+  } else if (type === 'VideoEditorNode') {
+    const url = data.videoUrl;
+    const caption = data.message || '';
+    if (url) {
+      messages.push({
+        type: 'video',
+        link: url,
+        caption,
+        delay
+      });
+    }
   }
+
+  const nextEdge = edges.find(e => e.source === current.id);
+  if (!nextEdge) break;
+
+  current = nodeMap.get(nextEdge.target);
+}
 
   return messages;
 };
