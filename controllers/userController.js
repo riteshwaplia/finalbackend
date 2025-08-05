@@ -373,8 +373,33 @@ const resendOtpController = async (req) => {
   }
 };
 
+const getBatchSizeController = async (req) => {
+    try {
+        return await userService.getBatchSize(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+}
+
+const updateBatchSizeController = async (req) => {
+    try {
+        return await userService.updateBatchSize(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+}
 
 module.exports = {
+    updateBatchSizeController,
+    getBatchSizeController,
     authUser,
     logoutUserController,
     getUserProfile,

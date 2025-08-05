@@ -130,7 +130,8 @@ const resMessage = {
     USER_NOT_FOUND: "User not found",
     Logged_out_successfully: "Logged out successfully",
     Otp_expired: "OTP has expired",
-    Carousel_limit_exceed: "Carousel component cannot have more than 10 cards."
+    Carousel_limit_exceed: "Carousel component cannot have more than 10 cards.",
+    Data_fetch_successfully: "Data fetch successfully"
 };
 
 module.exports = {
