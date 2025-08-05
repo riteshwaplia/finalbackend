@@ -18,3 +18,9 @@ exports.createProjectSchema = Joi.object({
     vertical: Joi.string().allow('').optional(),
     profilePictureUrl: Joi.string().uri().allow('').optional(),
 });
+
+exports.updateBatchSize = Joi.object({
+  batch_size: Joi.number().optional().messages({
+    'number.base': 'Batch size must be a number',
+  }),
+});

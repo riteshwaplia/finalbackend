@@ -175,9 +175,3 @@ exports.verifyOtp = Joi.object({
       "string.pattern.base": "OTP must contain only letters (A-Z, a-z)",
     }),
 });
-
-exports.updateBatchSize = Joi.object({
-  batch_size: Joi.number().optional().messages({
-    'number.base': 'Batch size must be a number',
-  }),
-});

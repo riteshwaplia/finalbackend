@@ -348,21 +348,9 @@ const updateUserController = async (req) => {
     return result;
 };
 
-const getBatchSizeController = async (req) => {
+const logoutUserController = async (req) => {
     try {
-        return await userService.getBatchSize(req);
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message,
-        };
-    }
-}
-
-const updateBatchSizeController = async (req) => {
-    try {
-        return await userService.updateBatchSize(req);
+        return await userService.logoutUser(req);
     } catch (error) {
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
@@ -373,8 +361,7 @@ const updateBatchSizeController = async (req) => {
 }
 
 module.exports = {
-    updateBatchSizeController,
-    getBatchSizeController,
+    logoutUserController,
     authUser,
     getUserProfile,
     updateUserProfile,

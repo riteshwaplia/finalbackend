@@ -22,6 +22,5 @@ router.post('/forgot-password', validateRequest(forgotPassword), responseHandler
 router.post('/update-password-with-otp', validateRequest(resetPasswordWithOtp), responseHandler(userController.updatePasswordWithOtpController));
 router.put('/update-self/:userId', protect, validateRequest(update), responseHandler(userController.updateUserController));
 router.post('/logout', protect, responseHandler(userController.logoutUserController));
-router.put('/batch-size', protect, validateRequest(updateBatchSize), responseHandler(userController.updateBatchSizeController));
 
 module.exports = router;
