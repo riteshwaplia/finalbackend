@@ -231,18 +231,6 @@ const authUser = async (req, res) => {
     }
 };
 
-const logoutUserController = async (req) => {
-    try {
-        return await userService.logoutUser(req);
-    } catch (error) {
-        return {
-            status: statusCode.INTERNAL_SERVER_ERROR,
-            success: false,
-            message: error.message,
-        };
-    }
-}
-
 const getUserProfile = async (req, res) => {
     if (req.user && req.user.tenantId.toString() === req.tenant._id.toString()) {
         return res.json({
@@ -388,7 +376,6 @@ module.exports = {
     updateBatchSizeController,
     getBatchSizeController,
     authUser,
-    logoutUserController,
     getUserProfile,
     updateUserProfile,
     getAllUsersForTenant,

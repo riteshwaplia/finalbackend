@@ -68,11 +68,6 @@ const UserSchema = new mongoose.Schema({
         default: false
     },
     token: String,
-    batch_size: {
-        type: Number,
-        default: 20,
-        trim: true
-    },
     lastLoginAt: {
         type: Date,
         default: null

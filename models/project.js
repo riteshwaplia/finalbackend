@@ -86,6 +86,11 @@ const ProjectSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
+    batch_size: {
+        type: Number,
+        default: 20,
+        trim: true
+    },
     createdAt: {
         type: Date,
         default: Date.now
