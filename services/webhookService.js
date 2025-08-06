@@ -283,13 +283,23 @@ exports.handleWebhookPayload = async (req) => {
 
                                         const results = await Promise.allSettled(tasks);
 
-                                        await ConversationSession.create({
+                                        const existingSession = await ConversationSession.findOne({
+                                            userId: project.userId,
+                                            tenantId: project.tenantId,
                                             whatsappContactId: userNumber,
                                             whatsappPhoneNumberId: phoneNumberId,
                                             projectId: project._id,
-                                            userId: project.userId,
-                                            tenantId: project.tenantId,
                                         });
+
+                                        if (!existingSession) {
+                                            await ConversationSession.create({
+                                                whatsappContactId: userNumber,
+                                                whatsappPhoneNumberId: phoneNumberId,
+                                                projectId: project._id,
+                                                userId: project.userId,
+                                                tenantId: project.tenantId,
+                                            });
+                                        }
 
                                         results.forEach((r, i) => {
                                             if (r.status === 'fulfilled' && r.value?.success) {
