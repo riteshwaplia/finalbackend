@@ -22,6 +22,6 @@ router.post('/forgot-password',otpLimiter ,  validateRequest(forgotPassword), re
 router.post('/update-password-with-otp',otpLimiter , validateRequest(resetPasswordWithOtp), responseHandler(userController.updatePasswordWithOtpController));
 router.put('/update-self/:userId', protect, validateRequest(update), responseHandler(userController.updateUserController));
 router.post('/logout', protect, responseHandler(userController.logoutUserController));
-router.post('/resend-otp', validateRequest(resendOtp), responseHandler(userController.resendOtpController));
+router.post('/resend-otp',otpLimiter, validateRequest(resendOtp), responseHandler(userController.resendOtpController));
 
 module.exports = router;
