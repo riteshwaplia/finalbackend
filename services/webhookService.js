@@ -223,6 +223,7 @@ exports.handleWebhookPayload = async (req) => {
 
                                     if (flow) {
                                         const replies = await traverseFlow(userText, flow.nodes, flow.edges);
+                                        console.log("==========replies", replies);
 
                                         const buildPayload = (reply) => {
                                             switch (reply.type) {
@@ -241,7 +242,14 @@ exports.handleWebhookPayload = async (req) => {
                                                             caption: reply.caption || ''
                                                         }
                                                     };
-
+                                                case 'audio':
+                                                    return {
+                                                        type: 'audio',
+                                                        message: {
+                                                            id: reply.id,
+                                                            link: reply.link
+                                                        }
+                                                    };
                                                 case 'template':
                                                 return {
                                                     type: 'template',

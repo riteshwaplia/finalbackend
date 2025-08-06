@@ -1052,6 +1052,12 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
       if (message.caption) payload.video.caption = message.caption;
       break;
  
+    case 'audio':
+      payload.audio = {};
+      if (message.id) payload.audio.id = message.id;
+      if (message.link) payload.audio.link = message.link;
+      break;
+
     case 'template': {
       const languageCode =
         typeof message.language === 'string'

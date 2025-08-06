@@ -37,6 +37,18 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
       });
     }
 
+  } else if (type === 'audio') {
+    const audioId = data?.audioId;
+    const audioUrl = data.audioUrl || data.url;
+    if (audioId || audioUrl) {
+        messages.push({
+        type: 'audio',
+        id: audioId,
+        link: audioUrl,
+        delay
+      });
+    }
+    
   } else if (type === 'template') {
     const { selectedTemplateId, selectedTemplateName, selectedTemplateLanguage, parameters = [] } = data;
     if (selectedTemplateId && selectedTemplateName) {
