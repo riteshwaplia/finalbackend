@@ -30,7 +30,7 @@ exports.createProject = async (req) => {
             };
         }
 
-        const projectExists = await Project.findOne({ whatsappNumber, tenantId, userId, businessProfileId });
+        const projectExists = await Project.findOne({ whatsappNumber, tenantId, userId });
         if (projectExists) {
             return {
                 status: statusCode.CONFLICT,
