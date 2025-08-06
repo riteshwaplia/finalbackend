@@ -29,6 +29,7 @@
     "ioredis": "^5.7.0",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.2",
+    "mime-types": "^3.0.1",
     "mongoose": "^8.4.1",
     "multer": "^2.0.1",
     "nodemailer": "^7.0.5",

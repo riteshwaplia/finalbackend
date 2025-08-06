@@ -60,27 +60,19 @@ exports.getController = async (req, res) => {
             ];
         }
 
-        const [data, total] = await Promise.all([
+        const [data, totalCount] = await Promise.all([
             Group.find(searchCondition).sort({ _id: -1 }).skip(skip).limit(limit),
             Group.countDocuments(searchCondition)
         ]);
 
-        if (!data || data.length === 0) {
-              return res.status(statusCode.OK).json({ // Changed to OK for empty data
-                success: true,
-                data: [],
-                message: resMessage.No_groups_found
-            });
-        }
-
         return res.status(statusCode.OK).json({
             success: true,
-            message: resMessage.Groups_fetch_successfully,
+            message: data.length === 0 ? resMessage.No_groups_found : resMessage.Groups_fetch_successfully,
             data,
             pagination: {
-                total,
-                currentPage: page,
-                totalPages: Math.ceil(total / limit),
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page
             }
         });
     } catch (error) {

@@ -1393,7 +1393,7 @@ exports.getPlainTextTemplates = async (req) => {
               $elemMatch: {
                 $or: [
                   { type: "CAROUSEL" },
-                  { format: { $in: ['IMAGE', 'VIDEO', 'AUDIO', 'CAROUSEL'] } },
+                  { format: { $in: [ 'CAROUSEL'] } },
                   { text: { $regex: "{{.*}}", $options: "i" } }
                 ]
               }

@@ -12,6 +12,8 @@ const { statusCode, resMessage } = require("../config/constants");
 const { chunkArray } = require("../utils/helpers");
 const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
+const fsPromises = require("fs/promises");
+const mime = require("mime-types");
 
 const sendWhatsAppMessage = async ({
   to,
@@ -939,7 +941,7 @@ const getAllBulkSendJobsService = async (req) => {
       success: true,
       message: resMessage.Bulk_send_jobs_fetched,
       data: jobs,
-    };
+    }; 
   } catch (error) {
     console.error("Error fetching all bulk send jobs:", error.stack);
     return {
@@ -1112,15 +1114,15 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
 
 const downloadMedia = async (req) => {
   const { projectId } = req.params;
-  const { imageId } = req.body;
+  const { imageId } = req.body; // imageId is the mediaId
   const userId = req.user._id;
   const tenantId = req.tenant._id;
 
   if (!imageId) {
     return {
-      status: 400,
       success: false,
-      message: "Image ID is required",
+      status: 400,
+      message: "Media ID is required",
     };
   }
 
@@ -1137,48 +1139,47 @@ const downloadMedia = async (req) => {
       !project.businessProfileId?.metaAccessToken
     ) {
       return {
-        status: 400,
         success: false,
+        status: 400,
         message: "Invalid project configuration",
       };
     }
 
-    // 1. Get media URL from Meta
+    const accessToken = project.businessProfileId.metaAccessToken;
+
     const metadataResponse = await axios.get(
       `https://graph.facebook.com/v19.0/${imageId}`,
       {
         headers: {
-          Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
 
     const mediaUrl = metadataResponse.data.url;
+    const mimeType = metadataResponse.data.mime_type || "application/octet-stream";
+    const extension = mime.extension(mimeType) || "bin"; 
+    const fileName = `meta-media-${uuidv4()}.${extension}`;
 
-    // 2. Download media binary
+    console.log("⬇️ Downloading media binary from Meta...");
     const mediaResponse = await axios.get(mediaUrl, {
       headers: {
-        Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       responseType: "arraybuffer",
     });
 
-    const contentType = mediaResponse.headers["content-type"];
-    const extension = contentType.split("/")[1] || "jpg";
-    const fileName = `meta-image-${uuidv4()}.${extension}`;
     const tempDir = path.join(__dirname, "../temp");
-
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
+      console.log("📁 Temp directory created:", tempDir);
     }
 
     const filePath = path.join(tempDir, fileName);
-
     fs.writeFileSync(filePath, mediaResponse.data);
 
     const fileStream = fs.createReadStream(filePath);
 
-    // Automatically delete file when stream closes
     fileStream.on("close", async () => {
       try {
         await fsPromises.unlink(filePath);
@@ -1187,19 +1188,17 @@ const downloadMedia = async (req) => {
         console.error("❌ Error deleting file:", err.message);
       }
     });
-
     return {
-      status: 200,
       success: true,
-      message: "Media downloaded successfully",
+      status: 200,
       stream: fileStream,
-      mimeType: contentType,
+      mimeType,
       fileName,
     };
   } catch (error) {
     return {
-      status: 500,
       success: false,
+      status: error.response?.status || 500,
       message: error.response?.data?.error?.message || "Download failed",
       error: error.response?.data || error.message,
     };
