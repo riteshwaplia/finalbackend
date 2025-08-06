@@ -27,10 +27,17 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
     const url = data.imageUrl || data.url;
     const caption = data.message || data.caption || '';
 
-    if (url || mediaId) {
+    if (mediaId) {
       messages.push({
         type: 'image',
         id: mediaId,
+        caption,
+        delay
+      });
+    }
+    else if(url) {
+      messages.push({
+        type: 'image',
         link: url,
         caption,
         delay
@@ -49,18 +56,79 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
       });
     }
     
-  } else if (type === 'template') {
-    const { selectedTemplateId, selectedTemplateName, selectedTemplateLanguage, parameters = [] } = data;
-    if (selectedTemplateId && selectedTemplateName) {
-      messages.push({
-        type: 'template',
-        templateId: selectedTemplateId,
-        templateName: selectedTemplateName,
-        templateLang: selectedTemplateLanguage,
-        parameters,
-        delay
-      });
-    }
+  } else if (type === 'document') {
+      const documentId = data.documentId;
+      const documentUrl = data.documentUrl || data.url;
+      const filename = data.document_name || 'document.pdf';
+      const caption = data.message || data.caption || '';
+
+      if (documentId) {
+        messages.push({
+          type: 'document',
+          id: documentId,
+          caption,
+          delay
+        });
+      } else if (documentUrl) {
+        messages.push({
+          type: 'document',
+          link: documentUrl,
+          filename,
+          caption,
+          delay
+        });
+      }
+
+    } else if (type === 'template') {
+    const {
+      selectedTemplateId,
+      selectedTemplateName,
+      selectedTemplateLanguage,
+      imageMediaId,
+      buttons = [],
+      parameters = []
+    } = data;
+
+  const components = [];
+
+  if (imageMediaId) {
+    components.push({
+      type: 'header',
+      parameters: [
+        {
+          type: 'image',
+          image: { id: imageMediaId }
+        }
+      ]
+    });
+  }
+
+  components.push({ type: 'body' });
+
+  components.push({ type: 'footer' });
+
+  buttons.forEach((btn, index) => {
+    components.push({
+      type: 'button',
+      sub_type: 'quick_reply',
+      index: index.toString(),
+      parameters: [
+        {
+          type: 'payload',
+          payload: btn.payload
+        }
+      ]
+    });
+  });
+
+  messages.push({
+    type: 'template',
+    templateId: selectedTemplateId,
+    templateName: selectedTemplateName,
+    templateLang: selectedTemplateLanguage,
+    components,
+    delay
+  });
 
   } else if (type === 'video') {
     const videoId = data.videoId;

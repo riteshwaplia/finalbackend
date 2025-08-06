@@ -254,18 +254,17 @@ exports.handleWebhookPayload = async (req) => {
                                                 return {
                                                     type: 'template',
                                                     message: {
-                                                        name: reply.templateName,
-                                                        language: { code: reply.templateLang },
-                                                        components: (reply.parameters?.length
-                                                            ? [{
-                                                                type: 'body',
-                                                                parameters: reply.parameters.map(param => ({
-                                                                    type: 'text',
-                                                                    text: param.value
-                                                                }))
-                                                            }]
-                                                            : []
-                                                        )
+                                                    name: reply.templateName,
+                                                    language: { code: reply.templateLang },
+                                                    components: reply.components || []
+                                                    }
+                                                };
+                                                case 'document':
+                                                return {
+                                                    type: 'document',
+                                                    message: {
+                                                    ...(reply.id ? { id: reply.id } : { link: reply.link, filename: reply.filename }),
+                                                    caption: reply.caption || ''
                                                     }
                                                 };
 
