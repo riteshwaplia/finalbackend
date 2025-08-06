@@ -62,13 +62,13 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
       });
     }
 
-  } else if (type === 'VideoEditorNode') {
-    const url = data.videoUrl;
+  } else if (type === 'video') {
+    const videoId = data.videoId;
     const caption = data.message || '';
-    if (url) {
+    if (videoId) {
       messages.push({
         type: 'video',
-        link: url,
+        id: videoId,
         caption,
         delay
       });

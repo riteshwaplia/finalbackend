@@ -1048,6 +1048,7 @@ const sendWhatsAppMessages = async ({ phoneNumberId, accessToken, to, type, mess
  
     case 'video':
       payload.video = {};
+      if (message.id) payload.video.id = message.id;
       if (message.link) payload.video.link = message.link;
       if (message.caption) payload.video.caption = message.caption;
       break;
