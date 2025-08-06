@@ -44,6 +44,14 @@ exports.updateFlowController = async (req) => {
     }
 };
 
+exports.deleteFlowByIdController = async (req) => {
+    const { projectId, flowId } = req.params;
+    const userId = req.user._id;
+    const tenantId = req.tenant._id;
+
+    return await flowService.deleteFlowById({ flowId, projectId, userId, tenantId });
+};
+
 // /**
 //  * @desc    Delete a conversational flow.
 //  * @route   DELETE /api/projects/:projectId/flows/:flowId

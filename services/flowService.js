@@ -249,6 +249,53 @@ exports.update = async (req) => {
     }
 };
 
+exports.deleteFlowById = async ({ flowId, projectId, userId, tenantId }) => {
+    if (!flowId || !projectId || !userId || !tenantId) {
+        return {
+            status: statusCode.BAD_REQUEST,
+            success: false,
+            message: resMessage.Missing_required_fields + " (flowId, projectId, userId, tenantId are required)."
+        };
+    }
+
+    try {
+        const deletedFlow = await Flow.findOneAndDelete({
+            _id: flowId,
+            projectId,
+            userId,
+            tenantId
+        });
+
+        if (!deletedFlow) {
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: resMessage.No_data_found + " (Flow not found or unauthorized)."
+            };
+        }
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Flow_deleted_successfully,
+        };
+    } catch (error) {
+        console.error("Error deleting flow:", error);
+        if (error.name === "CastError") {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: "Invalid Flow ID format.",
+            };
+        }
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message || resMessage.Server_error,
+        };
+    }
+};
+
 
 // exports.deleteFlow = async ({ flowId, projectId, userId, tenantId }) => {
 //     if (!flowId || !projectId || !userId || !tenantId) {
