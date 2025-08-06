@@ -3,7 +3,7 @@ const { protect, authorizeRoles } = require('../middleware/auth');
 const userController = require('../controllers/userController');
 const { responseHandler } = require('../middleware/responseHandler');
 const validateRequest = require('../middleware/validate');
-const {register,login, forgotPassword, resetPassword, verifyOtp, update, resetPasswordWithOtp } = require('../validations/userValidations');
+const {register,login, forgotPassword, resetPassword, verifyOtp, update, resetPasswordWithOtp , resendOtp } = require('../validations/userValidations');
 const { loginLimiter , otpLimiter } = require("../middleware/rateLimiter");
 const router = express.Router();
 
@@ -22,5 +22,6 @@ router.post('/forgot-password',otpLimiter ,  validateRequest(forgotPassword), re
 router.post('/update-password-with-otp',otpLimiter , validateRequest(resetPasswordWithOtp), responseHandler(userController.updatePasswordWithOtpController));
 router.put('/update-self/:userId', protect, validateRequest(update), responseHandler(userController.updateUserController));
 router.post('/logout', protect, responseHandler(userController.logoutUserController));
+router.post('/resend-otp', validateRequest(resendOtp), responseHandler(userController.resendOtpController));
 
 module.exports = router;
