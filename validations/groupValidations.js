@@ -11,11 +11,11 @@ const titleValidation = Joi.string()
 
 const createGroup = Joi.object({
   title: Joi.string()
-    .pattern(/^[a-zA-Z0-9_]+$/)
+    .pattern(/^[a-zA-Z0-9_ ]+$/)
     .min(3)
     .optional()
     .messages({
-      "string.pattern.base": "Title can only contain letters, numbers, and underscores",
+      "string.pattern.base": "Title can only contain letters, numbers, underscores, and spaces",
       "string.base": "Title must be a string",
       "string.min": "Title must be at least 3 characters long",
     }),
@@ -26,11 +26,11 @@ const createGroup = Joi.object({
 
 const updateGroup = Joi.object({
   title: Joi.string()
-    .pattern(/^[a-zA-Z0-9_]+$/)
+    .pattern(/^[a-zA-Z0-9_ ]+$/)
     .min(3)
     .optional()
     .messages({
-      "string.pattern.base": "Title can only contain letters, numbers, and underscores",
+      "string.pattern.base": "Title can only contain letters, numbers, underscores, and spaces",
       "string.base": "Title must be a string",
       "string.min": "Title must be at least 3 characters long",
     }),
