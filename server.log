@@ -1685,3 +1685,83 @@
 [6/8/2025, 16:52:16] Server running on port 5001
 [6/8/2025, 16:52:16] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
 >>>>>>> b8fafc3960ca1cb8903bec7aa3e0889d923f8a2a
+[7/8/2025, 12:07:28] Server running on port 5001
+[7/8/2025, 12:07:29] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 12:08:10] Server running on port 5001
+[7/8/2025, 12:08:11] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 12:08:39] Server running on port 5001
+[7/8/2025, 12:08:40] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 12:09:14] Server running on port 5001
+[7/8/2025, 12:09:14] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 12:09:34] Server running on port 5001
+[7/8/2025, 12:09:35] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 12:11:13] Server running on port 5001
+[7/8/2025, 12:11:14] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 12:11:49] Server running on port 5001
+[7/8/2025, 12:11:49] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 12:12:08] Server running on port 5001
+[7/8/2025, 12:12:08] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 12:12:27] Server running on port 5001
+[7/8/2025, 12:12:27] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 12:12:48] Server running on port 5001
+[7/8/2025, 12:12:48] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 12:13:14] Server running on port 5001
+[7/8/2025, 12:13:15] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 12:13:51] Server running on port 5001
+[7/8/2025, 12:13:51] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 12:15:01] Server running on port 5001
+[7/8/2025, 12:15:01] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 12:15:57] Server running on port 5001
+[7/8/2025, 12:15:58] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 12:16:17] Server running on port 5001
+[7/8/2025, 12:16:17] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 12:50:52] Server running on port 5001
+[7/8/2025, 12:50:53] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 12:51:56] Server running on port 5001
+[7/8/2025, 12:51:57] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 12:54:54] Server running on port 5001
+[7/8/2025, 12:54:56] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 12:55:19] Server running on port 5001
+[7/8/2025, 12:55:19] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 12:55:40] Server running on port 5001
+[7/8/2025, 12:55:40] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 13:55:50] Server running on port 5001
+[7/8/2025, 13:55:50] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 13:56:02] Server running on port 5001
+[7/8/2025, 13:56:02] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 13:58:32] Server running on port 5001
+[7/8/2025, 13:58:33] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 13:58:51] Server running on port 5001
+[7/8/2025, 13:58:52] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 14:00:43] Server running on port 5001
+[7/8/2025, 14:00:44] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 14:00:57] Server running on port 5001
+[7/8/2025, 14:00:57] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 14:01:07] Server running on port 5001
+[7/8/2025, 14:01:08] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 14:03:54] Server running on port 5001
+[7/8/2025, 14:03:55] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 14:04:26] Server running on port 5001
+[7/8/2025, 14:04:26] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 20:49:46] Server running on port 5001
+[7/8/2025, 20:49:47] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 20:50:56] Server running on port 5001
+[7/8/2025, 20:50:56] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 21:03:30] Server running on port 5001
+[7/8/2025, 21:03:30] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 21:04:48] Server running on port 5001
+[7/8/2025, 21:04:48] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 21:07:56] Server running on port 5001
+[7/8/2025, 21:07:56] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 21:07:59] Server running on port 5001
+[7/8/2025, 21:07:59] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 21:08:10] Server running on port 5001
+[7/8/2025, 21:08:11] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 21:08:18] Server running on port 5001
+[7/8/2025, 21:08:18] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net
+[7/8/2025, 21:19:02] Server running on port 5001
+[7/8/2025, 21:19:03] MongoDB Connected: ac-hpitsto-shard-00-00.emmkmiu.mongodb.net
+[7/8/2025, 21:19:08] Server running on port 5001
+[7/8/2025, 21:19:08] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[7/8/2025, 21:19:26] Server running on port 5001
+[7/8/2025, 21:19:27] MongoDB Connected: ac-hpitsto-shard-00-01.emmkmiu.mongodb.net

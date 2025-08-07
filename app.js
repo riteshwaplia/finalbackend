@@ -7,6 +7,7 @@ const http = require('http')
 const { Server } = require('socket.io');
 const path = require("path");
 const fs = require("fs");
+// const axios = require('axios');
 // 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
 
 const tenantRoutes = require('./routes/tenant');
@@ -89,6 +90,101 @@ app.use('/api/projects/:projectId/flows', flowRoutes);
 app.use('/api/projects/', projectDashboardRoutes);
 app.use('/api/projects/:projectId/messages', messageRoutes);
 app.use('/api/projects/:projectId/team-member', teamMemberRoutes);
+
+// app.get('/auth/facebook/login', (req, res) => {
+//   const redirectUri = encodeURIComponent(`https://wachat.matkadash.in/auth/facebook/callback`);
+//   const scope = [
+//     'whatsapp_business_messaging',
+//     'whatsapp_business_management',
+//     'business_management',
+//     'pages_manage_metadata'
+//   ].join(',');
+//   const authUrl = `https://www.facebook.com/v19.0/dialog/oauth?client_id=704878479078160&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
+//   res.redirect(authUrl);
+// });
+
+// app.get('/auth/facebook/callback', async (req, res) => {
+//   const { code, error } = req.query;
+//   if (error) {
+//     console.error('Facebook OAuth Error:', req.query.error_description);
+//     return res.status(400).send('Authentication failed: ' + req.query.error_description);
+//   }
+
+//   if (!code) {
+//     return res.status(400).send('Missing authorization code.');
+//   }
+
+//   const redirectUri = `https://wachat.matkadash.in/auth/facebook/callback`;
+
+//   try {
+//     const tokenRes = await axios.get('https://graph.facebook.com/v19.0/oauth/access_token', {
+//       params: {
+//         client_id: "704878479078160",
+//         client_secret: "7a262e581162c5d2c8900a734d73fa59",
+//         redirect_uri: redirectUri,
+//         code
+//       }
+//     });
+
+//     console.log("=============tokenRes", tokenRes);
+
+//     const access_token = tokenRes.data.access_token;
+
+//     // Step 3: Get business and WABA info
+//     const bizRes = await axios.get('https://graph.facebook.com/v19.0/me/owned_businesses', {
+//       params: { access_token }
+//     });
+
+//     const business_id = bizRes.data.data[0]?.id;
+
+//     const wabaRes = await axios.get(`https://graph.facebook.com/v19.0/${business_id}/client_whatsapp_business_accounts`, {
+//       params: { access_token }
+//     });
+
+//     const waba_id = wabaRes.data.data[0]?.id;
+
+//     const phoneNumberRes = await axios.get(`https://graph.facebook.com/v19.0/${waba_id}/phone_numbers`, {
+//       params: { access_token }
+//     });
+
+//     const phone_number_id = phoneNumberRes.data.data[0]?.id;
+
+//     // Step 4: Set webhook to your global URL
+//     await axios.post(`https://graph.facebook.com/v19.0/704878479078160/subscriptions`, {
+//       object: 'whatsapp_business_account',
+//       callback_url: `https://wachat.matkadash.in/api/webhook/whatsapp`,
+//       fields: 'messages,message_deliveries,message_reads',
+//       verify_token: "token"
+//     }, {
+//       params: { access_token }
+//     });
+
+//     // Step 5: Store in DB
+//     // await oauth.findOneAndUpdate(
+//     //   { facebookUserId: req.query.user_id || 'default' },
+//     //   {
+//     //     facebookUserId: req.query.user_id || 'default',
+//     //     access_token,
+//     //     business_id,
+//     //     waba_id,
+//     //     phone_number_id
+//     //   },
+//     //   { upsert: true, new: true }
+//     // );
+
+//     // Redirect to frontend
+//     res.redirect(`http://localhost:5173/success`);
+//   } catch (err) {
+//     console.error(err?.response?.data || err.message);
+//     res.status(500).send("OAuth failed");
+//   }
+// });
+
+// app.post('/api/webhook/whatsapp', async (req, res) => {
+//   const payload = req.body;
+//   console.log('Incoming Webhook:', JSON.stringify(payload, null, 2));
+//   res.sendStatus(200);
+// });
 
 const server = http.createServer(app); 
 const io = new Server(server, {
