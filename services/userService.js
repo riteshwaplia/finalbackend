@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendEmail } = require('../functions/functions');
-const generateToken = require('../utils/generateToken');
+// const generateToken = require('../utils/generateToken');
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 
@@ -29,6 +29,7 @@ exports.register = async (req) => {
                 };
             }
 
+            existingUser.password = password;
             existingUser.otp = otp;
             existingUser.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
             await existingUser.save();
