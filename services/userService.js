@@ -53,7 +53,7 @@ exports.register = async (req) => {
                     username: existingUser.username,
                     email: existingUser.email,
                     role: existingUser.role,
-                    token: generateToken(existingUser._id)
+                    // token: generateToken(existingUser._id)
                 },
                 statusCode: statusCode.OK
             };
