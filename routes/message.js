@@ -23,8 +23,15 @@ router.get('/bulk-send-jobs', protect, responseHandler(messageController.getAllB
 router.get('/bulk-send-jobs/:bulkSendJobId', protect, responseHandler(messageController.getBulkSendJobDetailsService));
 
 router.post('/bulk-send-group', protect, responseHandler(messageController.BulkSendGroupController));
+router.post(
+  "/bulk-send/carousel",
+  protect,  
+  uploadExcel.single("file"),
+ responseHandler(messageController.sendBulkCarouselMessage)
+);
+// router.post('/download-media', protect, messageController.downloadMediaController);
+router.post('/download-media', protect, messageController.downloadMediaControllerRaw); // ❌ not wrapped in responseHandler
 
-router.post('/download-media', protect, responseHandler(messageController.downloadMediaController));
 
 // You might add routes for message history, delivery reports later
 

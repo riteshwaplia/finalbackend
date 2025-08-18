@@ -233,176 +233,7 @@ exports.uploadMedia = async (req) => {
     };
   }
 };
-// exports.uploadMedia = async (req) => {
-//   const { projectId, businessProfileId } = req.body;
-//   const file = req.file; // This is the file object from multer
-//   const userId = req.user._id;
-//   const tenantId = req.tenant._id;
 
-//   if (!file) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.Media_required,
-//     };
-//   }
-//   if (!projectId || !businessProfileId) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.Missing_required_fields + " (projectId and businessProfileId are required).",
-//     };
-//   }
-
-//   let processedFileBuffer = null;
-//   let finalMimeType = file.mimetype;
-//   let finalFileSize = file.size;
-
-//   try {
-//     // NEW: Image processing with sharp for JPGs
-//     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-//       console.log(`[Sharp] Processing image: ${file.originalname} (${file.mimetype})`);
-//       try {
-//         // Read the original file buffer
-//         const originalBuffer = fs.readFileSync(file.path);
-
-//         // Process with sharp: resize (optional, but good for profile pics),
-//         // then output as a clean JPG with a specific quality.
-//         // This re-encodes the image, often fixing obscure format issues.
-//         processedFileBuffer = await sharp(originalBuffer)
-//           .resize(300, 300, {
-//             fit: sharp.fit.inside, // Ensures image fits within dimensions without cropping
-//             withoutEnlargement: true // Prevents enlarging if smaller
-//           })
-//           .jpeg({ quality: 80, progressive: true }) // Re-encode as JPG, 80% quality, progressive scan
-//           .toBuffer();
-
-//         finalMimeType = 'image/jpeg';
-//         finalFileSize = processedFileBuffer.length;
-//         console.log(`[Sharp] Image processed to JPG. New size: ${finalFileSize} bytes.`);
-
-//       } catch (sharpError) {
-//         console.error("[Sharp] Error processing image with sharp, falling back to original file:", sharpError);
-//         // If sharp fails, proceed with the original file
-//         processedFileBuffer = null;
-//       }
-//     }
-
-//     const metaCredentials = await getBusinessProfileMetaApiCredentials(
-//       businessProfileId,
-//       userId,
-//       tenantId
-//     );
-//     if (!metaCredentials.success) {
-//       console.warn("Meta credential fetch failed:", metaCredentials.message);
-//       return {
-//         status: metaCredentials.status || statusCode.BAD_REQUEST,
-//         success: false,
-//         message: metaCredentials.message,
-//       };
-//     }
-
-//     const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
-
-//     console.log("🟡 Resumable Upload params (after processing):", {
-//       facebookUrl,
-//       graphVersion,
-//       appIdUsedForUploads: wabaId,
-//       accessToken: !!accessToken,
-//       mimeType: finalMimeType,
-//       fileSize: finalFileSize,
-//     });
-
-//     const initUrl = `${facebookUrl}/${graphVersion}/736244065439007/uploads`;
-//     console.log("Resumable Upload Init URL:", initUrl);
-
-//     const initResponse = await axios.post(
-//       initUrl,
-//       {
-//         file_length: finalFileSize,
-//         file_type: finalMimeType,
-//         messaging_product: 'whatsapp',
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           'Content-Type': 'application/json',
-//         }
-//       }
-//     );
-
-//     console.log("✅ Init upload session response:", initResponse.data);
-
-//     const uploadId = initResponse.data?.id;
-//     if (!uploadId) {
-//       throw new Error("Upload session ID not received from Meta during initialization.");
-//     }
-
-//     const form = new FormData();
-//     // Use the processed buffer if available, otherwise read from original path
-//     const fileStream = processedFileBuffer ? processedFileBuffer : fs.createReadStream(file.path);
-
-//     form.append("file", fileStream, {
-//       filename: file.originalname.replace(/\..+$/, '.jpg'), // Ensure filename ends with .jpg if processed
-//       contentType: finalMimeType,
-//     });
-//     form.append("type", finalMimeType); // Redundant but harmless
-
-//     const uploadUrl = `${facebookUrl}/${graphVersion}/${uploadId}`;
-//     console.log("Resumable Upload File URL:", uploadUrl);
-//     console.log("Attempting to upload file with Content-Type:", finalMimeType);
-
-//     const uploadResponse = await axios.post(
-//       uploadUrl,
-//       form,
-//       {
-//         headers: {
-//           ...form.getHeaders(),
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//         maxContentLength: Infinity,
-//         maxBodyLength: Infinity,
-//       }
-//     );
-
-//     console.log("✅ Media uploaded to Meta:", uploadResponse.data);
-
-//     const hValue = uploadResponse.data?.h;
-//     if (!hValue) {
-//       throw new Error("Media handle ('h' value) not returned from Meta after resumable upload.");
-//     }
-
-//     // Clean up the original uploaded file after successful processing/upload
-//     if (fs.existsSync(file.path)) {
-//       fs.unlinkSync(file.path);
-//     }
-
-//     return {
-//       status: statusCode.OK,
-//       success: true,
-//       message: resMessage.Media_uploaded,
-//       id: hValue, // Return the 'h' handle
-//       mimeType: finalMimeType,
-//       fileSize: finalFileSize,
-//     };
-//   } catch (error) {
-//     // Ensure original file is cleaned up even on error
-//     if (file?.path && fs.existsSync(file.path)) {
-//       fs.unlinkSync(file.path);
-//     }
-
-//     const metaError = error.response?.data?.error || error.message;
-//     console.error("❌ Resumable Media upload error:", metaError);
-//     console.error("❌ Full error response:", JSON.stringify(error.response?.data || {}));
-
-//     return {
-//       status: statusCode.INTERNAL_SERVER_ERROR,
-//       success: false,
-//       message: `Media upload failed: ${metaError.message || metaError}`,
-//       metaError: error.response?.data || null,
-//     };
-//   }
-// };
 
 // @desc    Create a new template (locally first)
 // @access  Private (User/Team Member)
@@ -543,14 +374,7 @@ exports.createTemplate = async (req) => {
 };
 
 
-/**
- * @desc    Create a new WhatsApp Carousel Message Template on Meta Graph API.
- * This is a specialized function for CAROUSEL type templates.
- * @route   POST /api/whatsapp/carousel-templates (new route)
- * @access  Private (User/Project Owner)
- * @param {Object} req - The request object containing template data, user, and tenant info.
- * @returns {Object} Success status and the created template data.
- */
+
 exports.createCarouselTemplate = async (req) => {
   const { name, language, category, components, businessProfileId, projectId } =
     req.body;
@@ -606,10 +430,7 @@ exports.createCarouselTemplate = async (req) => {
     const { accessToken, wabaId } = metaCredentials;
     const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
-    // The components for carousel templates are structured differently.
-    // Meta expects the 'CAROUSEL' component at the top level,
-    // and each card has its own 'components' array.
-    // Ensure the payload matches the exact structure provided by Meta.
+
     const payload = {
       name,
       language,
@@ -770,46 +591,6 @@ exports.submitTemplateToMeta = async (req) => {
     };
   }
 };
-
-// @desc    Get all templates for the authenticated user, optionally filtered by businessProfileId
-// @access  Private (User/Team Member)
-// exports.getAllTemplates = async (req) => {
-//   const tenantId = req.tenant._id;
-//   const userId = req.user._id;
-//   const { businessProfileId } = req.query; // Allow filtering by businessProfileId
-
-//   let query = { tenantId, userId };
-//   if (businessProfileId) {
-//     query.businessProfileId = businessProfileId;
-//   }
-
-//   try {
-//     const templates = await Template.find(query).lean();
-//     if (templates.length === 0) {
-//       return {
-//         status: statusCode.OK,
-//         success: true,
-//         message:
-//           resMessage.No_data_found +
-//           (businessProfileId ? " for the selected business profile." : ""),
-//         data: [],
-//       };
-//     }
-//     return {
-//       status: statusCode.OK,
-//       success: true,
-//       message: resMessage.Template_fetched,
-//       data: templates,
-//     };
-//   } catch (error) {
-//     console.error("Error fetching templates:", error);
-//     return {
-//       status: statusCode.INTERNAL_SERVER_ERROR,
-//       success: false,
-//       message: error.message || resMessage.Server_error,
-//     };
-//   }
-// };
 
 exports.getAllTemplates = async (req) => {
   const tenantId = req.tenant._id;
@@ -1114,52 +895,7 @@ exports.updateTemplate = async (req) => {
   }
 };
 
-// @desc    Delete a template
-// @access  Private (User/Team Member)
-// exports.deleteTemplate = async (req) => {
-//   const templateId = req.params.id;
-//   const tenantId = req.tenant._id;
-//   const userId = req.user._id;
-//   const { businessProfileId } = req.body;
 
-//   try {
-//     const template = await Template.findOne({
-//       _id: templateId,
-//       tenantId,
-//       userId,
-//       businessProfileId,
-//     });
-//     if (!template) {
-//       return {
-//         status: statusCode.NOT_FOUND,
-//         success: false,
-//         message: resMessage.No_data_found,
-//       };
-//     }
-
-//     await template.deleteOne();
-
-//     return {
-//       status: statusCode.OK,
-//       success: true,
-//       message: resMessage.Template_deleted_successfully,
-//     };
-//   } catch (error) {
-//     console.error("Error deleting template:", error);
-//     if (error.name === "CastError") {
-//       return {
-//         status: statusCode.BAD_REQUEST,
-//         success: false,
-//         message: "Invalid Template ID format.",
-//       };
-//     }
-//     return {
-//       status: statusCode.INTERNAL_SERVER_ERROR,
-//       success: false,
-//       message: error.message || resMessage.Server_error,
-//     };
-//   }
-// };
 
 // @desc    Delete a template (locally + from Meta)
 // @access  Private (User/Team Member)
