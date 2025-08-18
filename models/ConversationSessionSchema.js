@@ -35,17 +35,6 @@ const ConversationSessionSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.Mixed, // Flexible object to store key-value pairs
         default: {},
     },
-    // To track the last message received from the user, useful for context
-    lastUserMessage: {
-        type: String,
-        default: '',
-    },
-    // To track the last message sent by the bot, useful for context
-    lastBotMessage: {
-        type: String,
-        default: '',
-    },
-    // If the session is awaiting specific input for a CollectInputNode field
     awaitingFieldId: {
         type: String, // The ID of the field (e.g., 'name', 'email')
         required: false,

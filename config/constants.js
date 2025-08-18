@@ -16,7 +16,7 @@ const resMessage = {
     edges_array_is_required: "Edges array is required",
     No_valid_entry_point: "No valid entry point",
 
-    Project_already_exists: "Project with this name already exists.",
+    Project_already_exists: "Project with this number already exists.",
     Project_created_successfully: "Project created successfully.",
     Projects_fetched_successfully: "Projects fetched successfully.",
     No_data_found: "No data found.",
@@ -73,7 +73,6 @@ const resMessage = {
     No_valid_contacts_for_bulk_send: "No valid contacts found for bulk messaging.",
     Project_whatsapp_number_not_configured: "Project WhatsApp number (for sending messages) is not configured. Please set it in your project settings.",
 
-    // NEW Webhook-specific messages
     WEBHOOK_VERIFIED: "WEBHOOK_VERIFIED",
     WEBHOOK_RECEIVE_SUCCESS: "Webhook received successfully.",
     WEBHOOK_INVALID_VERIFY_TOKEN: "Invalid verify token.",
@@ -86,7 +85,6 @@ const resMessage = {
     Team_member_deleted_successfully: "Team member deleted successfully.",
     Unauthorized_action: "Unauthorized action.",
 
-   // NEW WhatsApp Number Registration messages (updated for direct input)
     WhatsApp_numbers_fetched_successfully: "WhatsApp phone numbers fetched successfully.",
     No_whatsapp_numbers_found: "No WhatsApp phone numbers found for the provided WABA ID. Please ensure the WABA ID and Access Token are correct.",
     Failed_to_fetch_whatsapp_numbers: "Failed to fetch WhatsApp phone numbers from Meta API. Check WABA ID and Access Token.",
@@ -103,16 +101,16 @@ const resMessage = {
 
     Dashboard_stats_fetched_successfully: 'Dashboard statistics fetched successfully.',
 
-Flow_created_successfully: 'Flow created successfully.',
+    Flow_created_successfully: 'Flow created successfully.',
     Flows_fetched_successfully: 'Flows fetched successfully.',
     Flow_fetched_successfully: 'Flow fetched successfully.',
     Flow_updated_successfully: 'Flow updated successfully.',
     Flow_deleted_successfully: 'Flow deleted successfully.',
     Flow_name_exists: 'A flow with this name already exists for this project.',
-    // NEW Flow-specific error messages
+    Flow_not_found: 'Flow not found for the provided ID.',
     nodes_array_is_required: 'Nodes array is required and cannot be empty.',
     edges_array_is_required: 'Edges array is required.',
-    No_valid_entry_point: 'Flow must have a valid trigger keyword.', // Renamed for clarity
+    No_valid_entry_point: 'Flow must have a valid trigger keyword.',
     
     WhatsApp_Business_Profile_updated_successfully: 'WhatsApp Business Profile updated successfully on Meta.',
     WABA_ID_and_ACCESS_TOKEN_REQUIRED :"WABA ID and Access Token are required.",
@@ -127,7 +125,14 @@ Flow_created_successfully: 'Flow created successfully.',
     otp_verified_successfully: "OTP verified successfully.",
 
     Business_profile_not_found: "Selected Business Profile not found or does not belong to your account.",
-    Business_profile_updated_successfully: "Business Profile updated successfully."
+    Business_profile_updated_successfully: "Business Profile updated successfully.",
+    Token_is_required: "Token is required for logout",
+    USER_NOT_FOUND: "User not found",
+    Logged_out_successfully: "Logged out successfully",
+    Otp_expired: "OTP has expired",
+    Carousel_limit_exceed: "Carousel component cannot have more than 10 cards.",
+    Data_fetch_successfully: "Data fetch successfully",
+    Data_updated: "Data updated successfully"
 };
 
 module.exports = {

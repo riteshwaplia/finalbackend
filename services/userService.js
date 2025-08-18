@@ -1,6 +1,7 @@
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { sendEmail } = require('../functions/functions');
-const generateToken = require('../utils/generateToken');
+// const generateToken = require('../utils/generateToken');
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 
@@ -28,7 +29,9 @@ exports.register = async (req) => {
                 };
             }
 
+            existingUser.password = password;
             existingUser.otp = otp;
+            existingUser.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
             await existingUser.save();
 
             const subject = 'Wachat Account OTP Verification';
@@ -51,7 +54,7 @@ exports.register = async (req) => {
                     username: existingUser.username,
                     email: existingUser.email,
                     role: existingUser.role,
-                    token: generateToken(existingUser._id)
+                    // token: generateToken(existingUser._id)
                 },
                 statusCode: statusCode.OK
             };
@@ -64,6 +67,7 @@ exports.register = async (req) => {
             password,
             role: 'user',
             otp: otp,
+            otpExpiresAt: new Date(Date.now() + 5 * 60 * 1000)
         });
 
         const subject = 'Wachat Account OTP Verification';
@@ -72,7 +76,7 @@ exports.register = async (req) => {
             <h2>Hello ${username},</h2>
             <p>Your OTP for Wachat registration is:</p>
             <h3>${otp}</h3>
-            <p>This OTP will expire in 10 minutes.</p>
+            <p>This OTP will expire in 5 minutes.</p>
         `;
 
         await sendEmail(email, subject, text, html);
@@ -126,7 +130,26 @@ exports.verifyOtp = async (req) => {
         };
       }
 
+      if (!user.otpExpiresAt || Date.now() > user.otpExpiresAt) {
+        return {
+          status: statusCode.UNAUTHORIZED,
+          success: false,
+          message: resMessage.Otp_expired,
+          statusCode: statusCode.UNAUTHORIZED
+        };
+      }
+
+      if (user.otp !== otp) {
+        return {
+          status: statusCode.UNAUTHORIZED,
+          success: false,
+          message: resMessage.Invalid_otp,
+          statusCode: statusCode.UNAUTHORIZED
+        };
+      }
+
       user.otp = null;
+      user.otpExpiresAt = null;
       user.isEmailVerified = true;
       await user.save();
 
@@ -179,14 +202,16 @@ exports.resetPassword = async (req) => {
 
         if (!isMatch) {
             return {
-                status: statusCode.UNAUTHORIZED,
+                status: statusCode.BAD_REQUEST,
                 success: false,
                 message: resMessage.INVALID_OLD_PASSWORD || 'Old password is incorrect.',
-                statusCode: statusCode.UNAUTHORIZED
+                statusCode: statusCode.BAD_REQUEST
             };
         }
 
         user.password = newPassword;
+        user.passwordChangedAt = new Date();
+        user.token = "";
         await user.save();
 
         return {
@@ -224,13 +249,14 @@ exports.forgotPassword = async (req) => {
     const otp = Array.from({ length: 6 }, () =>
       String.fromCharCode(
         Math.random() < 0.5
-          ? 65 + Math.floor(Math.random() * 26)  // A-Z
-          : 97 + Math.floor(Math.random() * 26)  // a-z
+          ? 65 + Math.floor(Math.random() * 26)
+          : 97 + Math.floor(Math.random() * 26)
       )
     ).join('');
 
 
     user.otp = otp;
+    user.otpExpiresAt = Date.now() + 10 * 60 * 1000;
     await user.save();
 
     const subject = 'Wachat Password Reset OTP';
@@ -239,7 +265,7 @@ exports.forgotPassword = async (req) => {
       <h2>Hello ${user.username},</h2>
       <p>Your OTP to reset your password is:</p>
       <h3>${otp}</h3>
-      <p>This OTP will expire soon. Please use it promptly.</p>
+      <p>This OTP will expire after 10 min. Please use it promptly.</p>
     `;
 
     await sendEmail(email, subject, text, html);
@@ -309,29 +335,19 @@ exports.updateUser = async (req) => {
         console.log("🔐 [updateUser] Called");
 
         const paramUserId = req.params.userId;
-        const tokenUserId = req.user._id;
+        const tokenUserId = req.user._id.toString();
         const tenantId = req.tenant._id;
 
-        console.log("🧾 [updateUser] Param User ID:", paramUserId);
-        console.log("🧾 [updateUser] Token User ID:", tokenUserId);
-        console.log("🧾 [updateUser] Tenant ID:", tenantId);
-
         const {
-            email, // only for matching, not update
+            email,
             username,
             firstName,
             lastName,
-            mobileNumber,
-            profilePicture,
-            gender,
-            dob
+            mobileNumber
         } = req.body;
 
-        console.log("📥 [updateUser] Incoming Body:", req.body);
-
-        // Step 1: Check if userId from token matches the param
-        if (paramUserId !== tokenUserId.toString()) {
-            console.warn("❌ [updateUser] Unauthorized access attempt");
+        // Step 1: Check user ID matches token user
+        if (paramUserId !== tokenUserId) {
             return {
                 status: statusCode.UNAUTHORIZED,
                 success: false,
@@ -340,9 +356,8 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 2: Validate email presence
+        // Step 2: Email is required to match before update
         if (!email) {
-            console.warn("⚠️ [updateUser] Email not provided");
             return {
                 status: statusCode.BAD_REQUEST,
                 success: false,
@@ -351,12 +366,10 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 3: Find the user
-        console.log("🔍 [updateUser] Finding user with ID, tenantId, and email...");
-        const user = await User.findOne({ _id: paramUserId, tenantId, email });
+        // Step 3: Find user using ID, tenant, and email for verification
+        const user = await User.findOne({ _id: paramUserId, tenantId });
 
-        if (!user) {
-            console.warn("❌ [updateUser] User not found or email mismatch");
+        if (!user || user.email !== email) {
             return {
                 status: statusCode.NOT_FOUND,
                 success: false,
@@ -365,29 +378,13 @@ exports.updateUser = async (req) => {
             };
         }
 
-        // Step 4: Prevent email change
-        if (req.body.email !== user.email) {
-            console.warn("❌ [updateUser] Email update attempt blocked");
-            return {
-                status: statusCode.BAD_REQUEST,
-                success: false,
-                message: 'Email update is not allowed.',
-                statusCode: statusCode.BAD_REQUEST
-            };
-        }
-
-        // Step 5: Update user fields
-        console.log("✏️ [updateUser] Updating user fields...");
-        user.username = username ?? user.username;
-        user.firstName = firstName ?? user.firstName;
-        user.lastName = lastName ?? user.lastName;
-        user.mobileNumber = mobileNumber ?? user.mobileNumber;
-        user.profilePicture = profilePicture ?? user.profilePicture;
-        user.gender = gender ?? user.gender;
-        user.dob = dob ?? user.dob;
+        // Step 4: Only update allowed fields
+        if (username !== undefined) user.username = username;
+        if (firstName !== undefined) user.firstName = firstName;
+        if (lastName !== undefined) user.lastName = lastName;
+        if (mobileNumber !== undefined) user.mobileNumber = mobileNumber;
 
         await user.save();
-        console.log("✅ [updateUser] User updated successfully");
 
         return {
             status: statusCode.OK,
@@ -400,14 +397,12 @@ exports.updateUser = async (req) => {
                 lastName: user.lastName,
                 mobileNumber: user.mobileNumber,
                 email: user.email,
-                profilePicture: user.profilePicture,
-                gender: user.gender,
-                dob: user.dob
+                role: user.role,
+                isActive: user.isActive
             },
             statusCode: statusCode.OK
         };
     } catch (error) {
-        console.error("💥 [updateUser] Error:", error.message);
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
@@ -416,6 +411,7 @@ exports.updateUser = async (req) => {
         };
     }
 };
+
 exports.updateBusinessProfile = async (req) => {
   const businessProfileId = req.params.id;
   const userId = req.user._id;
@@ -471,6 +467,135 @@ exports.updateBusinessProfile = async (req) => {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: error.message || resMessage.Server_error
+    };
+  }
+};
+
+exports.logoutUser = async (req, res) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Token_is_required,
+        statusCode: statusCode.BAD_REQUEST
+      }
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id);
+        if (!user) {
+          return {
+            status: statusCode.NOT_FOUND,
+            success: false,
+            message: resMessage.USER_NOT_FOUND,
+            statusCode: statusCode.NOT_FOUND
+          }
+        }
+
+        user.passwordChangedAt = new Date();
+        user.token = "";
+        await user.save();
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Logged_out_successfully,
+            statusCode: statusCode.OK
+        };
+    } catch (err) {
+      console.error("Error in Logout User:", err);
+      return {
+        status: statusCode.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: err.message || resMessage.Server_error
+      };
+    }
+};
+
+exports.resendOtp = async (req) => {
+  const { email, type } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.EMAIL_NOT_FOUND || 'User not found',
+        statusCode: statusCode.NOT_FOUND
+      };
+    }
+
+    if (type === 'register') {
+      if (user.isEmailVerified) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: resMessage.Email_already_registered || 'Email already verified',
+          statusCode: statusCode.BAD_REQUEST
+        };
+      }
+    }
+
+    if (type === 'forgot_password') {
+      if (!user.isEmailVerified) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: 'Email is not verified. Cannot proceed with password reset.',
+          statusCode: statusCode.BAD_REQUEST
+        };
+      }
+    }
+
+    const otp = Array.from({ length: 6 }, () =>
+      String.fromCharCode(
+        Math.random() < 0.5
+          ? 65 + Math.floor(Math.random() * 26)  // A-Z
+          : 97 + Math.floor(Math.random() * 26)  // a-z
+      )
+    ).join('');
+
+    await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          otp: otp,
+          otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000) // 10 minutes from now
+        }
+      }
+    );
+
+    const subject = type === 'register'
+      ? 'Wachat Registration OTP'
+      : 'Wachat Password Reset OTP';
+
+    const html = `
+      <h2>Hello ${user.username || 'User'},</h2>
+      <p>Your OTP for Wachat ${type === 'register' ? 'registration' : 'password reset'} is:</p>
+      <h3>${otp}</h3>
+      <p>This OTP will expire in 10 minutes.</p>
+    `;
+
+    const text = `Hello ${user.username || 'User'},\n\nYour OTP is: ${otp}`;
+
+    await sendEmail(email, subject, text, html);
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: 'OTP resent successfully',
+      statusCode: statusCode.OK
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+      statusCode: statusCode.INTERNAL_SERVER_ERROR
     };
   }
 };

@@ -11,8 +11,9 @@ const BulkSendJob = require("../models/BulkSendJob");
 const { statusCode, resMessage } = require("../config/constants");
 const { chunkArray } = require("../utils/helpers");
 const { v4: uuidv4 } = require("uuid");
-
-const BATCH_SIZE = 20;
+const User = require("../models/User");
+const fsPromises = require("fs/promises");
+const mime = require("mime-types");
 
 const sendWhatsAppMessage = async ({
   to,
@@ -232,13 +233,15 @@ const sendBulkMessageService = async (req) => {
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
   const fileName = req.file?.originalname || "manual_upload.xlsx";
+
+  const userBatchSize = await User.findOne({ _id: req.user._id, tenantId: req.tenant._id }).select('batch_size');
+  const BATCH_SIZE = userBatchSize?.batch_size || 20;
+
   if (!templateName || !req.file) {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
-      message:
-        resMessage.Missing_required_fields +
-        " (templateName and file are required for bulk send).",
+      message: resMessage.Missing_required_fields + " (templateName and file are required for bulk send).",
     };
   }
 
@@ -247,13 +250,12 @@ const sendBulkMessageService = async (req) => {
     tenantId,
     userId,
   }).populate("businessProfileId");
+
   if (!project) {
     return {
       status: statusCode.NOT_FOUND,
       success: false,
-      message:
-        resMessage.No_data_found +
-        " (Project not found or does not belong to you).",
+      message: resMessage.No_data_found + " (Project not found or does not belong to you).",
     };
   }
 
@@ -264,23 +266,20 @@ const sendBulkMessageService = async (req) => {
       message: resMessage.Project_whatsapp_number_not_configured,
     };
   }
-  const phoneNumberId = project.metaPhoneNumberID;
 
+  const phoneNumberId = project.metaPhoneNumberID;
   const businessProfile = project.businessProfileId;
-  if (
-    !businessProfile ||
-    !businessProfile.metaAccessToken ||
-    !businessProfile.metaBusinessId
-  ) {
+
+  if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
       message: resMessage.Meta_API_credentials_not_configured,
     };
   }
+
   const accessToken = businessProfile.metaAccessToken;
-  const facebookUrl =
-    businessProfile.facebookUrl || "https://graph.facebook.com";
+  const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
   const graphVersion = businessProfile.graphVersion || "v16.0";
 
   const filePath = path.resolve(req.file.path);
@@ -309,23 +308,23 @@ const sendBulkMessageService = async (req) => {
     }
   }
 
-  let parsedMessage = message;
-  if (typeof message === "string") {
-    try {
-      parsedMessage = JSON.parse(message);
-    } catch (err) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: "Invalid JSON format in 'message' field.",
-      };
-    }
+  let parsedMessage;
+  try {
+    parsedMessage = typeof message === "string" ? JSON.parse(message) : message;
+  } catch (err) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: "Invalid JSON format in 'message' field.",
+    };
   }
 
   let templateComponents = parsedMessage.components;
   let templateLanguageCode = parsedMessage.language?.code || "en_US";
+  let localTemplate;
+
   if (!templateComponents || templateComponents.length === 0) {
-    const localTemplate = await Template.findOne({
+    localTemplate = await Template.findOne({
       tenantId,
       userId,
       businessProfileId: project.businessProfileId,
@@ -377,63 +376,90 @@ const sendBulkMessageService = async (req) => {
 
       if (!mobileNumber || mobileNumber.length < 5) {
         totalFailed++;
-        errorsSummary.push({
-          to: mobileNumber,
-          error: "Invalid mobile number format in Excel.",
-        });
+        errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format in Excel." });
         return;
       }
 
       const components = [];
 
-      templateComponents.forEach((component) => {
-        if (component.type === "HEADER" && component.format === "IMAGE") {
-          console.log("Header component found:", component);
-          const imageLink = component.example?.header_handle?.[0];
-          if (imageLink) {
+      for (const comp of templateComponents) {
+        if (comp.type === 'HEADER') {
+          const headerParameters = [];
+          const hasVariables = comp.text?.includes('{{');
+
+          if (comp.format === 'IMAGE' && imageId) {
             components.push({
-              type: "HEADER",
-              parameters: [
-                {
-                  type: "image",
-                  image: { id: imageId },
-                },
-              ],
+              type: 'header',
+              parameters: [{ type: 'image', image: { id: imageId } }],
+            });
+          } else if (comp.format === 'TEXT' && hasVariables) {
+            const variableValue = contactRow['header_Example 1'];
+
+            if (variableValue) {
+              headerParameters.push({ type: 'text', text: variableValue });
+            }
+            components.push({
+              type: 'header',
+              parameters: headerParameters,
+            });
+          } else if (comp.format === 'TEXT' && comp.text) {
+            components.push({
+              type: 'header',
+              parameters: [{ type: 'text', text: comp.text }],
+            });
+          }
+        } else if (comp.type === 'BODY') {
+          const bodyParameters = [];
+          const bodyVariables = comp.text?.match(/{{(\d)}}/g);
+
+          if (bodyVariables) {
+            for (const variable of bodyVariables) {
+              const varIndex = variable.match(/{{(\d)}}/)[1];
+              const variableValue = contactRow[`body_Example_${varIndex}`];
+
+              if (variableValue) {
+                bodyParameters.push({ type: 'text', text: variableValue });
+              }
+            }
+          }
+          
+          components.push({
+            type: 'body',
+            parameters: bodyParameters,
+          });
+
+        } else if (comp.type === 'FOOTER') {
+          components.push({
+            type: 'footer',
+          });
+        } else if (comp.type === 'BUTTONS') {
+          if (comp.buttons && comp.buttons.length > 0) {
+            comp.buttons.forEach((button, index) => {
+              if (button.type === 'QUICK_REPLY') {
+                const payload = button.text.toLowerCase().replace(/ /g, '_') + '_payload';
+                components.push({
+                  type: 'button',
+                  sub_type: 'quick_reply',
+                  index: String(index),
+                  parameters: [{ type: 'payload', payload: payload }],
+                });
+              }
             });
           }
         }
-      });
-
-      if (contactRow.header_text) {
-        const headerIndex = components.findIndex((c) => c.type === "HEADER");
-        const headerComponent = {
-          type: "HEADER",
-          parameters: [{ type: "text", text: contactRow.header_text }],
-        };
-        if (headerIndex >= 0) {
-          components[headerIndex] = headerComponent;
-        } else {
-          components.push(headerComponent);
-        }
       }
-
-      const bodyParams = [];
-      Object.entries(contactRow).forEach(([key, value]) => {
-        if (key.startsWith("body_") && value) {
-          bodyParams.push({ type: "text", text: value });
-        }
-      });
-      if (bodyParams.length > 0) {
-        components.push({
-          type: "BODY",
-          parameters: bodyParams,
-        });
-      }
-
+      
       const templateMessage = {
         name: baseMessage.name,
         language: baseMessage.language,
         components,
+      };
+
+      const messagePayload = {
+        messaging_product: "whatsapp",
+        to: to,
+        type: "template",
+        template: templateMessage,
       };
 
       try {
@@ -463,18 +489,17 @@ const sendBulkMessageService = async (req) => {
           templateName,
           templateLanguage: templateLanguageCode,
         });
+
         if (!sendResult.success && sendResult.error) {
           messageLog.errorDetails = sendResult.error;
         }
+
         await messageLog.save();
 
         if (sendResult.success) totalSent++;
         else {
           totalFailed++;
-          errorsSummary.push({
-            to,
-            error: sendResult.error || "Unknown error",
-          });
+          errorsSummary.push({ to, error: sendResult.error || "Unknown error" });
         }
       } catch (err) {
         totalFailed++;
@@ -775,327 +800,39 @@ const BulkSendGroupService = async (req) => {
   };
 };
 
-const sendBulkCarouselMessageService = async (req) => {
-  const { templateName, message = {} } = req.body;
-  const userId = req.user._id;
-  const tenantId = req.tenant._id;
-  const projectId = req.params.projectId;
-  const fileName = req.file?.originalname || "manual_upload.xlsx";
+const extractAndMapParameters = (text, contact, contactfields) => {
+    const params = [];
+    const variables = text.match(/{{\d+}}/g) || [];
 
-  if (!templateName || !req.file || Object.keys(message).length === 0) {
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message:
-        resMessage.Missing_required_fields +
-        " (templateName, file, and message are required).",
-    };
-  }
+    variables.forEach(variable => {
+        const index = parseInt(variable.match(/\d+/)[0], 10);
+        const keyFromContactFields = contactfields[index - 1];
+        const lowerCaseKey = keyFromContactFields ? keyFromContactFields.toLowerCase() : `field${index}`;
+        
+        let value = '...';
 
-  const project = await Project.findOne({
-    _id: projectId,
-    tenantId,
-    userId,
-  }).populate("businessProfileId");
-  if (!project || !project.isWhatsappVerified || !project.metaPhoneNumberID) {
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Project_whatsapp_number_not_configured,
-    };
-  }
-  const phoneNumberId = project.metaPhoneNumberID;
-
-  const businessProfile = project.businessProfileId;
-  if (
-    !businessProfile ||
-    !businessProfile.metaAccessToken ||
-    !businessProfile.metaBusinessId
-  ) {
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Meta_API_credentials_not_configured,
-    };
-  }
-  const accessToken = businessProfile.metaAccessToken;
-  const facebookUrl =
-    businessProfile.facebookUrl || "https://graph.facebook.com";
-  const graphVersion = businessProfile.graphVersion || "v19.0";
-
-  const filePath = path.resolve(req.file.path);
-  let contacts = [];
-  try {
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-    contacts = sheetData.filter((row) => row.mobilenumber);
-    if (contacts.length === 0) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: resMessage.No_valid_contacts_for_bulk_send,
-      };
-    }
-  } catch (fileError) {
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Invalid_file_format,
-    };
-  } finally {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-  }
-
-  // Parse the message JSON object provided in the request
-  let parsedMessage =
-    typeof message === "string" ? JSON.parse(message) : message;
-  const templateLanguageCode = parsedMessage.language?.code || "en_US";
-
-  // Validate the message structure for a carousel
-  const carouselComponent = parsedMessage.components?.find(
-    (c) => c.type === "CAROUSEL"
-  );
-  if (
-    !carouselComponent ||
-    !Array.isArray(carouselComponent.cards) ||
-    carouselComponent.cards.length === 0
-  ) {
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message:
-        "Invalid carousel message payload. 'message' must contain a carousel component with cards.",
-    };
-  }
-
-  const bulkSendJob = await BulkSendJob.create({
-    tenantId,
-    userId,
-    projectId,
-    templateName,
-    fileName,
-    totalContacts: contacts.length,
-    status: "in_progress",
-    startTime: new Date(),
-    templateDetails: {
-      components: parsedMessage.components,
-      language: templateLanguageCode,
-    },
-  });
-
-  let totalSent = 0;
-  let totalFailed = 0;
-  const errorsSummary = [];
-
-  const contactBatches = chunkArray(contacts, BATCH_SIZE);
-
-  for (const batch of contactBatches) {
-    const sendPromises = batch.map(async (contactRow) => {
-      const mobileNumber = String(contactRow.mobilenumber);
-      const countryCode = String(contactRow.countrycode || "");
-      const to = `${countryCode}${mobileNumber}`;
-
-      if (!mobileNumber || mobileNumber.length < 5) {
-        totalFailed++;
-        errorsSummary.push({
-          to: mobileNumber,
-          error: "Invalid mobile number format in Excel.",
-        });
-        return;
-      }
-
-      // Prepare components for WhatsApp API payload
-      const components = [];
-
-      // Handle BODY component from template
-      const bodyComponent = parsedMessage.components.find(
-        (c) => c.type === "BODY"
-      );
-      if (bodyComponent) {
-        const bodyParameters = [];
-        // Get all body variables from Excel (body_1, body_2, etc.)
-        let bodyIndex = 1;
-        while (contactRow[`body_${bodyIndex}`] !== undefined) {
-          bodyParameters.push({
-            type: "text",
-            text: String(contactRow[`body_${bodyIndex}`]),
-          });
-          bodyIndex++;
+        if (contact && (lowerCaseKey === 'name' || lowerCaseKey === 'full name') && contact.name) {
+            value = contact.name;
+        } else if (contact && (lowerCaseKey === 'email' || lowerCaseKey === 'email address') && contact.email) {
+            value = contact.email;
+        } else if (contact && lowerCaseKey === 'mobilenumber' && contact.mobileNumber) {
+            value = contact.mobileNumber;
         }
-
-        if (bodyParameters.length > 0) {
-          components.push({
-            type: "body",
-            parameters: bodyParameters,
-          });
-        }
-      }
-
-      // Handle CAROUSEL component
-      const carouselCards = [];
-      const carouselComponent = parsedMessage.components.find(
-        (c) => c.type === "CAROUSEL"
-      );
-
-      if (carouselComponent?.cards) {
-        carouselComponent.cards.forEach((card, cardIndex) => {
-          const cardComponents = [];
-
-          // Handle HEADER component for each card
-          const headerComponent = card.components.find(
-            (c) => c.type === "HEADER"
-          );
-          if (headerComponent?.example?.header_handle?.id?.[0]) {
-            cardComponents.push({
-              type: "header",
-              parameters: [
-                {
-                  type: "image",
-                  image: {
-                    id: headerComponent.example.header_handle.id[0],
-                  },
-                },
-              ],
-            });
-          }
-
-          // Handle BODY component for each card
-          const cardBodyComponent = card.components.find(
-            (c) => c.type === "BODY"
-          );
-          if (cardBodyComponent) {
-            const bodyParam = contactRow[`card_${cardIndex}_body_1`]; // Get card-specific body param
-            if (bodyParam) {
-              cardComponents.push({
-                type: "body",
-                parameters: [
-                  {
-                    type: "text",
-                    text: String(bodyParam),
-                  },
-                ],
-              });
+        else if (contact.customFields) {
+            const customFieldKeys = Object.keys(contact.customFields);
+            const foundCustomFieldKey = customFieldKeys.find(cfKey => cfKey.toLowerCase() === lowerCaseKey);
+            if (foundCustomFieldKey) {
+                value = contact.customFields[foundCustomFieldKey];
             }
-          }
-
-          // Handle BUTTONS component for each card
-          const buttonsComponent = card.components.find(
-            (c) => c.type === "BUTTONS"
-          );
-          if (buttonsComponent?.buttons) {
-            buttonsComponent.buttons.forEach((button, buttonIndex) => {
-              if (button.type === "QUICK_REPLY") {
-                cardComponents.push({
-                  type: "button",
-                  sub_type: "quick_reply",
-                  index: buttonIndex,
-                  parameters: [], // Quick replies don't typically have parameters
-                });
-              }
-            });
-          }
-
-          carouselCards.push({
-            card_index: cardIndex,
-            components: cardComponents,
-          });
-        });
-
-        if (carouselCards.length > 0) {
-          components.push({
-            type: "carousel",
-            cards: carouselCards,
-          });
         }
-      }
-      const templateMessage = {
-        name: templateName,
-        language: { code: templateLanguageCode },
-        components,
-      };
-
-      console.log("📦 Template message prepared:", templateMessage);
-      try {
-        const sendResult = await sendWhatsAppMessage({
-          to: to,
-          type: "template",
-          message: templateMessage,
-          phoneNumberId,
-          accessToken,
-          facebookUrl,
-          graphVersion,
-        });
-        console.log("res of send", sendResult);
-
-        const messageLog = new Message({
-          to,
-          type: "template",
-          message: templateMessage,
-          status: sendResult.success ? "sent" : "failed",
-          name: contactRow.name || "",
-          metaResponse: sendResult.data,
-          userId,
-          tenantId,
-          projectId,
-          metaPhoneNumberID: phoneNumberId,
-          direction: "outbound",
-          bulkSendJobId: bulkSendJob._id,
-          templateName,
-          templateLanguage: templateLanguageCode,
-        });
-
-        if (!sendResult.success && sendResult.error) {
-          messageLog.errorDetails = sendResult.error;
-        }
-        await messageLog.save();
-
-        if (sendResult.success) {
-          totalSent++;
-        } else {
-          totalFailed++;
-          errorsSummary.push({
-            to,
-            error: sendResult.error || "Unknown error",
-          });
-        }
-      } catch (err) {
-        totalFailed++;
-        errorsSummary.push({ to, error: err.message || "Unhandled exception" });
-      }
+        
+        params.push({ type: 'text', text: value });
     });
-    await Promise.allSettled(sendPromises);
-  }
-
-  bulkSendJob.totalSent = totalSent;
-  bulkSendJob.totalFailed = totalFailed;
-  bulkSendJob.errorsSummary = errorsSummary;
-  bulkSendJob.endTime = new Date();
-  bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
-  await bulkSendJob.save();
-
-  return {
-    status: statusCode.OK,
-    success: true,
-    message:
-      totalFailed > 0
-        ? resMessage.Bulk_send_completed_with_errors
-        : resMessage.Bulk_messages_sent_successfully,
-    data: {
-      bulkSendJobId: bulkSendJob._id,
-      totalSent,
-      totalFailed,
-      errorsSummary,
-    },
-  };
+    return params;
 };
 
-/**
- * @desc    Get details of a specific bulk send job, including individual message statuses.
- * @access  Private
- */
+
+
 const getBulkSendJobDetailsService = async (req) => {
   const { bulkSendJobId } = req.params;
   const userId = req.user._id;
@@ -1167,7 +904,7 @@ const getAllBulkSendJobsService = async (req) => {
       success: true,
       message: resMessage.Bulk_send_jobs_fetched,
       data: jobs,
-    };
+    }; 
   } catch (error) {
     console.error("Error fetching all bulk send jobs:", error.stack);
     return {
@@ -1283,11 +1020,18 @@ const sendWhatsAppMessages = async ({
 
     case "video":
       payload.video = {};
+      if (message.id) payload.video.id = message.id;
       if (message.link) payload.video.link = message.link;
       if (message.caption) payload.video.caption = message.caption;
       break;
+ 
+    case 'audio':
+      payload.audio = {};
+      if (message.id) payload.audio.id = message.id;
+      if (message.link) payload.audio.link = message.link;
+      break;
 
-    case "template": {
+    case 'template': {
       const languageCode =
         typeof message.language === "string"
           ? message.language
@@ -1355,15 +1099,15 @@ const sendWhatsAppMessages = async ({
 
 const downloadMedia = async (req) => {
   const { projectId } = req.params;
-  const { imageId } = req.body;
+  const { imageId } = req.body; // imageId is the mediaId
   const userId = req.user._id;
   const tenantId = req.tenant._id;
 
   if (!imageId) {
     return {
-      status: 400,
       success: false,
-      message: "Image ID is required",
+      status: 400,
+      message: "Media ID is required",
     };
   }
 
@@ -1380,48 +1124,47 @@ const downloadMedia = async (req) => {
       !project.businessProfileId?.metaAccessToken
     ) {
       return {
-        status: 400,
         success: false,
+        status: 400,
         message: "Invalid project configuration",
       };
     }
 
-    // 1. Get media URL from Meta
+    const accessToken = project.businessProfileId.metaAccessToken;
+
     const metadataResponse = await axios.get(
       `https://graph.facebook.com/v19.0/${imageId}`,
       {
         headers: {
-          Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
 
     const mediaUrl = metadataResponse.data.url;
+    const mimeType = metadataResponse.data.mime_type || "application/octet-stream";
+    const extension = mime.extension(mimeType) || "bin"; 
+    const fileName = `meta-media-${uuidv4()}.${extension}`;
 
-    // 2. Download media binary
+    console.log("⬇️ Downloading media binary from Meta...");
     const mediaResponse = await axios.get(mediaUrl, {
       headers: {
-        Authorization: `Bearer ${project.businessProfileId.metaAccessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
       responseType: "arraybuffer",
     });
 
-    const contentType = mediaResponse.headers["content-type"];
-    const extension = contentType.split("/")[1] || "jpg";
-    const fileName = `meta-image-${uuidv4()}.${extension}`;
     const tempDir = path.join(__dirname, "../temp");
-
     if (!fs.existsSync(tempDir)) {
       fs.mkdirSync(tempDir);
+      console.log("📁 Temp directory created:", tempDir);
     }
 
     const filePath = path.join(tempDir, fileName);
-
     fs.writeFileSync(filePath, mediaResponse.data);
 
     const fileStream = fs.createReadStream(filePath);
 
-    // Automatically delete file when stream closes
     fileStream.on("close", async () => {
       try {
         await fsPromises.unlink(filePath);
@@ -1430,19 +1173,17 @@ const downloadMedia = async (req) => {
         console.error("❌ Error deleting file:", err.message);
       }
     });
-
     return {
-      status: 200,
       success: true,
-      message: "Media downloaded successfully",
+      status: 200,
       stream: fileStream,
-      mimeType: contentType,
+      mimeType,
       fileName,
     };
   } catch (error) {
     return {
-      status: 500,
       success: false,
+      status: error.response?.status || 500,
       message: error.response?.data?.error?.message || "Download failed",
       error: error.response?.data || error.message,
     };
@@ -1455,7 +1196,6 @@ module.exports = {
   uploadMedia,
   BulkSendGroupService,
   sendBulkMessageService,
-  sendBulkCarouselMessageService,
   getAllBulkSendJobsService,
   getBulkSendJobDetailsService,
   downloadMedia,

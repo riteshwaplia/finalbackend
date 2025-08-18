@@ -30,7 +30,7 @@ exports.createProject = async (req) => {
             };
         }
 
-        const projectExists = await Project.findOne({ name, tenantId, userId, businessProfileId });
+        const projectExists = await Project.findOne({ whatsappNumber, tenantId, userId });
         if (projectExists) {
             return {
                 status: statusCode.CONFLICT,
@@ -268,7 +268,6 @@ exports.updateWhatsappBusinessProfileOnMeta = async ({ projectId, userId, tenant
 
     try {
         const project = await Project.findOne({ _id: projectId, userId, tenantId }).populate('businessProfileId');
-console.log("project to update WhatsApp Business Profile:", project);
         if (!project) {
             return {
                 status: statusCode.NOT_FOUND,
@@ -290,25 +289,16 @@ console.log("project to update WhatsApp Business Profile:", project);
                 message: resMessage.Meta_API_credentials_not_configured + " for the linked Business Profile."
             };
         }
-  const  facebookUrl = 'https://graph.facebook.com'
-  const  graphVersion = 'v19.0'
+        const  facebookUrl = 'https://graph.facebook.com'
+        const  graphVersion = 'v19.0'
 
-  console.log("Using Meta API credentials:", {
-            accessToken: project.businessProfileId.metaAccessToken,
-            facebookUrl,
-            graphVersion
-        });
         const { metaPhoneNumberID } = project;
         const { metaAccessToken } = project.businessProfileId;
-console.log("Meta API credentials:", { metaAccessToken, facebookUrl, graphVersion });
         const url = `${facebookUrl}/${graphVersion}/${metaPhoneNumberID}/whatsapp_business_profile`;
-console.log("Meta API URL:", url);
         const metaPayload = {
             messaging_product: "whatsapp",
             ...profileData
         };
-
-        console.log(`[WhatsApp Business Profile Update] Sending payload to Meta: ${JSON.stringify(metaPayload)}`);
 
         const response = await axios.post(url, metaPayload, {
             headers: {
@@ -317,9 +307,14 @@ console.log("Meta API URL:", url);
             }
         });
 
-        if (response.data.success) {
-            Object.assign(project, profileData);
+        if (response.status === 200) {
+            Object.entries(profileData).forEach(([key, value]) => {
+                project[key] = value;
+                project.markModified(key);
+            }); 
+
             await project.save();
+            const savedProject = await Project.findById(project._id).lean();
 
             return {
                 status: statusCode.OK,
@@ -345,3 +340,66 @@ console.log("Meta API URL:", url);
         };
     }
 };
+
+exports.getBatchSize = async (req) => {
+  try {
+    const userData = await Project.findOne({ _id: req.params.projectId, tenantId: req.tenant._id, userId: req.user._id }).select('batch_size');
+    
+    if(!userData) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.USER_NOT_FOUND,
+        statusCode: statusCode.BAD_REQUEST
+      }
+    }
+
+    return {
+      data: userData,
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Data_fetch_successfully,
+      statusCode: statusCode.BAD_REQUEST
+    }
+  } catch (error) {
+    console.error("Error in Getting batch size User:", error);
+      return {
+        status: statusCode.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: error.message || resMessage.Server_error
+      };
+  }
+}
+
+exports.updateBatchSize = async (req, res) => {
+  try {
+    const { batch_size } = req.body;
+    const userData = await Project.findOne({ _id: req.params.projectId, userId: req.user._id, tenantId: req.tenant._id }).select('batch_size');
+    
+    if(!userData) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.USER_NOT_FOUND,
+        statusCode: statusCode.BAD_REQUEST
+      }
+    }
+
+    userData.batch_size = batch_size;
+    await userData.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Data_updated,
+      statusCode: statusCode.BAD_REQUEST
+    }
+  } catch (error) {
+    console.error("Error in Logout User:", err);
+      return {
+        status: statusCode.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: err.message || resMessage.Server_error
+      };
+  }
+}

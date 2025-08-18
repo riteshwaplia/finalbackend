@@ -3,6 +3,7 @@ const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
 const FormData = require("form-data"); // Ensure you have installed this: npm install form-data
+const mongoose = require('mongoose');
 
 const BusinessProfile = require("../models/BusinessProfile");
 const { statusCode, resMessage } = require("../config/constants");
@@ -398,7 +399,6 @@ exports.createCarouselTemplate = async (req) => {
     };
   }
 
-  // Validate that the main component is of type CAROUSEL and has cards
   const carouselComponent = components.find((comp) => comp.type === "CAROUSEL");
   if (
     !carouselComponent ||
@@ -411,6 +411,15 @@ exports.createCarouselTemplate = async (req) => {
       message:
         "Carousel template must have a 'CAROUSEL' component with at least one card.",
     };
+  }
+
+  if(carouselComponent.cards.length > 10) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Carousel_limit_exceed,
+      statusCode: statusCode.BAD_REQUEST
+    }
   }
 
   try {
@@ -430,12 +439,11 @@ exports.createCarouselTemplate = async (req) => {
     const { accessToken, wabaId } = metaCredentials;
     const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
-
     const payload = {
       name,
       language,
       category,
-      components: components, // Assuming the frontend sends the components in the correct Meta carousel format
+      components: components,
     };
 
     console.log(
@@ -452,21 +460,20 @@ exports.createCarouselTemplate = async (req) => {
 
     console.log("Meta API carousel template creation response:", response.data);
 
-    // Save template to your database
     const newTemplate = await Template.create({
       name,
       category,
       language,
-      components: components || [], // Store original components (including mediaHandle) locally
+      components: components || [],
       tenantId,
       userId,
       businessProfileId,
-      metaTemplateId: response.data.id, // Meta's template ID
-      metaStatus: response.data.status, // Meta's status (e.g., PENDING, APPROVED)
-      metaCategory: response.data.category, // Meta's category
-      isSynced: true, // Mark as synced
+      metaTemplateId: response.data.id,
+      metaStatus: response.data.status,
+      metaCategory: response.data.category,
+      isSynced: true,
       lastSyncedAt: new Date(),
-      type: "CAROUSEL", // Explicitly mark as carousel type
+      type: "CAROUSEL",
     });
 
     return {
@@ -595,11 +602,18 @@ exports.submitTemplateToMeta = async (req) => {
 exports.getAllTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
-  const { businessProfileId, page = 1, limit = 10 } = req.query;
+  const { businessProfileId, page = 1, limit = 10, type } = req.query;
 
   const query = { tenantId, userId };
   if (businessProfileId) {
     query.businessProfileId = businessProfileId;
+  }
+
+  if(type === "carousel") {
+    query['components.type'] = "CAROUSEL"
+  }
+  else if(type === "regular") {
+    query['components.type'] = { $ne: "CAROUSEL" };
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -651,7 +665,6 @@ exports.getAllTemplates = async (req) => {
   }
 };
 
-
 exports.getAllApprovedTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
@@ -660,8 +673,14 @@ exports.getAllApprovedTemplates = async (req) => {
   const query = {
     tenantId,
     userId,
-    metaStatus: 'APPROVED', // ✅ Only approved
-    type: { $ne: 'CAROUSEL' } // ✅ Exclude carousel
+    metaStatus: 'APPROVED',
+    components: {
+      $not: {
+        $elemMatch: {
+          type: "CAROUSEL"
+        }
+      }
+    }
   };
 
   if (businessProfileId) {
@@ -702,6 +721,7 @@ exports.getAllApprovedTemplates = async (req) => {
     };
   }
 };
+
 exports.getAllCarouselTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
@@ -710,7 +730,11 @@ exports.getAllCarouselTemplates = async (req) => {
   const query = {
     tenantId,
     userId,
-    type: 'CAROUSEL',
+    components: {
+      $elemMatch: {
+        type: "CAROUSEL"
+      }
+    },
     metaStatus: 'APPROVED',
   };
 
@@ -1105,6 +1129,105 @@ exports.syncTemplatesFromMeta = async (req) => {
       message: `Failed to synchronize templates from Meta: ${
         error.response?.data?.error?.message || error.message
       }. Ensure your selected business profile has correct WABA ID and Access Token.`,
+    };
+  }
+};
+
+exports.getPlainTextTemplates = async (req) => {
+  const tenantId = req.tenant?._id;
+  const userId = req.user?._id;
+  const { businessProfileId, page = 1, limit = 10 } = req.query;
+
+  if (!tenantId || !userId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing tenantId or userId in request"
+    };
+  }
+
+  if (!businessProfileId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing businessProfileId in request"
+    };
+  }
+
+  const matchStage = {
+    tenantId,
+    userId,
+    metaStatus: 'APPROVED',
+    businessProfileId: new mongoose.Types.ObjectId(businessProfileId), 
+    $or: [
+      { type: { $exists: false } },
+      { type: 'STANDARD' }
+    ]
+  };
+
+  const pageNum = parseInt(page);
+  const pageLimit = parseInt(limit);
+  const skip = (pageNum - 1) * pageLimit;
+
+  try {
+    const aggregationPipeline = [
+      {
+        $match: matchStage
+      },
+      {
+        $match: {
+          components: {
+            $not: {
+              $elemMatch: {
+                $or: [
+                  { type: "CAROUSEL" },
+                  { format: { $in: [ 'CAROUSEL'] } },
+                  { text: { $regex: "{{.*}}", $options: "i" } }
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        $facet: {
+          templates: [
+            { $skip: skip },
+            { $limit: pageLimit }
+          ],
+          totalCount: [
+            { $count: 'count' }
+          ]
+        }
+      }
+    ];
+
+    const result = await Template.aggregate(aggregationPipeline);
+
+    const templates = result?.[0]?.templates || [];
+    const totalCount = result?.[0]?.totalCount?.[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / pageLimit);
+
+    return {
+      status: 200,
+      success: true,
+      message: templates.length
+        ? resMessage.Template_fetched
+        : resMessage.No_data_found + ' for the selected business profile.',
+      data: templates,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: pageNum
+      }
+    };
+
+  } catch (error) {
+    console.error("❌ Error in getPlainTextTemplates:", error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || "Server error"
     };
   }
 };

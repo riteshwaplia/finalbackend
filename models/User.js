@@ -23,6 +23,7 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    passwordChangedAt: Date,
     role: {
         type: String,
         enum: ['super_admin', 'tenant_admin', 'user', 'team-member'],
@@ -61,9 +62,15 @@ const UserSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    otpExpiresAt: { type: Date },
     isEmailVerified: {
         type: Boolean,
         default: false
+    },
+    token: String,
+    lastLoginAt: {
+        type: Date,
+        default: null
     },
     createdAt: {
         type: Date,

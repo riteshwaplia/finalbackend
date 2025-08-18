@@ -60,27 +60,19 @@ exports.getController = async (req, res) => {
             ];
         }
 
-        const [data, total] = await Promise.all([
+        const [data, totalCount] = await Promise.all([
             Group.find(searchCondition).sort({ _id: -1 }).skip(skip).limit(limit),
             Group.countDocuments(searchCondition)
         ]);
 
-        if (!data || data.length === 0) {
-              return res.status(statusCode.OK).json({ // Changed to OK for empty data
-                success: true,
-                data: [],
-                message: resMessage.No_groups_found
-            });
-        }
-
         return res.status(statusCode.OK).json({
             success: true,
-            message: resMessage.Groups_fetch_successfully,
+            message: data.length === 0 ? resMessage.No_groups_found : resMessage.Groups_fetch_successfully,
             data,
             pagination: {
-                total,
-                currentPage: page,
-                totalPages: Math.ceil(total / limit),
+                totalCount,
+                totalPages: Math.ceil(totalCount / limit),
+                currentPage: page
             }
         });
     } catch (error) {
@@ -186,47 +178,19 @@ exports.editController = async (req, res) => {
     }
 };
 
-// @desc    Delete a specific group
-// @route   DELETE /api/projects/:projectId/group/:groupId
-// @access  Private (Authenticated User)
-exports.deleteController = async (req, res) => {
+exports.deleteController = async (req) => {
     try {
-        const userId = req.user._id;
-        const tenantId = req.tenant._id;
-        const projectId = req.params.projectId;
-        const groupId = req.params.groupId;
-
-        const data = await Group.findOneAndDelete({ _id: groupId, tenantId, userId, projectId });
-        if (data === null) {
-            return res.status(statusCode.NOT_FOUND).json({
-                success: false,
-                message: resMessage.No_groups_found
-            });
-        }
-
-        return res.status(statusCode.OK).json({
-            success: true,
-            message: resMessage.Group_deleted_successfully
-        });
+        return await service.deleteById(req);
     } catch (error) {
-        console.error("Error deleting group:", error);
-        if (error.name === 'CastError') {
-            return res.status(statusCode.BAD_REQUEST).json({
-                success: false,
-                message: "Invalid Group ID."
-            });
-        }
-        return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
-            message: resMessage.Server_error,
-            error: error.message
-        });
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        }
     }
-};
+}
 
-// @desc    Archive (set isActive to false) a specific group
-// @route   PUT /api/projects/:projectId/group/archive/:groupId
-// @access  Private (Authenticated User)
 exports.updateFalseStatusController = async (req, res) => {
     try {
         const userId = req.user._id;

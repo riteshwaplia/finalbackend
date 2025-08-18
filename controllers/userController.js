@@ -9,6 +9,7 @@ const { sendEmail } = require('../functions/functions');
 const BlacklistedTokenSchema = require('../models/BlacklistedTokenSchema');
 const { getEmailTemplate } = require('../utils/getEmailTemplate');
 const jwt = require('jsonwebtoken');
+
 const registerController = async (req) => {
     try {
         return await userService.register(req);
@@ -38,7 +39,6 @@ const createBusinessProfileLogic = async (req) => {
     const tenantId = req.tenant._id;
     const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId } = req.body;
 
-    // 1. Validate required fields
     if (!name || !metaAccessToken || !metaBusinessId || !metaAppId) {
         return {
             status: statusCode.BAD_REQUEST,
@@ -48,7 +48,6 @@ const createBusinessProfileLogic = async (req) => {
     }
 
     try {
-        // 2. Check if the same metaBusinessId exists in same tenant
         const existing = await BusinessProfile.findOne({ tenantId, metaBusinessId });
         if (existing) {
             return {
@@ -58,7 +57,6 @@ const createBusinessProfileLogic = async (req) => {
             };
         }
 
-        // 3. Create new profile
         const newProfile = await BusinessProfile.create({
             userId,
             tenantId,
@@ -77,7 +75,6 @@ const createBusinessProfileLogic = async (req) => {
         };
 
     } catch (error) {
-        // 4. Handle MongoDB unique index errors more clearly
         if (error.code === 11000) {
             return {
                 status: statusCode.CONFLICT,
@@ -197,26 +194,26 @@ const authUser = async (req, res) => {
         const user = await User.findOne({ email, tenantId, isEmailVerified: true });
 
         if (user && (await user.matchPassword(password))) {
+            user.lastLoginAt = new Date();
+            await user.save();
+
             const token = generateToken(user._id, email);
-             const subject ='New Login Detected'
+
+            const subject = 'New Login Detected';
             const text = `Hello ${user.username},\n\n`;
-           
 
-const html = `
-  <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
-    <p>Hello <strong>${user.username}</strong>,</p>
-    <p>A new login was detected to your <strong>Wachat</strong> account.</p>
-    <p>If this was not you, please <a href="https://yourapp.com/reset-password" target="_blank">reset your password</a> immediately.</p>
-    <p><strong>Login time:</strong> ${new Date().toLocaleString()}</p>
-    <br />
-    <p>Regards,<br />Wachat Security Team</p>
-  </div>
-`;
-            // Send login notification email
-                        await sendEmail(email, subject, text,getEmailTemplate(html) );
-            
-            // await sendEmail(user.email, ,html= getEmailTemplate(html));
+            const html = `
+                <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
+                    <p>Hello <strong>${user.username}</strong>,</p>
+                    <p>A new login was detected to your <strong>Wachat</strong> account.</p>
+                    <p>If this was not you, please <a href="https://yourapp.com/reset-password" target="_blank">reset your password</a> immediately.</p>
+                    <p><strong>Login time:</strong> ${new Date().toLocaleString()}</p>
+                    <br />
+                    <p>Regards,<br />Wachat Security Team</p>
+                </div>
+            `;
 
+            await sendEmail(email, subject, text, getEmailTemplate(html));
 
             return res.json({
                 _id: user._id,
@@ -233,26 +230,6 @@ const html = `
         return res.status(500).json({ message: 'Server error' });
     }
 };
-const logoutUser = async (req, res) => {
-    const token = req.headers.authorization?.split(' ')[1];
-console.log('Logout token:', token);
-    if (!token) {
-        return res.status(400).json({ message: 'Token is required for logout' });
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-console.log('Decoded token:', decoded);
-       const blsck= await BlacklistedTokenSchema.create({
-            token,
-            expiresAt: new Date(decoded.exp * 1000)
-        });
-console.log('Blacklisted token:', blsck);
-        return res.status(200).json({ message: 'Logged out successfully' });
-    } catch (err) {
-        return res.status(401).json({ message: 'Invalid or expired token' });
-    }
-};
 
 const getUserProfile = async (req, res) => {
     if (req.user && req.user.tenantId.toString() === req.tenant._id.toString()) {
@@ -260,7 +237,10 @@ const getUserProfile = async (req, res) => {
             _id: req.user._id,
             username: req.user.username,
             email: req.user.email,
-            role: req.user.role
+            role: req.user.role,
+            firstName: req.user.firstName,
+            lastName: req.user.lastName,
+            mobileNumber: req.user.mobileNumber
         });
     } else {
         return res.status(404).json({ message: 'User not found' });
@@ -368,9 +348,34 @@ const updateUserController = async (req) => {
     return result;
 };
 
+const logoutUserController = async (req) => {
+    try {
+        return await userService.logoutUser(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        };
+    }
+}
+
+const resendOtpController = async (req) => {
+  try {
+    return await userService.resendOtp(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message,
+      statusCode: statusCode.INTERNAL_SERVER_ERROR
+    };
+  }
+};
+
 module.exports = {
+    logoutUserController,
     authUser,
-    logoutUser,
     getUserProfile,
     updateUserProfile,
     getAllUsersForTenant,
@@ -385,5 +390,6 @@ module.exports = {
     forgotPasswordController,
     updatePasswordWithOtpController,
     updateUserController,
-    updateBusinessProfileController
+    updateBusinessProfileController,
+    resendOtpController
 };

@@ -2,7 +2,7 @@
 const Message = require("../models/Message");
 const Contact = require("../models/Contact");
 const Conversation = require("../models/ConversationSchema"); // Corrected model import
-const Project = require("../models/Project");
+const Project = require("../models/project");
 const flowExecutionService = require("./flowExecutionService"); // Import flow execution service
 const { statusCode, resMessage } = require('../config/constants');
 // Removed unused imports: Businessprofile, Flow, sendWhatsAppMessage, traverseFlow, sendWhatsAppMessages

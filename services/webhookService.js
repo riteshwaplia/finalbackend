@@ -8,7 +8,7 @@ const Businessprofile = require("../models/BusinessProfile");
 const Flow = require("../models/Flow");
 const { traverseFlow } = require('../functions/functions');
 const {sendWhatsAppMessages} = require("../services/messageService");
-const ConversationSession = require('../models/ConversationSchema');
+const ConversationSession = require('../models/ConversationSessionSchema');
  
 exports.handleWebhookPayload = async (req) => {
     const io = req.app.get('io');
@@ -118,36 +118,51 @@ exports.handleWebhookPayload = async (req) => {
                             }
                             businessProfileData = await Businessprofile.findById(project.businessProfileId);
  
+                            const parsedPhoneNumber = fromPhoneNumber.replace(/^\+/, '');
+
                             let contact = await Contact.findOne({
+                                tenantId: project.tenantId,
                                 projectId: project._id,
-                                userId: project.userId,
-                                whatsappId: whatsappId
+                                mobileNumber: parsedPhoneNumber
                             });
- 
+
                             if (!contact) {
-                                const parsedPhoneNumber = fromPhoneNumber.replace(/^\+/, '');
                                 let defaultCountryCode = '';
                                 let defaultMobileNumber = parsedPhoneNumber;
+
                                 if (parsedPhoneNumber.length > 10) {
                                     defaultCountryCode = parsedPhoneNumber.substring(0, parsedPhoneNumber.length - 10);
                                     defaultMobileNumber = parsedPhoneNumber.substring(parsedPhoneNumber.length - 10);
                                 }
+
                                 contact = await Contact.create({
                                     tenantId: project.tenantId,
                                     userId: project.userId,
                                     projectId: project._id,
                                     name: profileName,
                                     countryCode: defaultCountryCode,
-                                    mobileNumber: fromPhoneNumber,
-                                    whatsappId: whatsappId,
-                                    profileName: profileName
+                                    mobileNumber: parsedPhoneNumber,
+                                    whatsappId,
+                                    profileName
                                 });
-                            } else if (contact.profileName !== profileName || contact.mobileNumber !== fromPhoneNumber.replace(/^\+/, '')) {
-                                contact.profileName = profileName;
-                                contact.mobileNumber = fromPhoneNumber.replace(/^\+/, '');
-                                await contact.save();
                             } else {
-                                console.log(`[Inbound Message] Existing contact found: ${contact._id}`);
+                                let updated = false;
+
+                                if (profileName && contact.profileName !== profileName) {
+                                    contact.profileName = profileName;
+                                    updated = true;
+                                }
+
+                                if (profileName && contact.name !== profileName) {
+                                    contact.name = profileName;
+                                    updated = true;
+                                }
+
+                                if (updated) {
+                                    await contact.save();
+                                } else {
+                                    console.log(`[Inbound Message] Contact already up-to-date: ${contact._id}`);
+                                }
                             }
  
                             let conversation = await Conversation.findOne({
@@ -199,10 +214,16 @@ exports.handleWebhookPayload = async (req) => {
                                 const userNumber = fromPhoneNumber;
 
                                 try {;
-                                    const flow = await Flow.findOne({ entryPoint: userText });
+                                    const flow = await Flow.findOne({ 
+                                        tenantId: project.tenantId,
+                                        userId: project.userId,
+                                        projectId: project._id,
+                                        entryPoint: userText
+                                    });
 
                                     if (flow) {
                                         const replies = await traverseFlow(userText, flow.nodes, flow.edges);
+                                        console.log("==========replies", replies);
 
                                         const buildPayload = (reply) => {
                                             switch (reply.type) {
@@ -221,23 +242,29 @@ exports.handleWebhookPayload = async (req) => {
                                                             caption: reply.caption || ''
                                                         }
                                                     };
-
+                                                case 'audio':
+                                                    return {
+                                                        type: 'audio',
+                                                        message: {
+                                                            id: reply.id,
+                                                            link: reply.link
+                                                        }
+                                                    };
                                                 case 'template':
                                                 return {
                                                     type: 'template',
                                                     message: {
-                                                        name: reply.templateName,
-                                                        language: { code: reply.templateLang },
-                                                        components: (reply.parameters?.length
-                                                            ? [{
-                                                                type: 'body',
-                                                                parameters: reply.parameters.map(param => ({
-                                                                    type: 'text',
-                                                                    text: param.value
-                                                                }))
-                                                            }]
-                                                            : []
-                                                        )
+                                                    name: reply.templateName,
+                                                    language: { code: reply.templateLang },
+                                                    components: reply.components || []
+                                                    }
+                                                };
+                                                case 'document':
+                                                return {
+                                                    type: 'document',
+                                                    message: {
+                                                    ...(reply.id ? { id: reply.id } : { link: reply.link, filename: reply.filename }),
+                                                    caption: reply.caption || ''
                                                     }
                                                 };
 
@@ -263,13 +290,23 @@ exports.handleWebhookPayload = async (req) => {
 
                                         const results = await Promise.allSettled(tasks);
 
-                                        await ConversationSession.create({
+                                        const existingSession = await ConversationSession.findOne({
+                                            userId: project.userId,
+                                            tenantId: project.tenantId,
                                             whatsappContactId: userNumber,
                                             whatsappPhoneNumberId: phoneNumberId,
                                             projectId: project._id,
-                                            userId: project.userId,
-                                            tenantId: project.tenantId,
                                         });
+
+                                        if (!existingSession) {
+                                            await ConversationSession.create({
+                                                whatsappContactId: userNumber,
+                                                whatsappPhoneNumberId: phoneNumberId,
+                                                projectId: project._id,
+                                                userId: project.userId,
+                                                tenantId: project.tenantId,
+                                            });
+                                        }
 
                                         results.forEach((r, i) => {
                                             if (r.status === 'fulfilled' && r.value?.success) {
@@ -304,10 +341,8 @@ exports.handleWebhookPayload = async (req) => {
         }
         return { status: statusCode.OK, success: true, message: resMessage.WEBHOOK_RECEIVE_SUCCESS };
     } catch (error) {
-        console.error("--- Error processing webhook payload ---");
         console.error("Error details:", error.message);
         console.error("Stack trace:", error.stack);
-        console.error("---------------------------------------");
         return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
     }
 };

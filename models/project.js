@@ -25,36 +25,35 @@ const ProjectSchema = new mongoose.Schema({
         trim: true,
         default: ''
     },
-    businessProfileId: { // Link to the specific BusinessProfile (WhatsApp Business Account) this project uses
+    businessProfileId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'BusinessProfile',
         required: true,
         index: true
     },
-    metaPhoneNumberID: { // Meta's internal ID for the phone number (e.g., "687854254405676")
+    metaPhoneNumberID: {
         type: String,
         trim: true,
         default: ''
     },
-    whatsappNumber: { // The display phone number (e.g., "+1 234 567 8901")
+    whatsappNumber: {
         type: String,
         trim: true,
         default: ''
     },
-    activePlan: { // e.g., "PRO"
+    activePlan: { 
         type: String,
         trim: true,
         default: ''
     },
-    planDuration: { // Numerical value for plan duration
+    planDuration: {
         type: String,
         default: 0
     },
-    // NEW FIELDS for WhatsApp Business Profile details (per phone number)
     about: {
         type: String,
         trim: true,
-        maxlength: 139, // Meta's limit for 'about'
+        maxlength: 139,
         default: ''
     },
     address: {
@@ -74,18 +73,23 @@ const ProjectSchema = new mongoose.Schema({
         default: ''
     },
     websites: {
-        type: [String], // Array of strings for websites
+        type: [String],
         default: []
     },
-    vertical: { // Industry category
+    vertical: {
         type: String,
         trim: true,
         default: ''
     },
-    profilePictureUrl: { // URL of the profile picture on Meta's CDN
+    profilePictureUrl: {
         type: String,
         trim: true,
         default: ''
+    },
+    batch_size: {
+        type: Number,
+        default: 20,
+        trim: true
     },
     createdAt: {
         type: Date,
@@ -95,15 +99,15 @@ const ProjectSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     }
-});
+}, { versionKey: false });
 
-// This helps prevent a user from creating two projects with the same name linked to the same business profile
 ProjectSchema.index({ name: 1, userId: 1, businessProfileId: 1 }, { unique: true });
 
-// Update `updatedAt` on save
 ProjectSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     next();
 });
 
-module.exports = mongoose.models.Project || mongoose.model('Project', ProjectSchema);
+const projectModel = mongoose.models.project || mongoose.model('project', ProjectSchema);
+
+module.exports = projectModel;
