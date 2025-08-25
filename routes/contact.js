@@ -22,6 +22,7 @@ router.put("/bulkContactUpdate/delete", protect, validateRequest(contactValidati
 router.post("/uploadContact", protect, uploadExcel.single("excelFile"), responseHandler(contactController.uploadContactController));
 router.post('/bulk-block', protect, validateRequest(contactValidation.bulkBlockUnblock), responseHandler(contactController.bulkBlockContactController));
 router.post('/bulk-unblock', protect, validateRequest(contactValidation.bulkBlockUnblock), responseHandler(contactController.bulkUnblockContactController));
+router.get("/:contactId", protect, responseHandler(contactController.contactByIdController));
 
 // router.post("/upload", protect, responseHandler(contactController.uploadContactController));
 // router.get("/:contactId", protect, responseHandler(contactController.contactByIdController));

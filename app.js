@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs");
 // const axios = require('axios');
 // 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
+const { initScheduler } = require('./cron/cronScheduler');
 
 const tenantRoutes = require('./routes/tenant');
 const userRoutes = require('./routes/user');
@@ -25,8 +26,12 @@ const conversationRoutes = require('./routes/conversation');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const projectDashboardRoutes = require('./routes/projectDashboard');
 const flowRoutes = require('./routes/flowRoutes');
+const templateCategoryRoutes = require('./routes/templateCategoryRoutes');
+const admintemplateRoutes = require('./routes/admintemplateRoutes');
 
 connectDB();
+initScheduler();
+
 const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -77,7 +82,8 @@ app.use((req, res, next) => {
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/site', siteRoutes);
 app.use('/api', tenantResolver);
-app.use('/api/tenants', tenantRoutes);
+app.use('/api/templatecategory', templateCategoryRoutes);
+app.use('/api/admintemplate', admintemplateRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/project', projectRoutes);
 app.use('/api/whatsapp/', whatsappRoutes); 
@@ -90,6 +96,21 @@ app.use('/api/projects/:projectId/flows', flowRoutes);
 app.use('/api/projects/', projectDashboardRoutes);
 app.use('/api/projects/:projectId/messages', messageRoutes);
 app.use('/api/projects/:projectId/team-member', teamMemberRoutes);
+
+
+
+
+//super admin and  tanent routes
+app.use('/api/tenants', tenantRoutes);
+
+
+
+
+
+
+
+
+
 
 // app.get('/auth/facebook/login', (req, res) => {
 //   const redirectUri = encodeURIComponent(`https://wachat.matkadash.in/auth/facebook/callback`);
@@ -231,3 +252,9 @@ console.log = (...args) => {
 
 const PORT = process.env.PORT || 5001;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+
+
+
+
+

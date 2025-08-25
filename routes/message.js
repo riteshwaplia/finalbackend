@@ -30,4 +30,11 @@ router.post('/download-media', protect, messageController.downloadMediaControlle
 router.post('/bulk-send-group', protect, sendGroupMessageLimiter, responseHandler(messageController.BulkSendGroupController));
 // router.post('/download-media', protect, messageController.downloadMediaControllerRaw); // ❌ not wrapped in responseHandler
 
+router.post(
+  '/schedule-bulk',
+  protect,
+  uploadExcel.single('file'),
+  responseHandler(messageController.ScheduleBulkSendServiceController)
+);
+
 module.exports = router;

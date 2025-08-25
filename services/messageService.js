@@ -535,6 +535,71 @@ const sendBulkMessageService = async (req) => {
 // @desc    Send bulk messages from an group
 // @access  Private
 
+const ScheduleBulkSendService = async (req) => {
+  const { templateName, scheduledAt } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+
+  if (!templateName || !scheduledAt || !req.file) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing required fields (templateName, scheduledAt, file)."
+    };
+  }
+
+  try {
+    // Validate scheduled time is in future
+    const scheduledTime = new Date(scheduledAt);
+    if (scheduledTime <= new Date()) {
+      return {
+        status: 400,
+        success: false,
+        message: "Scheduled time must be in the future."
+      };
+    }
+
+    const newJob = await ScheduledBulkJob.create({
+      tenantId,
+      userId,
+      projectId,
+      templateName,
+      fileName: req.file.originalname,
+      scheduledAt: scheduledTime,
+      status: 'pending',
+      meta: {
+        filePath: req.file.path,
+        message: req.body.message || {}
+      }
+    });
+
+    return {
+      status: 201,
+      success: true,
+      message: "Bulk message scheduled successfully!",
+      data: newJob
+    };
+  } catch (error) {
+    // Clean up uploaded file if job creation fails
+    if (req.file?.path) {
+      try {
+        fs.unlinkSync(req.file.path);
+      } catch (err) {
+        console.error("Failed to clean up file:", err);
+      }
+    }
+    return {
+      status: 500,
+      success: false,
+      message: "Failed to schedule job.",
+      error: error.message
+    };
+  }
+};
+
+
+
 const BulkSendGroupService = async (req) => {
   const { templateName, message = {}, groupId, contactfields = [] } = req.body;
   const userId = req.user._id;
@@ -916,6 +981,7 @@ const getAllBulkSendJobsService = async (req) => {
 };
 
 const FormData = require("form-data");
+const ScheduledBulkJob = require("../models/ScheduledBulkJob");
 
 const uploadMedia = async (req) => {
   const { projectId } = req.params;
@@ -1199,4 +1265,5 @@ module.exports = {
   getAllBulkSendJobsService,
   getBulkSendJobDetailsService,
   downloadMedia,
+  ScheduleBulkSendService
 };

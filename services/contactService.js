@@ -1122,3 +1122,45 @@ exports.bulkUnblockContact = async (req) => {
         };
     }
 };
+exports.contactByIdService = async (req) => {
+    const { contactId } = req.params;
+    
+    const userId = req.user._id;
+    const tenantId = req.tenant._id;
+    const projectId = req.params.projectId;
+console.log("id",contactId,"prams",req.params)
+    const checkProject = await Project.findOne({ _id: req.params.projectId, userId: req.user._id, tenantId: req.tenant._id });
+    if (!checkProject) {
+        return {
+            status: statusCode.NOT_FOUND,
+            success: false,
+            message: resMessage.ProjectId_dont_exists,
+            statusCode: statusCode.NOT_FOUND,
+        }
+    }
+
+    try {
+        const result = await Contact.findOne({
+            _id: contactId,
+            tenantId,
+            userId,
+            projectId
+        });
+
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Contacts_fetch_successfully,
+            statusCode: statusCode.OK,
+            data:result
+        };
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: resMessage.Server_error,
+            error: error.message
+        };
+    }
+};

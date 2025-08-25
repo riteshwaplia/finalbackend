@@ -15,7 +15,7 @@ exports.sendMessage = Joi.object({
     }),
 
   type: Joi.string()
-    .valid("text", "image")
+    .valid("text", "image","template")
     .required()
     .messages({
       "any.only": "Type must be either 'text' or 'image'",

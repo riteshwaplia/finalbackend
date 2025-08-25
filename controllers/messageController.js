@@ -10,6 +10,9 @@ exports.sendMessageController = async (req) => {
 exports.sendBulkMessageController = async (req) => {
     return await sendBulkMessageService(req);
 };
+exports.ScheduleBulkSendServiceController = async (req) => {
+  return await messageService.ScheduleBulkSendService(req);
+};
 
 exports.uploadMedia = async (req) => {
     return await messageService.uploadMedia(req);
