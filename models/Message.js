@@ -95,7 +95,7 @@ MessageSchema.index({ projectId: 1, direction: 1, sentAt: 1 }); // For filtering
 MessageSchema.pre('save', function(next) {
     this.updatedAt = Date.now();
     if (this.isNew) {
-        this.sentAt = Date.now(); // Set sentAt only on creation
+        this.sentAt = Date.now(); 
     }
     next();
 });

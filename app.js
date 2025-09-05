@@ -28,6 +28,7 @@ const projectDashboardRoutes = require('./routes/projectDashboard');
 const flowRoutes = require('./routes/flowRoutes');
 const templateCategoryRoutes = require('./routes/templateCategoryRoutes');
 const admintemplateRoutes = require('./routes/admintemplateRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 connectDB();
 initScheduler();
@@ -96,7 +97,7 @@ app.use('/api/projects/:projectId/flows', flowRoutes);
 app.use('/api/projects/', projectDashboardRoutes);
 app.use('/api/projects/:projectId/messages', messageRoutes);
 app.use('/api/projects/:projectId/team-member', teamMemberRoutes);
-
+app.use('/api/projects/:projectId/orders', orderRoutes);
 
 
 
