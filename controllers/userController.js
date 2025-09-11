@@ -1,7 +1,7 @@
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 const User = require('../models/User');
-const Project = require('../models/project');
+const Project = require('../models/Project');
 const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');

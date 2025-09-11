@@ -1,7 +1,7 @@
 // // server/services/flowService.js
 const Flow = require('../models/Flow');
 const { statusCode, resMessage } = require('../config/constants');
-const Project = require("../models/project");
+const Project = require("../models/Project");
 
 exports.create = async (req) => {
     try {

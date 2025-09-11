@@ -2,7 +2,7 @@
 const Message = require("../models/Message");
 const Contact = require("../models/Contact");
 const Conversation = require("../models/ConversationSchema");
-const Project = require("../models/project");
+const Project = require("../models/Project");
 const { statusCode, resMessage } = require('../config/constants');
 const Businessprofile = require("../models/BusinessProfile");
 const Flow = require("../models/Flow");
