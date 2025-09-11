@@ -29,7 +29,7 @@ const flowRoutes = require('./routes/flowRoutes');
 const templateCategoryRoutes = require('./routes/templateCategoryRoutes');
 const admintemplateRoutes = require('./routes/admintemplateRoutes');
 const orderRoutes = require('./routes/orderRoutes');
-
+const mediaRoutes = require('./routes/media');
 connectDB();
 initScheduler();
 
@@ -83,6 +83,7 @@ app.use((req, res, next) => {
 app.use('/api/webhook', webhookRoutes);
 app.use('/api/site', siteRoutes);
 app.use('/api', tenantResolver);
+app.use('/api/media', mediaRoutes);
 app.use('/api/templatecategory', templateCategoryRoutes);
 app.use('/api/admintemplate', admintemplateRoutes);
 app.use('/api/users', userRoutes);
