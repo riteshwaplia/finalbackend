@@ -7,7 +7,7 @@ const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
 const { sendEmail } = require('../functions/functions');
 const BlacklistedTokenSchema = require('../models/BlacklistedTokenSchema');
-const { getEmailTemplate } = require('../utils/getEmailTemplate');
+const getEmailTemplate = require('../utils/getEmailTemplate');
 const jwt = require('jsonwebtoken');
 
 const registerController = async (req) => {
