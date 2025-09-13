@@ -216,13 +216,11 @@ const authUser = async (req, res) => {
             await sendEmail(email, subject, text, getEmailTemplate(html));
 
             return res.json({
-                data: {
-                    _id: user._id,
-                    username: user.username,
-                    email: user.email,
-                    role: user.role,
-                    token
-                }
+                _id: user._id,
+                username: user.username,
+                email: user.email,
+                role: user.role,
+                token
             });
         } else {
             return res.status(401).json({ message: 'Invalid email or password for this tenant' });
