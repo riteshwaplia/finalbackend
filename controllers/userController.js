@@ -37,7 +37,7 @@ const verifyOtpController = async (req) => {
 const createBusinessProfileLogic = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
-    const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId } = req.body;
+    const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId, catalogAccess, metaId } = req.body;
 
     if (!name || !metaAccessToken || !metaBusinessId || !metaAppId) {
         return {
@@ -57,6 +57,17 @@ const createBusinessProfileLogic = async (req) => {
             };
         }
 
+        if (catalogAccess) {
+            const existingMeta = await BusinessProfile.findOne({ tenantId, metaId });
+            if (existingMeta) {
+                return {
+                    status: statusCode.CONFLICT,
+                    success: false,
+                    message: resMessage.Business_portfolio_id_already_linked
+                };
+            }
+        }
+
         const newProfile = await BusinessProfile.create({
             userId,
             tenantId,
@@ -64,7 +75,8 @@ const createBusinessProfileLogic = async (req) => {
             businessAddress,
             metaAccessToken,
             metaAppId,
-            metaBusinessId
+            metaBusinessId,
+            metaId
         });
 
         return {
@@ -214,7 +226,8 @@ const authUser = async (req, res) => {
             `;
 
             await sendEmail(email, subject, text, getEmailTemplate(html));
-
+            user.token = token;
+            await user.save();
             return res.json({
                 _id: user._id,
                 username: user.username,

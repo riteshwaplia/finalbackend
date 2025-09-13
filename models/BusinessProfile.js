@@ -39,6 +39,14 @@ const BusinessProfileSchema = new mongoose.Schema({
         trim: true
 
     },
+    catalogAccess: {
+        type: Boolean,
+        trim: true
+    },
+    metaId: {
+        type: String,
+        trim: true
+    },
     isDefault: {
         type: Boolean,
         default: false

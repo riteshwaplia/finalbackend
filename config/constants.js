@@ -132,7 +132,10 @@ const resMessage = {
     Otp_expired: "OTP has expired",
     Carousel_limit_exceed: "Carousel component cannot have more than 10 cards.",
     Data_fetch_successfully: "Data fetch successfully",
-    Data_updated: "Data updated successfully"
+    Data_updated: "Data updated successfully",
+    Invalid_business_ID: "Invalid Business Portfolio Id",
+    Business_already_linked: 'Business already linked with user',
+    Business_portfolio_id_already_linked: "A business profile with this Meta ID already exists in this tenant."
 };
 
 module.exports = {
