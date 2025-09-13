@@ -216,11 +216,13 @@ const authUser = async (req, res) => {
             await sendEmail(email, subject, text, getEmailTemplate(html));
 
             return res.json({
-                _id: user._id,
-                username: user.username,
-                email: user.email,
-                role: user.role,
-                token
+                data: {
+                    _id: user._id,
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    token
+                }
             });
         } else {
             return res.status(401).json({ message: 'Invalid email or password for this tenant' });
@@ -334,13 +336,13 @@ const resetPasswordController = async (req, res) => {
 };
 
 const forgotPasswordController = async (req) => {
-  const result = await userService.forgotPassword(req);
-  return result; 
+    const result = await userService.forgotPassword(req);
+    return result;
 };
 
 const updatePasswordWithOtpController = async (req) => {
-  const result = await userService.updatePasswordWithOtp(req);
-  return result;
+    const result = await userService.updatePasswordWithOtp(req);
+    return result;
 };
 
 const updateUserController = async (req) => {
@@ -361,16 +363,16 @@ const logoutUserController = async (req) => {
 }
 
 const resendOtpController = async (req) => {
-  try {
-    return await userService.resendOtp(req);
-  } catch (error) {
-    return {
-      status: statusCode.INTERNAL_SERVER_ERROR,
-      success: false,
-      message: error.message,
-      statusCode: statusCode.INTERNAL_SERVER_ERROR
-    };
-  }
+    try {
+        return await userService.resendOtp(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        };
+    }
 };
 
 module.exports = {

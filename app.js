@@ -31,7 +31,8 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 const allowedOrigins = [
-  'http://164.52.197.192:5001'
+  'http://164.52.197.192:5173',
+  "http://localhost:5173"
 ];
 
 app.use(cors({
