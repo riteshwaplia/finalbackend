@@ -36,3 +36,15 @@ exports.syncCatalogsController = async (req) => {
         }
     }
 }
+
+exports.deleteCatalogController = async (req) => {
+    try {
+        return await service.deleteCatalog(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        }
+    }
+}

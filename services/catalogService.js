@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { statusCode, resMessage } = require("../config/constants");
 const Businessprofile = require('../models/BusinessProfile');
-const { getBusinessData, createProductCatalog, getOwnedProductCatalogs } = require('../functions/functions');
+const { getBusinessData, createProductCatalog, getOwnedProductCatalogs, deleteCatalogFromMeta } = require('../functions/functions');
 const Catalog = require('../models/Catalog');
 
 exports.create = async (req) => {
@@ -236,5 +236,48 @@ exports.syncCatalogs = async (req) => {
             success: false,
             message: error.message
         };
+    }
+};
+
+exports.deleteCatalog = async (req, res) => {
+    try {
+        const { catalogId } = req.params;
+
+        const catalogData = await Catalog.findOne({
+            _id: catalogId,
+            tenantId: req.tenant._id,
+            userId: req.user._id
+        }).populate("businessProfileId", "metaAccessToken metaId");
+
+        if (!catalogData) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: resMessage.Catalog_id_not_found
+            }
+        }
+
+        const result = await deleteCatalogFromMeta(catalogData.catalogId, catalogData.businessProfileId.metaAccessToken, catalogData.businessProfileId.metaId);
+
+        if (result?.error) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: result?.error?.message
+            };
+        }
+
+        await Catalog.findByIdAndDelete(catalogId);
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: resMessage.Catalog_deleted
+        }
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message || "Server error"
+        });
     }
 };

@@ -136,7 +136,9 @@ const resMessage = {
     Invalid_business_ID: "Invalid Business Portfolio Id",
     Business_already_linked: 'Business already linked with user',
     Business_portfolio_id_already_linked: "A business profile with this Meta ID already exists in this tenant.",
-    Catalog_sync_successfully: "Catalog sync successfully"
+    Catalog_sync_successfully: "Catalog sync successfully",
+    Catalog_id_not_found: "Catalog Id not found",
+    Catalog_deleted: "Catalog deleted successfully"
 };
 
 module.exports = {

@@ -270,3 +270,21 @@ exports.getOwnedProductCatalogs = async (metaId, metaAccessToken) => {
     throw error.response?.data || error.message;
   }
 }
+
+exports.deleteCatalogFromMeta = async (catalogId, metaAccessToken, metaId) => {
+  try {
+    const url = `https://graph.facebook.com/v16.0/${catalogId}`;
+    
+    const response = await axios.delete(url, {
+      params: {
+        access_token: metaAccessToken,
+        business: metaId
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting catalog:", error?.response?.data || error.message);
+    throw error.response?.data || error.message;
+  }
+};
