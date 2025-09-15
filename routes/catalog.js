@@ -6,5 +6,6 @@ const controller = require("../controllers/catalogController");
 const router = express.Router();
 
 router.post("/:businessProfileId", protect, responseHandler(controller.createContactController));
+router.get("/:businessProfileId", protect, responseHandler(controller.catalogListController));
 
 module.exports = router;
