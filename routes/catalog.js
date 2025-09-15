@@ -7,5 +7,6 @@ const router = express.Router();
 
 router.post("/:businessProfileId", protect, responseHandler(controller.createContactController));
 router.get("/:businessProfileId", protect, responseHandler(controller.catalogListController));
+router.get("/sync/:businessProfileId", protect, responseHandler(controller.syncCatalogsController));
 
 module.exports = router;

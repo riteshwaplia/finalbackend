@@ -258,3 +258,15 @@ exports.createProductCatalog = async (metaBusinessId, name, accessToken) => {
     throw new Error("Failed to create product catalog");
   }
 };
+
+exports.getOwnedProductCatalogs = async (metaId, metaAccessToken) => {
+  const url = `https://graph.facebook.com/v16.0/${metaId}/owned_product_catalogs?access_token=${metaAccessToken}`;
+
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting product catalog:", error.response?.data || error.message);
+    throw error.response?.data || error.message;
+  }
+}

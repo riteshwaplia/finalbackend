@@ -24,3 +24,15 @@ exports.catalogListController = async (req) => {
         }
     }
 }
+
+exports.syncCatalogsController = async (req) => {
+    try {
+        return await service.syncCatalogs(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        }
+    }
+}
