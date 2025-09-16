@@ -12,3 +12,15 @@ exports.createProductController = async (req) => {
         }
     }
 }
+
+exports.listProductsController = async (req) => {
+    try {
+        return await service.listProducts(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        }
+    }
+}
