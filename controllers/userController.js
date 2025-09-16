@@ -1,13 +1,13 @@
 const { statusCode, resMessage } = require('../config/constants');
 const BusinessProfile = require('../models/BusinessProfile');
 const User = require('../models/User');
-const Project = require('../models/project');
+const Project = require('../models/Project');
 const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
 const { sendEmail } = require('../functions/functions');
 const BlacklistedTokenSchema = require('../models/BlacklistedTokenSchema');
-const { getEmailTemplate } = require('../utils/getEmailTemplate');
+const getEmailTemplate = require('../utils/getEmailTemplate');
 const jwt = require('jsonwebtoken');
 
 const registerController = async (req) => {
@@ -37,7 +37,7 @@ const verifyOtpController = async (req) => {
 const createBusinessProfileLogic = async (req) => {
     const userId = req.user._id;
     const tenantId = req.tenant._id;
-    const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId } = req.body;
+    const { name, businessAddress, metaAccessToken, metaAppId, metaBusinessId, catalogAccess, metaId } = req.body;
 
     if (!name || !metaAccessToken || !metaBusinessId || !metaAppId) {
         return {
@@ -57,6 +57,17 @@ const createBusinessProfileLogic = async (req) => {
             };
         }
 
+        if (catalogAccess) {
+            const existingMeta = await BusinessProfile.findOne({ tenantId, metaId });
+            if (existingMeta) {
+                return {
+                    status: statusCode.CONFLICT,
+                    success: false,
+                    message: resMessage.Business_portfolio_id_already_linked
+                };
+            }
+        }
+
         const newProfile = await BusinessProfile.create({
             userId,
             tenantId,
@@ -64,7 +75,8 @@ const createBusinessProfileLogic = async (req) => {
             businessAddress,
             metaAccessToken,
             metaAppId,
-            metaBusinessId
+            metaBusinessId,
+            metaId
         });
 
         return {
@@ -214,7 +226,8 @@ const authUser = async (req, res) => {
             `;
 
             await sendEmail(email, subject, text, getEmailTemplate(html));
-
+            user.token = token;
+            await user.save();
             return res.json({
                 _id: user._id,
                 username: user.username,
@@ -334,13 +347,13 @@ const resetPasswordController = async (req, res) => {
 };
 
 const forgotPasswordController = async (req) => {
-  const result = await userService.forgotPassword(req);
-  return result; 
+    const result = await userService.forgotPassword(req);
+    return result;
 };
 
 const updatePasswordWithOtpController = async (req) => {
-  const result = await userService.updatePasswordWithOtp(req);
-  return result;
+    const result = await userService.updatePasswordWithOtp(req);
+    return result;
 };
 
 const updateUserController = async (req) => {
@@ -361,16 +374,16 @@ const logoutUserController = async (req) => {
 }
 
 const resendOtpController = async (req) => {
-  try {
-    return await userService.resendOtp(req);
-  } catch (error) {
-    return {
-      status: statusCode.INTERNAL_SERVER_ERROR,
-      success: false,
-      message: error.message,
-      statusCode: statusCode.INTERNAL_SERVER_ERROR
-    };
-  }
+    try {
+        return await userService.resendOtp(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+            statusCode: statusCode.INTERNAL_SERVER_ERROR
+        };
+    }
 };
 
 module.exports = {

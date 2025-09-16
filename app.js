@@ -26,10 +26,8 @@ const conversationRoutes = require('./routes/conversation');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const projectDashboardRoutes = require('./routes/projectDashboard');
 const flowRoutes = require('./routes/flowRoutes');
-const templateCategoryRoutes = require('./routes/templateCategoryRoutes');
-const admintemplateRoutes = require('./routes/admintemplateRoutes');
-const orderRoutes = require('./routes/orderRoutes');
-const mediaRoutes = require('./routes/media');
+const catalogRoutes = require('./routes/catalog');
+
 connectDB();
 initScheduler();
 
@@ -37,14 +35,8 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://wachatfinal.onrender.com', 
-  'https://c1d2faae5baf.ngrok-free.app',
-  "http://192.168.1.86:5173/",
-  "http://172.16.0.2:5173/",
-  "https://sabnode.netlify.app",
-  "https://grand-chebakia-1cba30.netlify.app",
-  "https://wachaat.netlify.app"
+  'http://164.52.197.192:5173',
+  "http://localhost:5173"
 ];
 
 app.use(cors({
@@ -98,21 +90,7 @@ app.use('/api/projects/:projectId/flows', flowRoutes);
 app.use('/api/projects/', projectDashboardRoutes);
 app.use('/api/projects/:projectId/messages', messageRoutes);
 app.use('/api/projects/:projectId/team-member', teamMemberRoutes);
-app.use('/api/projects/:projectId/orders', orderRoutes);
-
-
-
-//super admin and  tanent routes
-app.use('/api/tenants', tenantRoutes);
-
-
-
-
-
-
-
-
-
+app.use('/api/catalog', catalogRoutes);
 
 // app.get('/auth/facebook/login', (req, res) => {
 //   const redirectUri = encodeURIComponent(`https://wachat.matkadash.in/auth/facebook/callback`);
