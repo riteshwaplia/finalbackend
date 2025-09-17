@@ -44,6 +44,7 @@ const responseHandler = (fn) => async (req, res, next) => {
             res.send(result.body);
         } else {
             const responsePayload = {
+                status: result.status,
                 success: result.success,
                 message: result.message,
                 data: result.data

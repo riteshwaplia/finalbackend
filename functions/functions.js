@@ -258,3 +258,88 @@ exports.createProductCatalog = async (metaBusinessId, name, accessToken) => {
     throw new Error("Failed to create product catalog");
   }
 };
+
+exports.getOwnedProductCatalogs = async (metaId, metaAccessToken) => {
+  const url = `https://graph.facebook.com/v16.0/${metaId}/owned_product_catalogs?access_token=${metaAccessToken}`;
+
+  try {
+    const response = await axios.get(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error getting product catalog:", error.response?.data || error.message);
+    throw error.response?.data || error.message;
+  }
+}
+
+exports.deleteCatalogFromMeta = async (catalogId, metaAccessToken, metaId) => {
+  try {
+    const url = `https://graph.facebook.com/v16.0/${catalogId}`;
+    
+    const response = await axios.delete(url, {
+      params: {
+        access_token: metaAccessToken,
+        business: metaId
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting catalog:", error?.response?.data || error.message);
+    throw error.response?.data || error.message;
+  }
+};
+
+exports.createProduct = async (productData, catalogId, accessToken) => {
+  try {
+    const response = await axios.post(
+      `https://graph.facebook.com/v16.0/${catalogId}/products`,
+      productData,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log("Meta API Response:", response.data);
+    return response.data;
+
+  } catch (error) {
+    console.error("Meta API Error:", error.response?.data || error.message);
+
+    return {
+      error: true,
+      details: error.response?.data || { message: error.message }
+    };
+  }
+};
+
+exports.fetchFacebookProducts = async (CATALOG_ID, FB_ACCESS_TOKEN) => {
+  const fields = [
+    'id',
+    'name',
+    'price',
+    'availability',
+    'retailer_id',
+    'description',
+    'currency',
+    'condition',
+    'image_url'
+  ].join(',');
+
+  const url = `https://graph.facebook.com/v17.0/${CATALOG_ID}/products`;
+
+  try {
+    const response = await axios.get(url, {
+      params: {
+        fields,
+        access_token: FB_ACCESS_TOKEN
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching products:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.error?.message || 'Failed to fetch products');
+  }
+}
