@@ -142,7 +142,8 @@ const resMessage = {
     Business_profile_id_not_linked: "Provided businessProfileId is not linked to this Meta Business ID",
     Product_id_not_found: "Product id not found",
     Product_deleted: "Product deleted successfully",
-    Product_updated: "Product updated successfully"
+    Product_updated: "Product updated successfully",
+    Catalog_template_created: "Catalog template created successfully"
 };
 
 module.exports = {

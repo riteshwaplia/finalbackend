@@ -60,3 +60,15 @@ exports.authTemplateController = async (req) => {
 exports.getPlainTextController = async (req) => {
   return await templateService.getPlainTextTemplates(req);
 };
+
+exports.createCatalogTemplateController = async (req) => {
+    try {
+        return await templateService.createCatalogTemplate(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message
+        }
+    }
+}

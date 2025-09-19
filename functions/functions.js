@@ -1,5 +1,5 @@
-const nodemailer = require('nodemailer');
 const axios = require('axios');
+const nodemailer = require('nodemailer');
 
 exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
   const nodeMap = new Map(nodes.map(n => [n.id, n]));
@@ -385,4 +385,46 @@ exports.updateProduct = async (productId, ACCESS_TOKEN, {
 
     const response = await axios.post(url, payload);
     return response.data;
+}
+
+exports.createCatalogTemplate = async (wabaId, name, language, category, bodyText, token) => {
+  try {
+    const url = `https://graph.facebook.com/v21.0/${wabaId}/message_templates`;
+
+    const payload = {
+      name,
+      language,
+      category,
+      components: [
+        {
+          type: "BODY",
+          text: bodyText
+        },
+        {
+          type: "BUTTONS",
+          buttons: [
+            {
+              type: "CATALOG",
+              text: "View catalog"
+            }
+          ]
+        }
+      ]
+    };
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      throw new Error(JSON.stringify(error.response.data));
+    } else {
+      throw new Error(error.message);
+    }
+  }
 }
