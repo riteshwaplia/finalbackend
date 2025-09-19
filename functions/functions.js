@@ -387,7 +387,7 @@ exports.updateProduct = async (productId, ACCESS_TOKEN, {
     return response.data;
 }
 
-exports.createCatalogTemplate = async (wabaId, name, language, category, bodyText, token) => {
+exports.createCatalogTemplate = async (wabaId, name, language, category, bodyText, token, options = {}) => {
   try {
     const url = `https://graph.facebook.com/v21.0/${wabaId}/message_templates`;
 
@@ -411,6 +411,18 @@ exports.createCatalogTemplate = async (wabaId, name, language, category, bodyTex
         }
       ]
     };
+
+    if (options.parameter_format) {
+      payload.parameter_format = options.parameter_format; // e.g., "POSITIONAL"
+    }
+
+    if (options.footer_text) {
+      payload.components.splice(1, 0, { type: "FOOTER", text: options.footer_text });
+    }
+
+    if (options.example) {
+      payload.components[0].example = options.example;
+    }
 
     const response = await axios.post(url, payload, {
       headers: {
