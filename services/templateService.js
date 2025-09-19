@@ -4,13 +4,14 @@ const fs = require("fs");
 const path = require("path");
 const FormData = require("form-data"); // Ensure you have installed this: npm install form-data
 const mongoose = require('mongoose');
-
 const BusinessProfile = require("../models/BusinessProfile");
 const { statusCode, resMessage } = require("../config/constants");
 const Template = require("../models/Template");
 const sharp = require("sharp"); // NEW: Import sharp
 const facebookUrl = "https://graph.facebook.com";
 const graphVersion = "v19.0"; // Use default if not
+const { createCatalogTemplate } = require('../functions/functions');
+
 // Helper function to get Meta API credentials from Business Profile
 const getBusinessProfileMetaApiCredentials = async (
   businessProfileId,
@@ -413,7 +414,7 @@ exports.createCarouselTemplate = async (req) => {
     };
   }
 
-  if(carouselComponent.cards.length > 10) {
+  if (carouselComponent.cards.length > 10) {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
@@ -490,9 +491,8 @@ exports.createCarouselTemplate = async (req) => {
     return {
       status: error.response?.status || statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: `Failed to create carousel template: ${
-        error.response?.data?.error?.message || error.message
-      }`,
+      message: `Failed to create carousel template: ${error.response?.data?.error?.message || error.message
+        }`,
       metaError: error.response?.data?.error || null,
     };
   }
@@ -592,9 +592,8 @@ exports.submitTemplateToMeta = async (req) => {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: `Failed to submit template to Meta: ${
-        error.response?.data?.error?.message || error.message
-      }`,
+      message: `Failed to submit template to Meta: ${error.response?.data?.error?.message || error.message
+        }`,
     };
   }
 };
@@ -609,10 +608,10 @@ exports.getAllTemplates = async (req) => {
     query.businessProfileId = businessProfileId;
   }
 
-  if(type === "carousel") {
+  if (type === "carousel") {
     query['components.type'] = "CAROUSEL"
   }
-  else if(type === "regular") {
+  else if (type === "regular") {
     query['components.type'] = { $ne: "CAROUSEL" };
   }
 
@@ -668,7 +667,7 @@ exports.getAllTemplates = async (req) => {
 exports.getAllApprovedTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
-  const { businessProfileId,page=1,limit=100 } = req.query;
+  const { businessProfileId, page = 1, limit = 100 } = req.query;
 
   const query = {
     tenantId,
@@ -703,7 +702,7 @@ exports.getAllApprovedTemplates = async (req) => {
       message:
         templates.length === 0
           ? 'No approved templates found' +
-            (businessProfileId ? ' for the selected business profile.' : '')
+          (businessProfileId ? ' for the selected business profile.' : '')
           : 'Templates fetched successfully',
       data: templates,
       pagination: {
@@ -758,7 +757,7 @@ exports.getAllCarouselTemplates = async (req) => {
       message:
         templates.length === 0
           ? 'No carousel templates found' +
-            (businessProfileId ? ' for the selected business profile.' : '')
+          (businessProfileId ? ' for the selected business profile.' : '')
           : 'Carousel templates fetched successfully',
       data: templates,
       pagination: {
@@ -1126,9 +1125,8 @@ exports.syncTemplatesFromMeta = async (req) => {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: `Failed to synchronize templates from Meta: ${
-        error.response?.data?.error?.message || error.message
-      }. Ensure your selected business profile has correct WABA ID and Access Token.`,
+      message: `Failed to synchronize templates from Meta: ${error.response?.data?.error?.message || error.message
+        }. Ensure your selected business profile has correct WABA ID and Access Token.`,
     };
   }
 };
@@ -1158,7 +1156,7 @@ exports.getPlainTextTemplates = async (req) => {
     tenantId,
     userId,
     metaStatus: 'APPROVED',
-    businessProfileId: new mongoose.Types.ObjectId(businessProfileId), 
+    businessProfileId: new mongoose.Types.ObjectId(businessProfileId),
     $or: [
       { type: { $exists: false } },
       { type: 'STANDARD' }
@@ -1181,7 +1179,7 @@ exports.getPlainTextTemplates = async (req) => {
               $elemMatch: {
                 $or: [
                   { type: "CAROUSEL" },
-                  { format: { $in: [ 'CAROUSEL'] } },
+                  { format: { $in: ['CAROUSEL'] } },
                   { text: { $regex: "{{.*}}", $options: "i" } }
                 ]
               }
@@ -1231,3 +1229,39 @@ exports.getPlainTextTemplates = async (req) => {
     };
   }
 };
+
+exports.createCatalogTemplate = async (req) => {
+  try {
+    const { businessProfileId } = req.params;
+    const { name, language, category, bodyText } = req.body;
+    const businessData = await BusinessProfile.findOne({ _id: businessProfileId, tenantId: req.tenant._id, userId: req.user._id });
+    if (!businessData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Invalid_business_ID
+      }
+    }
+    try {
+      const result = await createCatalogTemplate(businessData.metaBusinessId, name, language, category, bodyText, businessData.metaAccessToken);
+      return {
+        status: statusCode.SUCCESS,
+        success: true,
+        message: resMessage.Catalog_template_created,
+        data: result
+      };
+    } catch (serviceError) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: serviceError.message || "Failed to create catalog template"
+      };
+    }
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+}
