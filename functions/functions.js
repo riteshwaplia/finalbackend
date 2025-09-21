@@ -13,50 +13,50 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
   let current = nodeMap.get(edges.find(e => e.source === entryNode.id)?.target);
 
   while (current && current.data) {
-  const { type, data } = current;
-  const delay = data.meta?.delay || 0;
+    const { type, data } = current;
+    const delay = data.meta?.delay || 0;
 
-  if (type === 'text') {
-    const text = data.message;
-    if (text) {
-      messages.push({ type: 'text', text, delay });
-    }
+    if (type === 'text') {
+      const text = data.message;
+      if (text) {
+        messages.push({ type: 'text', text, delay });
+      }
 
-  } else if (type === 'image') {
-    const mediaId = data.id;
-    const url = data.imageUrl || data.url;
-    const caption = data.message || data.caption || '';
+    } else if (type === 'image') {
+      const mediaId = data.id;
+      const url = data.imageUrl || data.url;
+      const caption = data.message || data.caption || '';
 
-    if (mediaId) {
-      messages.push({
-        type: 'image',
-        id: mediaId,
-        caption,
-        delay
-      });
-    }
-    else if(url) {
-      messages.push({
-        type: 'image',
-        link: url,
-        caption,
-        delay
-      });
-    }
-
-  } else if (type === 'audio') {
-    const audioId = data?.audioId;
-    const audioUrl = data.audioUrl || data.url;
-    if (audioId || audioUrl) {
+      if (mediaId) {
         messages.push({
-        type: 'audio',
-        id: audioId,
-        link: audioUrl,
-        delay
-      });
-    }
-    
-  } else if (type === 'document') {
+          type: 'image',
+          id: mediaId,
+          caption,
+          delay
+        });
+      }
+      else if (url) {
+        messages.push({
+          type: 'image',
+          link: url,
+          caption,
+          delay
+        });
+      }
+
+    } else if (type === 'audio') {
+      const audioId = data?.audioId;
+      const audioUrl = data.audioUrl || data.url;
+      if (audioId || audioUrl) {
+        messages.push({
+          type: 'audio',
+          id: audioId,
+          link: audioUrl,
+          delay
+        });
+      }
+
+    } else if (type === 'document') {
       const documentId = data.documentId;
       const documentUrl = data.documentUrl || data.url;
       const filename = data.document_name || 'document.pdf';
@@ -80,74 +80,74 @@ exports.traverseFlow = async (entryPointMessage, nodes, edges) => {
       }
 
     } else if (type === 'template') {
-    const {
-      selectedTemplateId,
-      selectedTemplateName,
-      selectedTemplateLanguage,
-      imageMediaId,
-      buttons = [],
-      parameters = []
-    } = data;
+      const {
+        selectedTemplateId,
+        selectedTemplateName,
+        selectedTemplateLanguage,
+        imageMediaId,
+        buttons = [],
+        parameters = []
+      } = data;
 
-  const components = [];
+      const components = [];
 
-  if (imageMediaId) {
-    components.push({
-      type: 'header',
-      parameters: [
-        {
-          type: 'image',
-          image: { id: imageMediaId }
-        }
-      ]
-    });
-  }
+      if (imageMediaId) {
+        components.push({
+          type: 'header',
+          parameters: [
+            {
+              type: 'image',
+              image: { id: imageMediaId }
+            }
+          ]
+        });
+      }
 
-  components.push({ type: 'body' });
+      components.push({ type: 'body' });
 
-  components.push({ type: 'footer' });
+      components.push({ type: 'footer' });
 
-  buttons.forEach((btn, index) => {
-    components.push({
-      type: 'button',
-      sub_type: 'quick_reply',
-      index: index.toString(),
-      parameters: [
-        {
-          type: 'payload',
-          payload: btn.payload
-        }
-      ]
-    });
-  });
+      buttons.forEach((btn, index) => {
+        components.push({
+          type: 'button',
+          sub_type: 'quick_reply',
+          index: index.toString(),
+          parameters: [
+            {
+              type: 'payload',
+              payload: btn.payload
+            }
+          ]
+        });
+      });
 
-  messages.push({
-    type: 'template',
-    templateId: selectedTemplateId,
-    templateName: selectedTemplateName,
-    templateLang: selectedTemplateLanguage,
-    components,
-    delay
-  });
-
-  } else if (type === 'video') {
-    const videoId = data.videoId;
-    const caption = data.message || '';
-    if (videoId) {
       messages.push({
-        type: 'video',
-        id: videoId,
-        caption,
+        type: 'template',
+        templateId: selectedTemplateId,
+        templateName: selectedTemplateName,
+        templateLang: selectedTemplateLanguage,
+        components,
         delay
       });
+
+    } else if (type === 'video') {
+      const videoId = data.videoId;
+      const caption = data.message || '';
+      if (videoId) {
+        messages.push({
+          type: 'video',
+          id: videoId,
+          caption,
+          delay
+        });
+      }
     }
+
+    const nextEdge = edges.find(e => e.source === current.id);
+    if (!nextEdge) break;
+
+    current = nodeMap.get(nextEdge.target);
   }
-
-  const nextEdge = edges.find(e => e.source === current.id);
-  if (!nextEdge) break;
-
-  current = nodeMap.get(nextEdge.target);
-}
 
   return messages;
 };
@@ -157,8 +157,8 @@ exports.sendEmail = async (to, subject, text, html) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: process.env.USER_EMAIL,   
-        pass: process.env.PASS_EMAIL      
+        user: process.env.USER_EMAIL,
+        pass: process.env.PASS_EMAIL
       },
       tls: {
         rejectUnauthorized: false
@@ -214,17 +214,17 @@ exports.createAuthTemplate = async (templateName, otp_type, language, wabaId, ac
     const response = await axios.post(url, payload, { headers });
     return response.data;
   } catch (error) {
-      if (error.response) {
-        console.error('Meta API Error Response:', {
-          status: error.response.status,
-          data: error.response.data,
-        });
-      } else {
-        console.error('Error making request:', error.message);
-      }
-
-      throw new Error(error?.response?.data?.error?.message || 'Failed to create template on Meta');
+    if (error.response) {
+      console.error('Meta API Error Response:', {
+        status: error.response.status,
+        data: error.response.data,
+      });
+    } else {
+      console.error('Error making request:', error.message);
     }
+
+    throw new Error(error?.response?.data?.error?.message || 'Failed to create template on Meta');
+  }
 }
 
 exports.getBusinessData = async (metaBusinessId, accessToken) => {
@@ -274,7 +274,7 @@ exports.getOwnedProductCatalogs = async (metaId, metaAccessToken) => {
 exports.deleteCatalogFromMeta = async (catalogId, metaAccessToken, metaId) => {
   try {
     const url = `https://graph.facebook.com/v16.0/${catalogId}`;
-    
+
     const response = await axios.delete(url, {
       params: {
         access_token: metaAccessToken,
@@ -362,29 +362,29 @@ exports.deleteProduct = async (productId, access_token) => {
 }
 
 exports.updateProduct = async (productId, ACCESS_TOKEN, {
+  name,
+  description,
+  price,
+  currency,
+  availability,
+  condition,
+  image_url
+}) => {
+  const url = `https://graph.facebook.com/v17.0/${productId}`;
+  let formatedPrice = price * 100;
+  const payload = {
     name,
     description,
-    price,
+    price: formatedPrice,
     currency,
     availability,
     condition,
-    image_url
-}) => {
-    const url = `https://graph.facebook.com/v17.0/${productId}`;
-    let formatedPrice = price * 100;
-    const payload = {
-        name,
-        description,
-        price: formatedPrice,
-        currency,
-        availability,
-        condition,
-        image_url,
-        access_token: ACCESS_TOKEN
-    };
+    image_url,
+    access_token: ACCESS_TOKEN
+  };
 
-    const response = await axios.post(url, payload);
-    return response.data;
+  const response = await axios.post(url, payload);
+  return response.data;
 }
 
 exports.createCatalogTemplate = async (wabaId, name, language, category, bodyText, token) => {
@@ -428,3 +428,44 @@ exports.createCatalogTemplate = async (wabaId, name, language, category, bodyTex
     }
   }
 }
+
+exports.sendCatalogTemplateMessage = async (to, parameters, PHONE_NUMBER_ID, TEMPLATE_NAME, ACCESS_TOKEN) => {
+  try {
+    const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
+
+    const data = {
+      messaging_product: "whatsapp",
+      to,
+      type: "template",
+      template: {
+        name: TEMPLATE_NAME,
+        language: { code: "en_US" },
+        components: [
+          {
+            type: "body",
+            parameters: parameters.map((p) => ({ type: "text", text: p }))
+          },
+          {
+            type: "button",
+            sub_type: "catalog",
+            index: "0"
+          }
+        ]
+      }
+    };
+
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        "Content-Type": "application/json"
+      }
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response) {
+      throw new Error(JSON.stringify(error.response.data));
+    } else {
+      throw new Error(error.message);
+    }
+  }
+};

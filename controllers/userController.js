@@ -6,7 +6,6 @@ const Template = require('../models/Template');
 const generateToken = require('../utils/generateToken');
 const userService = require('../services/userService');
 const { sendEmail } = require('../functions/functions');
-const BlacklistedTokenSchema = require('../models/BlacklistedTokenSchema');
 const getEmailTemplate = require('../utils/getEmailTemplate');
 const jwt = require('jsonwebtoken');
 
@@ -57,6 +56,8 @@ const createBusinessProfileLogic = async (req) => {
             };
         }
 
+        let newProfile;
+
         if (catalogAccess) {
             const existingMeta = await BusinessProfile.findOne({ tenantId, metaId });
             if (existingMeta) {
@@ -66,9 +67,20 @@ const createBusinessProfileLogic = async (req) => {
                     message: resMessage.Business_portfolio_id_already_linked
                 };
             }
+            newProfile = await BusinessProfile.create({
+                userId,
+                tenantId,
+                name,
+                businessAddress,
+                metaAccessToken,
+                metaAppId,
+                catalogAccess,
+                metaBusinessId,
+                metaId
+            });
         }
 
-        const newProfile = await BusinessProfile.create({
+        newProfile = await BusinessProfile.create({
             userId,
             tenantId,
             name,
