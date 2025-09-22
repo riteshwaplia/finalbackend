@@ -15,6 +15,169 @@ const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
 
+const sendCatalogTemplateService = async (req) => {
+  const { to, templateName, languageCode, bodyParameters, buttonParameters } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+
+  // Validate required fields
+  if (!to || !templateName) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message:
+        resMessage.Missing_required_fields +
+        " (to and templateName are required for catalog template send).",
+    };
+  }
+
+  // Validate project
+  const project = await Project.findOne({
+    _id: projectId,
+    tenantId,
+    userId,
+  }).populate("businessProfileId");
+
+  if (!project) {
+    return {
+      status: statusCode.NOT_FOUND,
+      success: false,
+      message:
+        resMessage.No_data_found +
+        " (Project not found or does not belong to you).",
+    };
+  }
+
+  if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message:
+        resMessage.Project_whatsapp_number_not_configured +
+        " (WhatsApp number not verified or Meta Phone Number ID is missing for this project).",
+    };
+  }
+
+  const phoneNumberId = project.metaPhoneNumberID;
+  const businessProfile = project.businessProfileId;
+
+  if (
+    !businessProfile ||
+    !businessProfile.metaAccessToken ||
+    !businessProfile.metaBusinessId
+  ) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message:
+        resMessage.Meta_API_credentials_not_configured +
+        " for the linked Business Profile.",
+    };
+  }
+
+  const accessToken = businessProfile.metaAccessToken;
+  const facebookUrl = businessProfile.facebookUrl || "https://graph.facebook.com";
+  const graphVersion = businessProfile.graphVersion || "v17.0";
+
+  // Build catalog template payload
+  const payload = {
+    messaging_product: "whatsapp",
+    recipient_type: "individual",
+    to,
+    type: "template",
+    template: {
+      name: templateName,
+      language: { code: languageCode || "en_US" },
+      components: [
+        {
+          type: "body",
+          parameters: (bodyParameters || []).map((text) => ({
+            type: "text",
+            text,
+          })),
+        },
+        {
+          type: "button",
+          sub_type: "CATALOG",
+          index: 0,
+          parameters: (buttonParameters || []).map((id) => ({
+            type: "action",
+            action: { thumbnail_product_retailer_id: id },
+          })),
+        },
+      ],
+    },
+  };
+
+  try {
+    const response = await axios.post(
+      `${facebookUrl}/v17.0/${phoneNumberId}/messages`,
+      payload,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const messageData = new Message({
+      to,
+      type: "template",
+      message: payload.template,
+      metaResponse: response.data,
+      status: "sent",
+      userId,
+      tenantId,
+      projectId,
+      metaPhoneNumberID: phoneNumberId,
+      direction: "outbound",
+      templateName: templateName,
+      templateLanguage: languageCode || "en_US",
+    });
+
+    await messageData.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Message_sent_successfully,
+      data: {
+        apiResponse: response.data,
+        dbEntry: messageData,
+      },
+    };
+  } catch (error) {
+    console.error("Error in sendCatalogTemplateService:", error.stack);
+
+    const messageData = new Message({
+      to,
+      type: "template",
+      message: payload.template,
+      metaResponse: error.response?.data || {},
+      status: "failed",
+      errorDetails: error.message,
+      userId,
+      tenantId,
+      projectId,
+      metaPhoneNumberID: phoneNumberId,
+      direction: "outbound",
+      templateName: templateName,
+      templateLanguage: languageCode || "en_US",
+    });
+
+    await messageData.save();
+
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Message_send_failed,
+      data: { dbEntry: messageData },
+    };
+  }
+};
+
 const sendWhatsAppMessage = async ({
   to,
   type,
@@ -1265,5 +1428,6 @@ module.exports = {
   getAllBulkSendJobsService,
   getBulkSendJobDetailsService,
   downloadMedia,
-  ScheduleBulkSendService
+  ScheduleBulkSendService,
+  sendCatalogTemplateService
 };

@@ -9,6 +9,8 @@ const validateRequest = require("../middleware/validate");
 const messageValidation = require("../validations/messageValidations");
 const router = express.Router({ mergeParams: true });
 
+
+router.post("/send-template-catalog", protect, responseHandler(messageController.sendCatalogTemplateController));
 router.post("/send", protect, validateRequest(messageValidation.sendMessage), responseHandler(messageController.sendMessageController));
 router.post("/bulk-messages", protect, uploadExcel.single("file"), responseHandler(messageController.sendBulkMessageController));
 router.post('/upload-media', protect, mediaUploadDir.single('file'), responseHandler(messageController.uploadMedia));
