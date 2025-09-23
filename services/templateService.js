@@ -1,16 +1,15 @@
 // server/services/whatsappService.js
 const axios = require("axios");
 const fs = require("fs");
-const path = require("path");
 const FormData = require("form-data"); // Ensure you have installed this: npm install form-data
 const mongoose = require('mongoose');
 const BusinessProfile = require("../models/BusinessProfile");
 const { statusCode, resMessage } = require("../config/constants");
 const Template = require("../models/Template");
-const sharp = require("sharp"); // NEW: Import sharp
 const facebookUrl = "https://graph.facebook.com";
 const graphVersion = "v19.0"; // Use default if not
-const { createCatalogTemplate } = require('../functions/functions');
+const { createCatalogTemplate, sendCatalogTemplateMessage } = require('../functions/functions');
+const Project = require('../models/Project');
 
 // Helper function to get Meta API credentials from Business Profile
 const getBusinessProfileMetaApiCredentials = async (
@@ -1297,3 +1296,45 @@ exports.createCatalogTemplate = async (req) => {
     };
   }
 }
+
+exports.sendCatalogTemplate = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { to, parameters, template_name } = req.body;
+    const projectData = await Project.findOne({ _id: projectId, tenantId: req.tenant._id, userId: req.user._id });
+    if (!projectData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.ProjectId_dont_exists
+      }
+    }
+    const businessData = await BusinessProfile.findOne({ _id: projectData.businessProfileId, tenantId: req.tenant._id, userId: req.user._id, catalogAccess: true });
+    if (!businessData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Invalid_business_ID
+      }
+    }
+    const response = await sendCatalogTemplateMessage(to, parameters, projectData.metaPhoneNumberID, template_name, businessData.metaAccessToken);
+    if (!response.success) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: response.error
+      }
+    }
+    return {
+        status: statusCode.OK,
+        success: true,
+        message: resMessage.Catalog_template_sent
+      }
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};

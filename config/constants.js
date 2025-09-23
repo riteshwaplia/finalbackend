@@ -143,7 +143,9 @@ const resMessage = {
     Product_id_not_found: "Product id not found",
     Product_deleted: "Product deleted successfully",
     Product_updated: "Product updated successfully",
-    Catalog_template_created: "Catalog template created successfully"
+    Catalog_template_created: "Catalog template created successfully",
+    Business_profile_created_successfully: "Business profile created successfully", 
+    Catalog_template_sent: "Catalog template sent successfully"
 };
 
 module.exports = {
