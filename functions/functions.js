@@ -433,25 +433,30 @@ exports.sendCatalogTemplateMessage = async (to, parameters, PHONE_NUMBER_ID, TEM
   try {
     const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
 
+    const template = {
+      name: TEMPLATE_NAME,
+      language: { code: "en_US" },
+      components: []
+    };
+
+    if (parameters && parameters.length > 0) {
+      template.components.push({
+        type: "body",
+        parameters: parameters.map((p) => ({ type: "text", text: p }))
+      });
+    }
+
+    template.components.push({
+      type: "button",
+      sub_type: "catalog",
+      index: "0"
+    });
+
     const data = {
       messaging_product: "whatsapp",
       to,
       type: "template",
-      template: {
-        name: TEMPLATE_NAME,
-        language: { code: "en_US" },
-        components: [
-          {
-            type: "body",
-            parameters: parameters.map((p) => ({ type: "text", text: p }))
-          },
-          {
-            type: "button",
-            sub_type: "catalog",
-            index: "0"
-          }
-        ]
-      }
+      template
     };
 
     const response = await axios.post(url, data, {

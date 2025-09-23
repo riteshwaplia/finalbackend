@@ -1445,7 +1445,7 @@ exports.createCatalogTemplate = async (req) => {
   try {
     const { businessProfileId } = req.params;
     const { name, language, category, bodyText } = req.body;
-    const businessData = await BusinessProfile.findOne({ _id: businessProfileId, tenantId: req.tenant._id, userId: req.user._id });
+    const businessData = await BusinessProfile.findOne({ _id: businessProfileId, tenantId: req.tenant._id, userId: req.user._id, catalogAccess: true });
     if (!businessData) {
       return {
         status: statusCode.NOT_FOUND,
