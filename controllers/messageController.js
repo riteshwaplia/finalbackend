@@ -3,9 +3,6 @@ const messageService = require("../services/messageService");
 const fs = require("fs");
 const path = require("path");
 
-exports.sendCatalogTemplateController = async (req) => {
-    return await messageService.sendCatalogTemplateService(req);
-};
 exports.sendMessageController = async (req) => {
     return await messageService.sendMessageService(req);
 };
