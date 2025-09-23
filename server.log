@@ -42,3 +42,10 @@
 [19/9/2025, 10:44:51] MongoDB Connected: ac-on53m4m-shard-00-00.xkmyzv9.mongodb.net
 [19/9/2025, 10:47:32] Server running on port 5001
 [19/9/2025, 10:47:33] MongoDB Connected: ac-on53m4m-shard-00-02.xkmyzv9.mongodb.net
+[23/9/2025, 09:50:28] Server running on port 5001
+[23/9/2025, 09:50:28] MongoDB Connected: ac-on53m4m-shard-00-02.xkmyzv9.mongodb.net
+[23/9/2025, 09:57:32] token "68d2216c589faa6d11b5a1e4" YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+[23/9/2025, 10:02:37] Server running on port 5001
+[23/9/2025, 10:02:37] MongoDB Connected: ac-on53m4m-shard-00-00.xkmyzv9.mongodb.net
+[23/9/2025, 10:02:39] Server running on port 5001
+[23/9/2025, 10:02:39] MongoDB Connected: ac-on53m4m-shard-00-02.xkmyzv9.mongodb.net
