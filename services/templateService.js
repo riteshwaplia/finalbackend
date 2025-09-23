@@ -1453,8 +1453,32 @@ exports.createCatalogTemplate = async (req) => {
         message: resMessage.Invalid_business_ID
       }
     }
+    const components = [
+      {
+        type: "BODY",
+        text: bodyText
+      },
+      {
+        type: "BUTTONS",
+        buttons: [
+          {
+            type: "CATALOG",
+            text: "View catalog"
+          }
+        ]
+      }
+    ];
     try {
       const result = await createCatalogTemplate(businessData.metaBusinessId, name, language, category, bodyText, businessData.metaAccessToken);
+      await Template.create({
+        tenantId: req.tenant._id,
+        userId: req.user._id,
+        businessProfileId,
+        name,
+        language,
+        category,
+        components
+      });
       return {
         status: statusCode.SUCCESS,
         success: true,
