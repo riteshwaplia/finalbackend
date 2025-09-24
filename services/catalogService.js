@@ -276,9 +276,11 @@ exports.deleteCatalog = async (req, res) => {
             message: resMessage.Catalog_deleted
         }
     } catch (error) {
-        res.status(500).json({
+        console.log("Error while deleting catalog", error);
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
-            message: error.message || "Server error"
-        });
+            message: error.error.error_user_msg
+        };
     }
 };
