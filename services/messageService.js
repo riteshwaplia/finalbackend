@@ -1265,6 +1265,5 @@ module.exports = {
   getAllBulkSendJobsService,
   getBulkSendJobDetailsService,
   downloadMedia,
-  ScheduleBulkSendService,
-  sendCatalogTemplateService
+  ScheduleBulkSendService
 };
