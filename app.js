@@ -30,6 +30,10 @@ const templateCategoryRoutes = require('./routes/templateCategoryRoutes');
 const admintemplateRoutes = require('./routes/admintemplateRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const mediaRoutes = require('./routes/media');
+const catalogRoutes = require('./routes/catalog');
+const productRoutes = require('./routes/product');
+const feedRoutes = require('./routes/feed');
+
 connectDB();
 initScheduler();
 
@@ -109,10 +113,9 @@ app.use('/api/tenants', tenantRoutes);
 
 
 
-
-
-
-
+app.use('/api/catalog', catalogRoutes);
+app.use('/api/product', productRoutes);
+app.use('/api/productfeed', feedRoutes);
 
 // app.get('/auth/facebook/login', (req, res) => {
 //   const redirectUri = encodeURIComponent(`https://wachat.matkadash.in/auth/facebook/callback`);

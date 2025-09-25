@@ -5,7 +5,7 @@ const XLSX = require("xlsx");
 const path = require("path");
 const fs = require("fs");
 const mongoose = require('mongoose');
-const Project = require("../models/project");
+const Project = require("../models/Project");
 
 const validateGroupIds = async (tenantId, userId, projectId, groupIds) => {
     if (!groupIds || groupIds.length === 0) {

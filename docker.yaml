@@ -1,0 +1,23 @@
+services:
+  sabnode:
+    image: ishmeet1812000/sabnode
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sabnode-app
+    ports:
+      - "5001:5001"
+    environment:
+      MONGO_URI: mongodb+srv://ishmeet1812000:1234567890@ishmeetcluster.xkmyzv9.mongodb.net/sabnode-db?retryWrites=true&w=majority
+      JWT_SECRET: YOUR_VERY_STRONG_AND_RANDOM_SECRET_KEY
+      PORT: 5001
+      WHATSAPP_VERIFY_TOKEN: token
+      USER_EMAIL: deveshtesting9672@gmail.com
+      PASS_EMAIL: bfbo icae mybh ugzq
+    restart: unless-stopped
+    networks:
+      - sabnet
+    
+networks:
+  sabnet:
+    driver: bridge

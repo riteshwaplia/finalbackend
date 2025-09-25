@@ -1,7 +1,7 @@
 // server/services/flowExecutionService.js
 const ConversationSession = require('../models/ConversationSessionSchema');
 const Flow = require('../models/Flow');
-const Project = require('../models/project');
+const Project = require('../models/Project');
 const BusinessProfile = require('../models/BusinessProfile');
 const Message = require('../models/Message'); // To save outbound messages from flow execution
 const axios = require('axios');

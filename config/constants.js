@@ -132,7 +132,30 @@ const resMessage = {
     Otp_expired: "OTP has expired",
     Carousel_limit_exceed: "Carousel component cannot have more than 10 cards.",
     Data_fetch_successfully: "Data fetch successfully",
-    Data_updated: "Data updated successfully"
+    Data_updated: "Data updated successfully",
+    Invalid_business_ID: "Invalid Business Portfolio Id",
+    Business_already_linked: 'Business already linked with user',
+    Business_portfolio_id_already_linked: "A business profile with this Meta ID already exists in this tenant.",
+    Catalog_sync_successfully: "Catalog sync successfully",
+    Catalog_id_not_found: "Catalog Id not found",
+    Catalog_deleted: "Catalog deleted successfully",
+    Business_profile_id_not_linked: "Provided businessProfileId is not linked to this Meta Business ID",
+    Product_id_not_found: "Product id not found",
+    Product_deleted: "Product deleted successfully",
+    Product_updated: "Product updated successfully",
+    Catalog_template_created: "Catalog template created successfully",
+    Business_profile_created_successfully: "Business profile created successfully", 
+    Catalog_template_sent: "Catalog template sent successfully",
+
+    Feed_created: "Feed created successfully",
+    Feed_updated: "Feed updated successfully",
+    Feed_deleted: "Feed deleted successfully",
+    Feed_fetched: "Feed fetched successfully",
+    No_feeds_found: "No feeds found",
+    Feed_synchronized: "Feed synchronized successfully",
+    Invalid_feed_ID: "Invalid feed ID",
+    Feed_not_found: "Feed not found for the provided ID",
+    Meta_API_error: "Error from Meta API",
 };
 
 module.exports = {
