@@ -1,4 +1,4 @@
-const { sendBulkMessageService, getAllBulkSendJobsService, getBulkSendJobDetailsService } = require('../services/messageService');
+const { sendBulkMessageService, sendBulkCatalogService , getAllBulkSendJobsService, getBulkSendJobDetailsService , sendBulkCatalogService } = require('../services/messageService');
 const messageService = require("../services/messageService");
 const fs = require("fs");
 const path = require("path");
@@ -12,6 +12,10 @@ exports.sendBulkMessageController = async (req) => {
 };
 exports.ScheduleBulkSendServiceController = async (req) => {
   return await messageService.ScheduleBulkSendService(req);
+};
+
+exports.sendBulkCatalogController = async (req) => {
+    return await sendBulkCatalogService(req);
 };
 
 exports.uploadMedia = async (req) => {

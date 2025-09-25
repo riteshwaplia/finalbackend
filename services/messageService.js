@@ -14,6 +14,7 @@ const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
+const {sendCatalogTemplateMessage } = require('../functions/functions');
 
 const sendWhatsAppMessage = async ({
   to,
@@ -93,8 +94,6 @@ const sendWhatsAppMessage = async ({
     return { success: false, error };
   }
 };
-
-// http://localhost:5173
 
 const sendMessageService = async (req) => {
   const { to, type, message } = req.body;
@@ -227,8 +226,7 @@ const sendMessageService = async (req) => {
 };
 
 const sendBulkMessageService = async (req) => {
-  const { templateName, message = {}, imageId } = req.body;
-  console.log("imgageId", imageId);
+  const { templateName, message = {} } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
@@ -532,9 +530,6 @@ const sendBulkMessageService = async (req) => {
   };
 };
 
-// @desc    Send bulk messages from an group
-// @access  Private
-
 const ScheduleBulkSendService = async (req) => {
   const { templateName, scheduledAt } = req.body;
   const userId = req.user._id;
@@ -598,7 +593,148 @@ const ScheduleBulkSendService = async (req) => {
   }
 };
 
+const sendBulkCatalogService = async (req) => {
+  const { templateName, message = {} } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
 
+  console.log(`[BulkCatalogService] Start processing bulk catalog send. User: ${userId}, Project: ${projectId}`);
+
+  const userBatchSize = await User.findOne({ _id: userId, tenantId }).select('batch_size');
+  const BATCH_SIZE = userBatchSize?.batch_size || 20;
+  console.log(`[BulkCatalogService] Using batch size: ${BATCH_SIZE}`);
+
+  if (!templateName || !req.file) {
+    console.log(`[BulkCatalogService] Missing required fields: templateName or file`);
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Missing_required_fields + " (templateName and file are required for bulk send).",
+    };
+  }
+
+  const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+  if (!project) {
+    console.log(`[BulkCatalogService] Project not found or not owned by user: ${projectId}`);
+    return {
+      status: statusCode.NOT_FOUND,
+      success: false,
+      message: resMessage.No_data_found + " (Project not found or does not belong to you).",
+    };
+  }
+
+  if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
+    console.log(`[BulkCatalogService] WhatsApp number not verified/configured for project: ${projectId}`);
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Project_whatsapp_number_not_configured,
+    };
+  }
+
+  const phoneNumberId = project.metaPhoneNumberID;
+  const businessProfile = project.businessProfileId;
+
+  if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
+    console.log(`[BulkCatalogService] Meta API credentials missing for project: ${projectId}`);
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Meta_API_credentials_not_configured,
+    };
+  }
+
+  const accessToken = businessProfile.metaAccessToken;
+
+  const filePath = path.resolve(req.file.path);
+  console.log(`[BulkCatalogService] Reading Excel file: ${filePath}`);
+  let contacts = [];
+  try {
+    const workbook = xlsx.readFile(filePath);
+    const sheetName = workbook.SheetNames[0];
+    const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    contacts = sheetData.filter((row) => row.mobilenumber);
+
+    console.log(`[BulkCatalogService] Found ${contacts.length} valid contacts in Excel.`);
+
+    if (contacts.length === 0) {
+      console.log(`[BulkCatalogService] No valid contacts in Excel.`);
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.No_valid_contacts_for_bulk_send,
+      };
+    }
+  } catch (fileError) {
+    console.log(`[BulkCatalogService] Error reading Excel file:`, fileError.message);
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Invalid_file_format,
+    };
+  } finally {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      console.log(`[BulkCatalogService] Deleted uploaded Excel file: ${filePath}`);
+    }
+  }
+
+  
+
+  const baseMessage = { name: templateName, language: { code: templateLanguageCode } };
+  const contactBatches = chunkArray(contacts, BATCH_SIZE);
+  let totalSent = 0;
+  let totalFailed = 0;
+  const errorsSummary = [];
+
+  for (const [batchIndex, batch] of contactBatches.entries()) {
+    console.log(`[BulkCatalogService] Sending batch ${batchIndex + 1}/${contactBatches.length}, size: ${batch.length}`);
+    const sendPromises = batch.map(async (contactRow) => {
+      const mobileNumber = String(contactRow.mobilenumber);
+      const countryCode = String(contactRow.countrycode || "");
+      const to = `${countryCode}${mobileNumber}`;
+
+      if (!mobileNumber || mobileNumber.length < 5) {
+        totalFailed++;
+        errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format in Excel." });
+        console.log(`[BulkCatalogService] Invalid mobile number: ${mobileNumber}`);
+        return;
+      }
+
+      const components = [];
+      const templateMessage = { name: baseMessage.name, language: baseMessage.language, components };
+
+      try {
+        const sendResult = await sendCatalogTemplateMessage(to, parameters, phoneNumberId, templateName,accessToken);
+        console.log(`[BulkCatalogService] Message send result for ${to}: ${sendResult.success ? 'Success' : 'Failed'}`);
+
+
+        if (sendResult.success) totalSent++;
+        else {
+          totalFailed++;
+          errorsSummary.push({ to, error: sendResult.error || "Unknown error" });
+        }
+      } catch (err) {
+        totalFailed++;
+        errorsSummary.push({ to, error: err.message || "Unhandled exception" });
+        console.log(`[BulkCatalogService] Error sending message to ${to}: ${err.message}`);
+      }
+    });
+    await Promise.allSettled(sendPromises);
+  }
+  console.log(`[BulkCatalogService] Bulk send job completed. Sent: ${totalSent}, Failed: ${totalFailed}`);
+
+  return {
+    status: statusCode.OK,
+    success: true,
+    message:
+      totalFailed > 0
+        ? resMessage.Bulk_send_completed_with_errors
+        : resMessage.Bulk_messages_sent_successfully,
+    data: { bulkSendJobId: bulkSendJob._id, totalSent, totalFailed, errorsSummary },
+  };
+};
 
 const BulkSendGroupService = async (req) => {
   const { templateName, message = {}, groupId, contactfields = [] } = req.body;
@@ -1265,5 +1401,6 @@ module.exports = {
   getAllBulkSendJobsService,
   getBulkSendJobDetailsService,
   downloadMedia,
-  ScheduleBulkSendService
+  ScheduleBulkSendService,
+  sendBulkCatalogService
 };
