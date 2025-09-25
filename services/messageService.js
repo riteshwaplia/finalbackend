@@ -649,6 +649,23 @@ const sendBulkCatalogService = async (req) => {
     const accessToken = businessData.metaAccessToken;
     const phoneNumberId = projectData.metaPhoneNumberID;
 
+    const localTemplate = await Template.findOne({
+      tenantId,
+      userId,
+      businessProfileId: businessData._id,
+      name: templateName,
+      metaStatus: "APPROVED",
+    });
+
+    if (!localTemplate) {
+      console.log(`Template '${templateName}' not found or not approved locally.`);
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `Template '${templateName}' not found locally or not approved. Please sync the template first.`,
+      };
+    }
+
     // Read Excel contacts
     const filePath = path.resolve(req.file.path);
     let contacts = [];
@@ -657,9 +674,14 @@ const sendBulkCatalogService = async (req) => {
       const sheetName = workbook.SheetNames[0];
       const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
       contacts = sheetData.filter((row) => row.mobilenumber);
-      console.log(`Found ${contacts.length} valid contacts in Excel.`);
+      if (contacts.length === 0) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: resMessage.Invalid_file_format,
+        };
+      }
     } catch (err) {
-      console.log("Error reading Excel file:", err.message);
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -669,14 +691,21 @@ const sendBulkCatalogService = async (req) => {
       if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
 
-    if (contacts.length === 0) {
-      console.log("No valid contacts in Excel.");
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: resMessage.No_valid_contacts_for_bulk_send,
-      };
-    }
+    const fileName = req.file?.originalname || "manual_upload.xlsx";
+    const bulkSendJob = await BulkSendJob.create({
+      tenantId,
+      userId,
+      projectId,
+      templateName,
+      fileName,
+      totalContacts: contacts.length,
+      status: "in_progress",
+      startTime: new Date(),
+      templateDetails: {
+        components: localTemplate.components,
+        language: localTemplate.language,
+      },
+    });
 
     // Batch sending
     const userBatchSize = (await User.findOne({ _id: userId, tenantId }).select('batch_size'))?.batch_size || 20;
@@ -719,13 +748,26 @@ const sendBulkCatalogService = async (req) => {
 
     console.log(`Bulk send completed. Sent: ${totalSent}, Failed: ${totalFailed}`);
 
+    bulkSendJob.totalSent = totalSent;
+    bulkSendJob.totalFailed = totalFailed;
+    bulkSendJob.errorsSummary = errorsSummary;
+    bulkSendJob.endTime = new Date();
+    bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
+    await bulkSendJob.save();
+
     return {
       status: statusCode.OK,
       success: true,
-      message: totalFailed > 0
-        ? resMessage.Bulk_send_completed_with_errors
-        : resMessage.Bulk_messages_sent_successfully,
-      data: { totalSent, totalFailed, errorsSummary },
+      message:
+        totalFailed > 0
+          ? resMessage.Bulk_send_completed_with_errors
+          : resMessage.Bulk_messages_sent_successfully,
+      data: {
+        bulkSendJobId: bulkSendJob._id,
+        totalSent,
+        totalFailed,
+        errorsSummary,
+      },
     };
 
   } catch (error) {
