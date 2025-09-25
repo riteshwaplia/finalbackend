@@ -597,17 +597,13 @@ const sendBulkCatalogService = async (req) => {
   try {
     console.log("=== sendBulkCatalogService called ===&****************************");
 
-    const { templateName, parameters = [] } = req.body;
+    const { templateName, parameters: defaultParameters = [] } = req.body;
     const userId = req.user._id;
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
 
-    console.log("Request Params:", { projectId });
-    console.log("Request Body:", { templateName, parameters });
-
     // Validate file and templateName
     if (!templateName || !req.file) {
-      console.log("Missing required fields: templateName or file");
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -627,7 +623,6 @@ const sendBulkCatalogService = async (req) => {
     }
 
     if (!projectData.isWhatsappVerified || !projectData.metaPhoneNumberID) {
-      console.log("WhatsApp not verified for project:", projectId);
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -638,7 +633,6 @@ const sendBulkCatalogService = async (req) => {
     // Fetch business profile
     const businessData = projectData.businessProfileId;
     if (!businessData || !businessData.metaAccessToken || !businessData.metaBusinessId) {
-      console.log("Business profile missing or invalid for project:", projectId);
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -658,7 +652,6 @@ const sendBulkCatalogService = async (req) => {
     });
 
     if (!localTemplate) {
-      console.log(`Template '${templateName}' not found or not approved locally.`);
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
@@ -673,7 +666,21 @@ const sendBulkCatalogService = async (req) => {
       const workbook = xlsx.readFile(filePath);
       const sheetName = workbook.SheetNames[0];
       const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-      contacts = sheetData.filter((row) => row.mobilenumber);
+
+      // Normalize column names by trimming whitespace
+      const normalized = sheetData.map((row) => {
+        const out = {};
+        Object.keys(row).forEach((k) => {
+          if (typeof k === "string") {
+            out[k.trim()] = row[k];
+          } else {
+            out[k] = row[k];
+          }
+        });
+        return out;
+      });
+
+      contacts = normalized.filter((row) => row.mobilenumber);
       if (contacts.length === 0) {
         return {
           status: statusCode.BAD_REQUEST,
@@ -688,9 +695,13 @@ const sendBulkCatalogService = async (req) => {
         message: resMessage.Invalid_file_format,
       };
     } finally {
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      if (fs.existsSync(filePath)) {
+        try {
+          fs.unlinkSync(filePath);
+        } catch (unlinkErr) {
+        }
+      }
     }
-
     const fileName = req.file?.originalname || "manual_upload.xlsx";
     const bulkSendJob = await BulkSendJob.create({
       tenantId,
@@ -708,19 +719,27 @@ const sendBulkCatalogService = async (req) => {
     });
 
     // Batch sending
-    const userBatchSize = (await User.findOne({ _id: userId, tenantId }).select('batch_size'))?.batch_size || 20;
+    const userBatchSize = (await User.findOne({ _id: userId, tenantId }).select("batch_size"))?.batch_size || 20;
     const contactBatches = chunkArray(contacts, userBatchSize);
 
     let totalSent = 0;
     let totalFailed = 0;
     const errorsSummary = [];
 
-    for (const [batchIndex, batch] of contactBatches.entries()) {
-      console.log(`Sending batch ${batchIndex + 1}/${contactBatches.length}, size: ${batch.length}`);
+    const bodyPlaceholders = localTemplate.components
+      .filter((c) => c.type === "BODY" && typeof c.text === "string" && c.text.includes("{{"))
+      .map((c) => {
+        const matches = c.text.match(/{{(\d+)}}/g) || [];
+        return matches.map((m) => Number(m.match(/{{(\d+)}}/)[1]));
+      })
+      .flat();
+    const uniqueSortedPlaceholderIndexes = [...new Set(bodyPlaceholders)].sort((a, b) => a - b);
 
-      const sendPromises = batch.map(async (contactRow) => {
-        const mobileNumber = String(contactRow.mobilenumber);
-        const countryCode = String(contactRow.countrycode || "");
+    for (const [batchIndex, batch] of contactBatches.entries()) {
+
+      const sendPromises = batch.map(async (contactRow, idx) => {
+        const mobileNumber = String(contactRow.mobilenumber).trim();
+        const countryCode = String(contactRow.countrycode || "").trim();
         const to = `${countryCode}${mobileNumber}`;
 
         if (!mobileNumber || mobileNumber.length < 5) {
@@ -729,24 +748,55 @@ const sendBulkCatalogService = async (req) => {
           return;
         }
 
+        let contactParameters = [];
         try {
-          const response = await sendCatalogTemplateMessage(to, parameters, phoneNumberId, templateName, accessToken);
+          if (uniqueSortedPlaceholderIndexes.length > 0) {
+            contactParameters = uniqueSortedPlaceholderIndexes.map((index) => {
+              const col1 = `variable_${index}`;
+              const col2 = `body_Example_${index}`;
+              // try several possibilities (trimmed keys)
+              const valueRaw = contactRow[col1] ?? contactRow[col2] ?? contactRow[`variable ${index}`] ?? contactRow[`body_Example ${index}`] ?? "";
+              const value = typeof valueRaw === "string" ? valueRaw.trim() : valueRaw;
+              return value;
+            });
+            // Validate: WhatsApp requires non-empty text for text parameters
+            const missingIndex = contactParameters.findIndex((v) => v === undefined || v === null || String(v).trim() === "");
+            if (missingIndex !== -1) {
+              const msg = `Missing required template variable value for variable_${uniqueSortedPlaceholderIndexes[missingIndex]}`;
+              console.warn(`[sendBulkCatalogService] ${msg} for ${to}`);
+              totalFailed++;
+              errorsSummary.push({ to, error: msg });
+              return;
+            }
+          } else {
+            // No body variables — use defaultParameters (if any)
+            contactParameters = defaultParameters;console.log(`[sendBulkCatalogService] No template variables found. Using default parameters for ${to}:`, contactParameters);
+          }
+        } catch (paramErr) {
+          totalFailed++;
+          errorsSummary.push({ to, error: "Parameter build error: " + paramErr.message });
+          return;
+        }
+
+        // Now call sendCatalogTemplateMessage with an array of strings
+        try {
+          const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, templateName, accessToken);
+
           if (response && response.messages && response.messages.length > 0) {
             totalSent++;
           } else {
             totalFailed++;
-            errorsSummary.push({ to, error: "Failed to send catalog template" });
+            errorsSummary.push({ to, error: "Failed to send catalog template (no messages returned)" });
           }
         } catch (err) {
           totalFailed++;
-          errorsSummary.push({ to, error: err.message || "Unhandled exception" });
+          const errMsg = err?.message || JSON.stringify(err);
+          errorsSummary.push({ to, error: errMsg });
         }
       });
 
       await Promise.allSettled(sendPromises);
     }
-
-    console.log(`Bulk send completed. Sent: ${totalSent}, Failed: ${totalFailed}`);
 
     bulkSendJob.totalSent = totalSent;
     bulkSendJob.totalFailed = totalFailed;
