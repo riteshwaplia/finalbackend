@@ -486,3 +486,19 @@ exports.sendCatalogTemplateMessage = async (to, parameters, PHONE_NUMBER_ID, TEM
     }
   }
 };
+
+exports.scheduleLongTimeout =(fn, delayMs) => {
+  const MAX_TIMEOUT_MS = 2147483647;
+  if (delayMs <= 0) {
+    // already due
+    setImmediate(fn);
+    return;
+  }
+
+  if (delayMs > MAX_TIMEOUT_MS) {
+    setTimeout(() => scheduleLongTimeout(fn, delayMs - MAX_TIMEOUT_MS), MAX_TIMEOUT_MS);
+    return;
+  }
+
+  setTimeout(fn, delayMs);
+}

@@ -14,7 +14,8 @@ const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
-const {sendCatalogTemplateMessage } = require('../functions/functions');
+const {sendCatalogTemplateMessage , scheduleLongTimeout } = require('../functions/functions');
+const moment = require("moment-timezone");
 
 const sendWhatsAppMessage = async ({
   to,
@@ -595,14 +596,11 @@ const ScheduleBulkSendService = async (req) => {
 
 const sendBulkCatalogService = async (req) => {
   try {
-    console.log("=== sendBulkCatalogService called ===&****************************");
-
-    const { templateName, parameters: defaultParameters = [] } = req.body;
+    const { templateName, parameters: defaultParameters = [], scheduledTime: scheduledTimeStr } = req.body;
     const userId = req.user._id;
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
 
-    // Validate file and templateName
     if (!templateName || !req.file) {
       return {
         status: statusCode.BAD_REQUEST,
@@ -611,7 +609,6 @@ const sendBulkCatalogService = async (req) => {
       };
     }
 
-    // Fetch project
     const projectData = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
     if (!projectData) {
       console.log("Project not found:", projectId);
@@ -630,7 +627,6 @@ const sendBulkCatalogService = async (req) => {
       };
     }
 
-    // Fetch business profile
     const businessData = projectData.businessProfileId;
     if (!businessData || !businessData.metaAccessToken || !businessData.metaBusinessId) {
       return {
@@ -659,167 +655,299 @@ const sendBulkCatalogService = async (req) => {
       };
     }
 
-    // Read Excel contacts
-    const filePath = path.resolve(req.file.path);
-    let contacts = [];
-    try {
-      const workbook = xlsx.readFile(filePath);
-      const sheetName = workbook.SheetNames[0];
-      const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+    const originalFilePath = path.resolve(req.file.path);
+    const fileName = req.file?.originalname || "manual_upload.xlsx";
 
-      // Normalize column names by trimming whitespace
-      const normalized = sheetData.map((row) => {
-        const out = {};
-        Object.keys(row).forEach((k) => {
-          if (typeof k === "string") {
-            out[k.trim()] = row[k];
-          } else {
-            out[k] = row[k];
+    async function runBulkSendJob(bulkSendJobId, scheduledFilePath) {
+      console.log(`[runBulkSendJob] Starting job ${bulkSendJobId} using file ${scheduledFilePath}`);
+      const job = await BulkSendJob.findById(bulkSendJobId);
+      if (!job) {
+        console.error(`[runBulkSendJob] Job not found: ${bulkSendJobId}`);
+        return;
+      }
+
+      job.status = "in_progress";
+      job.startTime = job.startTime || new Date();
+      await job.save();
+
+      let contacts = [];
+      try {
+        const workbook = xlsx.readFile(scheduledFilePath);
+        const sheetName = workbook.SheetNames[0];
+        const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+
+        const normalized = sheetData.map((row) => {
+          const out = {};
+          Object.keys(row).forEach((k) => {
+            if (typeof k === "string") {
+              out[k.trim()] = row[k];
+            } else {
+              out[k] = row[k];
+            }
+          });
+          return out;
+        });
+
+        contacts = normalized.filter((row) => row.mobilenumber);
+        if (contacts.length === 0) {
+          job.status = "completed_with_errors";
+          job.totalSent = 0;
+          job.totalFailed = 0;
+          job.errorsSummary = [{ error: "Invalid file format or no mobilenumber column" }];
+          job.endTime = new Date();
+          await job.save();
+          console.warn(`[runBulkSendJob] No contacts found for job ${bulkSendJobId}`);
+          return;
+        }
+      } catch (err) {
+        job.status = "completed_with_errors";
+        job.errorsSummary = [{ error: "Invalid file format at send time: " + (err.message || err) }];
+        job.endTime = new Date();
+        await job.save();
+        console.error(`[runBulkSendJob] Error reading file for job ${bulkSendJobId}`, err);
+        return;
+      }
+
+      const userBatchSize = (await User.findOne({ _id: job.userId, tenantId: job.tenantId }).select("batch_size"))?.batch_size || 20;
+      const contactBatches = chunkArray(contacts, userBatchSize);
+
+      let totalSent = 0;
+      let totalFailed = 0;
+      const errorsSummary = [];
+
+      const bodyPlaceholders = localTemplate.components
+        .filter((c) => c.type === "BODY" && typeof c.text === "string" && c.text.includes("{{"))
+        .map((c) => {
+          const matches = c.text.match(/{{(\d+)}}/g) || [];
+          return matches.map((m) => Number(m.match(/{{(\d+)}}/)[1]));
+        })
+        .flat();
+      const uniqueSortedPlaceholderIndexes = [...new Set(bodyPlaceholders)].sort((a, b) => a - b);
+
+      for (const [batchIndex, batch] of contactBatches.entries()) {
+        const sendPromises = batch.map(async (contactRow) => {
+          const mobileNumber = String(contactRow.mobilenumber).trim();
+          const countryCode = String(contactRow.countrycode || "").trim();
+          const to = `${countryCode}${mobileNumber}`;
+
+          if (!mobileNumber || mobileNumber.length < 5) {
+            totalFailed++;
+            errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format" });
+            return;
+          }
+
+          let contactParameters = [];
+          try {
+            if (uniqueSortedPlaceholderIndexes.length > 0) {
+              contactParameters = uniqueSortedPlaceholderIndexes.map((index) => {
+                const col1 = `variable_${index}`;
+                const col2 = `body_Example_${index}`;
+                const valueRaw = contactRow[col1] ?? contactRow[col2] ?? contactRow[`variable ${index}`] ?? contactRow[`body_Example ${index}`] ?? "";
+                const value = typeof valueRaw === "string" ? valueRaw.trim() : valueRaw;
+                return value;
+              });
+              const missingIndex = contactParameters.findIndex((v) => v === undefined || v === null || String(v).trim() === "");
+              if (missingIndex !== -1) {
+                const msg = `Missing required template variable value for variable_${uniqueSortedPlaceholderIndexes[missingIndex]}`;
+                console.warn(`[runBulkSendJob] ${msg} for ${to}`);
+                totalFailed++;
+                errorsSummary.push({ to, error: msg });
+                return;
+              }
+            } else {
+              contactParameters = job.defaultParameters || [];
+            }
+          } catch (paramErr) {
+            totalFailed++;
+            errorsSummary.push({ to, error: "Parameter build error: " + paramErr.message });
+            return;
+          }
+
+          try {
+            const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, templateName, accessToken);
+            if (response && response.messages && response.messages.length > 0) {
+              totalSent++;
+            } else {
+              totalFailed++;
+              errorsSummary.push({ to, error: "Failed to send catalog template (no messages returned)" });
+            }
+          } catch (err) {
+            totalFailed++;
+            const errMsg = err?.message || JSON.stringify(err);
+            errorsSummary.push({ to, error: errMsg });
           }
         });
-        return out;
-      });
 
-      contacts = normalized.filter((row) => row.mobilenumber);
-      if (contacts.length === 0) {
+        await Promise.allSettled(sendPromises);
+      }
+
+      job.totalSent = totalSent;
+      job.totalFailed = totalFailed;
+      job.errorsSummary = errorsSummary;
+      job.endTime = new Date();
+      job.status = totalFailed > 0 ? "completed_with_errors" : "completed";
+
+      await job.save();
+
+      try {
+        if (fs.existsSync(scheduledFilePath)) {
+          fs.unlinkSync(scheduledFilePath);
+        }
+      } catch (e) {
+      }
+
+      console.log(`[runBulkSendJob] Job ${bulkSendJobId} finished. Sent: ${totalSent}, Failed: ${totalFailed}`);
+    }
+
+    // If scheduledTime provided — schedule the job and return immediately
+    if (scheduledTimeStr) {
+      // parse scheduledTime in IST
+      // Accepts ISO or human formats — using moment-timezone
+      const scheduledMoment = moment.tz(scheduledTimeStr, "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) {
+        // try fallback parse (e.g., user could send 'DD-MM-YYYY HH:mm')
+        const alt = moment.tz(scheduledTimeStr, "DD-MM-YYYY HH:mm", "Asia/Kolkata");
+        if (alt.isValid()) {
+          scheduledMoment = alt;
+        }
+      }
+
+      if (!scheduledMoment.isValid()) {
         return {
           status: statusCode.BAD_REQUEST,
           success: false,
-          message: resMessage.Invalid_file_format,
+          message: "Invalid scheduledTime. Provide a valid datetime (interpreted as Asia/Kolkata).",
         };
       }
-    } catch (err) {
-      return {
-        status: statusCode.BAD_REQUEST,
-        success: false,
-        message: resMessage.Invalid_file_format,
-      };
-    } finally {
-      if (fs.existsSync(filePath)) {
-        try {
-          fs.unlinkSync(filePath);
-        } catch (unlinkErr) {
-        }
+
+      const scheduledAt = scheduledMoment.toDate();
+      const now = new Date();
+      if (scheduledAt <= now) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: "scheduledTime must be in the future (Asia/Kolkata).",
+        };
       }
+
+      const bulkSendJob = await BulkSendJob.create({
+        tenantId,
+        userId,
+        projectId,
+        templateName,
+        fileName,
+        totalContacts: 0,
+        status: "scheduled",
+        scheduledTime: scheduledAt,
+        templateDetails: {
+          components: localTemplate.components,
+          language: localTemplate.language,
+        },
+        defaultParameters,
+      });
+
+      const scheduledDir = path.resolve("uploads", "scheduled");
+      if (!fs.existsSync(scheduledDir)) {
+        fs.mkdirSync(scheduledDir, { recursive: true });
+      }
+
+      const scheduledFilePath = path.join(scheduledDir, `${bulkSendJob._id}_${fileName}`);
+      try {
+        fs.copyFileSync(originalFilePath, scheduledFilePath);
+      } catch (copyErr) {
+        console.error("[sendBulkCatalogService] File copy error for scheduled job:", copyErr);
+        await BulkSendJob.findByIdAndUpdate(bulkSendJob._id, { status: "failed", errorsSummary: [{ error: "Failed to persist uploaded file for scheduled job" }] });
+        return {
+          status: statusCode.INTERNAL_SERVER_ERROR,
+          success: false,
+          message: "Failed to schedule job: could not persist uploaded file.",
+        };
+      }
+
+      try {
+        if (fs.existsSync(originalFilePath)) {
+          fs.unlinkSync(originalFilePath);
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      const delayMs = scheduledAt.getTime() - Date.now();
+      scheduleLongTimeout(async () => {
+        try {
+          await runBulkSendJob(bulkSendJob._id, scheduledFilePath);
+        } catch (e) {
+          console.error(`[sendBulkCatalogService] Error executing scheduled job ${bulkSendJob._id}`, e);
+        }
+      }, delayMs);
+
+      return {
+        status: statusCode.OK,
+        success: true,
+        message: "Bulk send scheduled successfully.",
+        data: {
+          bulkSendJobId: bulkSendJob._id,
+          scheduledTime: scheduledAt,
+        },
+      };
     }
-    const fileName = req.file?.originalname || "manual_upload.xlsx";
+
+    const tempDir = path.resolve("uploads", "bulk");
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
+    try {
+      fs.copyFileSync(originalFilePath, tempFilePath);
+    } catch (copyErr) {
+      console.error("[sendBulkCatalogService] File copy error for immediate job:", copyErr);
+      return {
+        status: statusCode.INTERNAL_SERVER_ERROR,
+        success: false,
+        message: "Failed to process uploaded file.",
+      };
+    }
+
+    try {
+      if (fs.existsSync(originalFilePath)) {
+        fs.unlinkSync(originalFilePath);
+      }
+    } catch (e) {
+      // ignore
+    }
+
     const bulkSendJob = await BulkSendJob.create({
       tenantId,
       userId,
       projectId,
       templateName,
       fileName,
-      totalContacts: contacts.length,
-      status: "in_progress",
+      totalContacts: 0,
+      status: "scheduled", 
       startTime: new Date(),
       templateDetails: {
         components: localTemplate.components,
         language: localTemplate.language,
       },
+      defaultParameters,
     });
 
-    // Batch sending
-    const userBatchSize = (await User.findOne({ _id: userId, tenantId }).select("batch_size"))?.batch_size || 20;
-    const contactBatches = chunkArray(contacts, userBatchSize);
-
-    let totalSent = 0;
-    let totalFailed = 0;
-    const errorsSummary = [];
-
-    const bodyPlaceholders = localTemplate.components
-      .filter((c) => c.type === "BODY" && typeof c.text === "string" && c.text.includes("{{"))
-      .map((c) => {
-        const matches = c.text.match(/{{(\d+)}}/g) || [];
-        return matches.map((m) => Number(m.match(/{{(\d+)}}/)[1]));
-      })
-      .flat();
-    const uniqueSortedPlaceholderIndexes = [...new Set(bodyPlaceholders)].sort((a, b) => a - b);
-
-    for (const [batchIndex, batch] of contactBatches.entries()) {
-
-      const sendPromises = batch.map(async (contactRow, idx) => {
-        const mobileNumber = String(contactRow.mobilenumber).trim();
-        const countryCode = String(contactRow.countrycode || "").trim();
-        const to = `${countryCode}${mobileNumber}`;
-
-        if (!mobileNumber || mobileNumber.length < 5) {
-          totalFailed++;
-          errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format" });
-          return;
-        }
-
-        let contactParameters = [];
-        try {
-          if (uniqueSortedPlaceholderIndexes.length > 0) {
-            contactParameters = uniqueSortedPlaceholderIndexes.map((index) => {
-              const col1 = `variable_${index}`;
-              const col2 = `body_Example_${index}`;
-              // try several possibilities (trimmed keys)
-              const valueRaw = contactRow[col1] ?? contactRow[col2] ?? contactRow[`variable ${index}`] ?? contactRow[`body_Example ${index}`] ?? "";
-              const value = typeof valueRaw === "string" ? valueRaw.trim() : valueRaw;
-              return value;
-            });
-            // Validate: WhatsApp requires non-empty text for text parameters
-            const missingIndex = contactParameters.findIndex((v) => v === undefined || v === null || String(v).trim() === "");
-            if (missingIndex !== -1) {
-              const msg = `Missing required template variable value for variable_${uniqueSortedPlaceholderIndexes[missingIndex]}`;
-              console.warn(`[sendBulkCatalogService] ${msg} for ${to}`);
-              totalFailed++;
-              errorsSummary.push({ to, error: msg });
-              return;
-            }
-          } else {
-            // No body variables — use defaultParameters (if any)
-            contactParameters = defaultParameters;console.log(`[sendBulkCatalogService] No template variables found. Using default parameters for ${to}:`, contactParameters);
-          }
-        } catch (paramErr) {
-          totalFailed++;
-          errorsSummary.push({ to, error: "Parameter build error: " + paramErr.message });
-          return;
-        }
-
-        // Now call sendCatalogTemplateMessage with an array of strings
-        try {
-          const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, templateName, accessToken);
-
-          if (response && response.messages && response.messages.length > 0) {
-            totalSent++;
-          } else {
-            totalFailed++;
-            errorsSummary.push({ to, error: "Failed to send catalog template (no messages returned)" });
-          }
-        } catch (err) {
-          totalFailed++;
-          const errMsg = err?.message || JSON.stringify(err);
-          errorsSummary.push({ to, error: errMsg });
-        }
-      });
-
-      await Promise.allSettled(sendPromises);
-    }
-
-    bulkSendJob.totalSent = totalSent;
-    bulkSendJob.totalFailed = totalFailed;
-    bulkSendJob.errorsSummary = errorsSummary;
-    bulkSendJob.endTime = new Date();
-    bulkSendJob.status = totalFailed > 0 ? "completed_with_errors" : "completed";
-    await bulkSendJob.save();
+    (async () => {
+      try {
+        await runBulkSendJob(bulkSendJob._id, tempFilePath);
+      } catch (e) {
+        console.error(`[sendBulkCatalogService] Background immediate job error ${bulkSendJob._id}`, e);
+      }
+    })();
 
     return {
       status: statusCode.OK,
       success: true,
-      message:
-        totalFailed > 0
-          ? resMessage.Bulk_send_completed_with_errors
-          : resMessage.Bulk_messages_sent_successfully,
+      message: resMessage.Bulk_send_started, 
       data: {
         bulkSendJobId: bulkSendJob._id,
-        totalSent,
-        totalFailed,
-        errorsSummary,
       },
     };
-
   } catch (error) {
     console.error("Error in sendBulkCatalogService:", error);
     return {

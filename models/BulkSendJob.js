@@ -55,7 +55,7 @@ const BulkSendJobSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'in_progress', 'completed', 'completed_with_errors', 'failed', 'cancelled'],
+        enum: ['pending', 'in_progress', 'completed', 'completed_with_errors', 'failed' , 'scheduled', 'cancelled'],
         default: 'pending',
         index: true // Index for status filtering
     },
