@@ -487,6 +487,58 @@ exports.sendCatalogTemplateMessage = async (to, parameters, PHONE_NUMBER_ID, TEM
   }
 };
 
+exports.sendSPMTemplateMessage = async (to, parameters = [], PHONE_NUMBER_ID, TEMPLATE_NAME, ACCESS_TOKEN, productRetailerId, metaCatalogId) => {
+  try {
+    if (!productRetailerId || !metaCatalogId) throw new Error("Missing productRetailerId or metaCatalogId for SPM template.");
+    const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
+    const template = {
+      name: TEMPLATE_NAME,
+      language: { policy: "deterministic", code: "en_GB" },
+      components: [
+        {
+          type: "header",
+          parameters: [
+            {
+              type: "product",
+              product: {
+                product_retailer_id: String(productRetailerId),
+                catalog_id: String(metaCatalogId)
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    if (parameters && parameters.length > 0) {
+      template.components.push({
+        type: "body",
+        parameters: parameters.map((p) => ({ type: "text", text: p }))
+      });
+    }
+
+    const data = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "template",
+      template
+    };
+
+    const response = await axios.post(url, data, {
+      headers: {
+        Authorization: `Bearer ${ACCESS_TOKEN}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response) throw new Error(JSON.stringify(error.response.data));
+    throw new Error(error.message);
+  }
+};
+
 exports.scheduleLongTimeout =(fn, delayMs) => {
   const MAX_TIMEOUT_MS = 2147483647;
   if (delayMs <= 0) {

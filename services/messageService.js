@@ -14,7 +14,7 @@ const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
-const {sendCatalogTemplateMessage , scheduleLongTimeout } = require('../functions/functions');
+const {sendCatalogTemplateMessage , scheduleLongTimeout ,sendSPMTemplateMessage} = require('../functions/functions');
 const moment = require("moment-timezone");
 
 const sendWhatsAppMessage = async ({
@@ -596,7 +596,7 @@ const ScheduleBulkSendService = async (req) => {
 
 const sendBulkCatalogService = async (req) => {
   try {
-    const { templateName, parameters: defaultParameters = [], scheduledTime: scheduledTimeStr } = req.body;
+    const { templateName, parameters: defaultParameters = [], scheduledTime: scheduledTimeStr, typeofmessage, productId, metaCatalogId } = req.body;
     const userId = req.user._id;
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
@@ -659,13 +659,8 @@ const sendBulkCatalogService = async (req) => {
     const fileName = req.file?.originalname || "manual_upload.xlsx";
 
     async function runBulkSendJob(bulkSendJobId, scheduledFilePath) {
-      console.log(`[runBulkSendJob] Starting job ${bulkSendJobId} using file ${scheduledFilePath}`);
       const job = await BulkSendJob.findById(bulkSendJobId);
-      if (!job) {
-        console.error(`[runBulkSendJob] Job not found: ${bulkSendJobId}`);
-        return;
-      }
-
+      if (!job) return;
       job.status = "in_progress";
       job.startTime = job.startTime || new Date();
       await job.save();
@@ -679,11 +674,8 @@ const sendBulkCatalogService = async (req) => {
         const normalized = sheetData.map((row) => {
           const out = {};
           Object.keys(row).forEach((k) => {
-            if (typeof k === "string") {
-              out[k.trim()] = row[k];
-            } else {
-              out[k] = row[k];
-            }
+            if (typeof k === "string") out[k.trim()] = row[k];
+            else out[k] = row[k];
           });
           return out;
         });
@@ -696,7 +688,6 @@ const sendBulkCatalogService = async (req) => {
           job.errorsSummary = [{ error: "Invalid file format or no mobilenumber column" }];
           job.endTime = new Date();
           await job.save();
-          console.warn(`[runBulkSendJob] No contacts found for job ${bulkSendJobId}`);
           return;
         }
       } catch (err) {
@@ -704,7 +695,6 @@ const sendBulkCatalogService = async (req) => {
         job.errorsSummary = [{ error: "Invalid file format at send time: " + (err.message || err) }];
         job.endTime = new Date();
         await job.save();
-        console.error(`[runBulkSendJob] Error reading file for job ${bulkSendJobId}`, err);
         return;
       }
 
@@ -724,7 +714,7 @@ const sendBulkCatalogService = async (req) => {
         .flat();
       const uniqueSortedPlaceholderIndexes = [...new Set(bodyPlaceholders)].sort((a, b) => a - b);
 
-      for (const [batchIndex, batch] of contactBatches.entries()) {
+      for (const batch of contactBatches) {
         const sendPromises = batch.map(async (contactRow) => {
           const mobileNumber = String(contactRow.mobilenumber).trim();
           const countryCode = String(contactRow.countrycode || "").trim();
@@ -748,10 +738,8 @@ const sendBulkCatalogService = async (req) => {
               });
               const missingIndex = contactParameters.findIndex((v) => v === undefined || v === null || String(v).trim() === "");
               if (missingIndex !== -1) {
-                const msg = `Missing required template variable value for variable_${uniqueSortedPlaceholderIndexes[missingIndex]}`;
-                console.warn(`[runBulkSendJob] ${msg} for ${to}`);
                 totalFailed++;
-                errorsSummary.push({ to, error: msg });
+                errorsSummary.push({ to, error: `Missing required template variable value for variable_${uniqueSortedPlaceholderIndexes[missingIndex]}` });
                 return;
               }
             } else {
@@ -764,12 +752,28 @@ const sendBulkCatalogService = async (req) => {
           }
 
           try {
-            const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, templateName, accessToken);
-            if (response && response.messages && response.messages.length > 0) {
-              totalSent++;
+            if (job.typeofmessage && job.typeofmessage.toLowerCase() === "spm") {
+              const productRetailerId = job.productId || contactRow.product_id || contactRow.productid || contactRow['product id'];
+              const metaCatalog = job.metaCatalogId || contactRow.metaCatalogId || contactRow.meta_catalog_id || contactRow.catalog_id || contactRow.catalogid || contactRow['catalog id'];
+              if (!productRetailerId || !metaCatalog) {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Missing product id or metaCatalogId for SPM message." });
+                return;
+              }
+
+              const response = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken, productRetailerId, metaCatalog);
+              if (response && response.messages && response.messages.length > 0) totalSent++;
+              else {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Failed to send SPM template (no messages returned)" });
+              }
             } else {
-              totalFailed++;
-              errorsSummary.push({ to, error: "Failed to send catalog template (no messages returned)" });
+              const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken);
+              if (response && response.messages && response.messages.length > 0) totalSent++;
+              else {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Failed to send catalog template (no messages returned)" });
+              }
             }
           } catch (err) {
             totalFailed++;
@@ -786,49 +790,22 @@ const sendBulkCatalogService = async (req) => {
       job.errorsSummary = errorsSummary;
       job.endTime = new Date();
       job.status = totalFailed > 0 ? "completed_with_errors" : "completed";
-
       await job.save();
 
-      try {
-        if (fs.existsSync(scheduledFilePath)) {
-          fs.unlinkSync(scheduledFilePath);
-        }
-      } catch (e) {
-      }
-
-      console.log(`[runBulkSendJob] Job ${bulkSendJobId} finished. Sent: ${totalSent}, Failed: ${totalFailed}`);
+      try { if (fs.existsSync(scheduledFilePath)) fs.unlinkSync(scheduledFilePath); } catch (e) {}
     }
 
-    // If scheduledTime provided — schedule the job and return immediately
     if (scheduledTimeStr) {
-      // parse scheduledTime in IST
-      // Accepts ISO or human formats — using moment-timezone
-      const scheduledMoment = moment.tz(scheduledTimeStr, "Asia/Kolkata");
+      let scheduledMoment = moment.tz(scheduledTimeStr, "Asia/Kolkata");
       if (!scheduledMoment.isValid()) {
-        // try fallback parse (e.g., user could send 'DD-MM-YYYY HH:mm')
         const alt = moment.tz(scheduledTimeStr, "DD-MM-YYYY HH:mm", "Asia/Kolkata");
-        if (alt.isValid()) {
-          scheduledMoment = alt;
-        }
+        if (alt.isValid()) scheduledMoment = alt;
       }
 
-      if (!scheduledMoment.isValid()) {
-        return {
-          status: statusCode.BAD_REQUEST,
-          success: false,
-          message: "Invalid scheduledTime. Provide a valid datetime (interpreted as Asia/Kolkata).",
-        };
-      }
+      if (!scheduledMoment.isValid()) return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid scheduledTime. Provide a valid datetime (interpreted as Asia/Kolkata)." };
 
       const scheduledAt = scheduledMoment.toDate();
-      const now = new Date();
-      if (scheduledAt <= now) {
-        return {
-          status: statusCode.BAD_REQUEST,
-          success: false,
-          message: "scheduledTime must be in the future (Asia/Kolkata).",
-        };
-      }
+      if (scheduledAt <= new Date()) return { status: statusCode.BAD_REQUEST, success: false, message: "scheduledTime must be in the future (Asia/Kolkata)." };
 
       const bulkSendJob = await BulkSendJob.create({
         tenantId,
@@ -844,77 +821,34 @@ const sendBulkCatalogService = async (req) => {
           language: localTemplate.language,
         },
         defaultParameters,
+        typeofmessage: typeofmessage || "catalog",
+        productId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (productId || null) : null,
+        metaCatalogId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (metaCatalogId || null) : null
       });
 
       const scheduledDir = path.resolve("uploads", "scheduled");
-      if (!fs.existsSync(scheduledDir)) {
-        fs.mkdirSync(scheduledDir, { recursive: true });
-      }
+      if (!fs.existsSync(scheduledDir)) fs.mkdirSync(scheduledDir, { recursive: true });
 
       const scheduledFilePath = path.join(scheduledDir, `${bulkSendJob._id}_${fileName}`);
-      try {
-        fs.copyFileSync(originalFilePath, scheduledFilePath);
-      } catch (copyErr) {
-        console.error("[sendBulkCatalogService] File copy error for scheduled job:", copyErr);
+      try { fs.copyFileSync(originalFilePath, scheduledFilePath); } catch (copyErr) {
         await BulkSendJob.findByIdAndUpdate(bulkSendJob._id, { status: "failed", errorsSummary: [{ error: "Failed to persist uploaded file for scheduled job" }] });
-        return {
-          status: statusCode.INTERNAL_SERVER_ERROR,
-          success: false,
-          message: "Failed to schedule job: could not persist uploaded file.",
-        };
+        return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: "Failed to schedule job: could not persist uploaded file." };
       }
 
-      try {
-        if (fs.existsSync(originalFilePath)) {
-          fs.unlinkSync(originalFilePath);
-        }
-      } catch (e) {
-        // ignore
-      }
+      try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch (e) {}
 
       const delayMs = scheduledAt.getTime() - Date.now();
-      scheduleLongTimeout(async () => {
-        try {
-          await runBulkSendJob(bulkSendJob._id, scheduledFilePath);
-        } catch (e) {
-          console.error(`[sendBulkCatalogService] Error executing scheduled job ${bulkSendJob._id}`, e);
-        }
-      }, delayMs);
+      scheduleLongTimeout(async () => { try { await runBulkSendJob(bulkSendJob._id, scheduledFilePath); } catch (e) {} }, delayMs);
 
-      return {
-        status: statusCode.OK,
-        success: true,
-        message: "Bulk send scheduled successfully.",
-        data: {
-          bulkSendJobId: bulkSendJob._id,
-          scheduledTime: scheduledAt,
-        },
-      };
+      return { status: statusCode.OK, success: true, message: "Bulk send scheduled successfully.", data: { bulkSendJobId: bulkSendJob._id, scheduledTime: scheduledAt } };
     }
 
     const tempDir = path.resolve("uploads", "bulk");
-    if (!fs.existsSync(tempDir)) {
-      fs.mkdirSync(tempDir, { recursive: true });
-    }
+    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
     const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
-    try {
-      fs.copyFileSync(originalFilePath, tempFilePath);
-    } catch (copyErr) {
-      console.error("[sendBulkCatalogService] File copy error for immediate job:", copyErr);
-      return {
-        status: statusCode.INTERNAL_SERVER_ERROR,
-        success: false,
-        message: "Failed to process uploaded file.",
-      };
-    }
+    try { fs.copyFileSync(originalFilePath, tempFilePath); } catch (copyErr) { return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: "Failed to process uploaded file." }; }
 
-    try {
-      if (fs.existsSync(originalFilePath)) {
-        fs.unlinkSync(originalFilePath);
-      }
-    } catch (e) {
-      // ignore
-    }
+    try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch (e) {}
 
     const bulkSendJob = await BulkSendJob.create({
       tenantId,
@@ -930,31 +864,18 @@ const sendBulkCatalogService = async (req) => {
         language: localTemplate.language,
       },
       defaultParameters,
+      typeofmessage: typeofmessage || "catalog",
+      productId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (productId || null) : null,
+      metaCatalogId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (metaCatalogId || null) : null
     });
 
     (async () => {
-      try {
-        await runBulkSendJob(bulkSendJob._id, tempFilePath);
-      } catch (e) {
-        console.error(`[sendBulkCatalogService] Background immediate job error ${bulkSendJob._id}`, e);
-      }
+      try { await runBulkSendJob(bulkSendJob._id, tempFilePath); } catch (e) {}
     })();
 
-    return {
-      status: statusCode.OK,
-      success: true,
-      message: resMessage.Bulk_send_started, 
-      data: {
-        bulkSendJobId: bulkSendJob._id,
-      },
-    };
+    return { status: statusCode.OK, success: true, message: resMessage.Bulk_send_started, data: { bulkSendJobId: bulkSendJob._id } };
   } catch (error) {
-    console.error("Error in sendBulkCatalogService:", error);
-    return {
-      status: statusCode.INTERNAL_SERVER_ERROR,
-      success: false,
-      message: error.message || resMessage.Server_error,
-    };
+    return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
   }
 };
 
