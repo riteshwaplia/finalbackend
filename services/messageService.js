@@ -611,7 +611,6 @@ const sendBulkCatalogService = async (req) => {
 
     const projectData = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
     if (!projectData) {
-      console.log("Project not found:", projectId);
       return {
         status: statusCode.NOT_FOUND,
         success: false,
@@ -655,6 +654,7 @@ const sendBulkCatalogService = async (req) => {
       };
     }
 
+    const templateLanguage = localTemplate.language || "en_US"; 
     const originalFilePath = path.resolve(req.file.path);
     const fileName = req.file?.originalname || "manual_upload.xlsx";
 
@@ -761,14 +761,14 @@ const sendBulkCatalogService = async (req) => {
                 return;
               }
 
-              const response = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken, productRetailerId, metaCatalog);
+              const response = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken, productRetailerId, metaCatalog , templateLanguage);
               if (response && response.messages && response.messages.length > 0) totalSent++;
               else {
                 totalFailed++;
                 errorsSummary.push({ to, error: "Failed to send SPM template (no messages returned)" });
               }
             } else {
-              const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken);
+              const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken , templateLanguage);
               if (response && response.messages && response.messages.length > 0) totalSent++;
               else {
                 totalFailed++;
@@ -818,7 +818,7 @@ const sendBulkCatalogService = async (req) => {
         scheduledTime: scheduledAt,
         templateDetails: {
           components: localTemplate.components,
-          language: localTemplate.language,
+          language: templateLanguage,
         },
         defaultParameters,
         typeofmessage: typeofmessage || "catalog",
@@ -861,7 +861,7 @@ const sendBulkCatalogService = async (req) => {
       startTime: new Date(),
       templateDetails: {
         components: localTemplate.components,
-        language: localTemplate.language,
+        language: templateLanguage,
       },
       defaultParameters,
       typeofmessage: typeofmessage || "catalog",

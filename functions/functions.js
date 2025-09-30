@@ -441,13 +441,13 @@ exports.createCatalogTemplate = async (wabaId, name, language, category, bodyTex
   }
 }
 
-exports.sendCatalogTemplateMessage = async (to, parameters, PHONE_NUMBER_ID, TEMPLATE_NAME, ACCESS_TOKEN) => {
+exports.sendCatalogTemplateMessage = async (to, parameters, PHONE_NUMBER_ID, TEMPLATE_NAME, ACCESS_TOKEN, LANGUAGE_CODE) => {
   try {
     const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
 
     const template = {
       name: TEMPLATE_NAME,
-      language: { code: "en_US" },
+      language: { code: LANGUAGE_CODE || "en_US" }, 
       components: []
     };
 
@@ -487,13 +487,13 @@ exports.sendCatalogTemplateMessage = async (to, parameters, PHONE_NUMBER_ID, TEM
   }
 };
 
-exports.sendSPMTemplateMessage = async (to, parameters = [], PHONE_NUMBER_ID, TEMPLATE_NAME, ACCESS_TOKEN, productRetailerId, metaCatalogId) => {
+exports.sendSPMTemplateMessage = async (to, parameters = [], PHONE_NUMBER_ID, TEMPLATE_NAME, ACCESS_TOKEN, productRetailerId, metaCatalogId, LANGUAGE_CODE) => {
   try {
     if (!productRetailerId || !metaCatalogId) throw new Error("Missing productRetailerId or metaCatalogId for SPM template.");
     const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
     const template = {
       name: TEMPLATE_NAME,
-      language: { policy: "deterministic", code: "en_GB" },
+      language: { policy: "deterministic", code: LANGUAGE_CODE || "en_GB" }, 
       components: [
         {
           type: "header",
