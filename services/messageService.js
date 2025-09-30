@@ -654,7 +654,7 @@ const sendBulkCatalogService = async (req) => {
       };
     }
 
-    const templateLanguage = localTemplate.language || "en_US"; 
+    const templateLanguage = localTemplate.language || "en_US";
     const originalFilePath = path.resolve(req.file.path);
     const fileName = req.file?.originalname || "manual_upload.xlsx";
 
@@ -688,14 +688,14 @@ const sendBulkCatalogService = async (req) => {
           job.errorsSummary = [{ error: "Invalid file format or no mobilenumber column" }];
           job.endTime = new Date();
           await job.save();
-          return;
+          return { totalSent: 0, totalFailed: 0, errorsSummary: job.errorsSummary };
         }
       } catch (err) {
         job.status = "completed_with_errors";
         job.errorsSummary = [{ error: "Invalid file format at send time: " + (err.message || err) }];
         job.endTime = new Date();
         await job.save();
-        return;
+        return { totalSent: 0, totalFailed: 0, errorsSummary: job.errorsSummary };
       }
 
       const userBatchSize = (await User.findOne({ _id: job.userId, tenantId: job.tenantId }).select("batch_size"))?.batch_size || 20;
@@ -793,6 +793,8 @@ const sendBulkCatalogService = async (req) => {
       await job.save();
 
       try { if (fs.existsSync(scheduledFilePath)) fs.unlinkSync(scheduledFilePath); } catch (e) {}
+
+      return { totalSent, totalFailed, errorsSummary }; // Return summary for immediate jobs
     }
 
     if (scheduledTimeStr) {
@@ -843,6 +845,7 @@ const sendBulkCatalogService = async (req) => {
       return { status: statusCode.OK, success: true, message: "Bulk send scheduled successfully.", data: { bulkSendJobId: bulkSendJob._id, scheduledTime: scheduledAt } };
     }
 
+    // Immediate send (no scheduledTime)
     const tempDir = path.resolve("uploads", "bulk");
     if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
     const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
@@ -857,7 +860,7 @@ const sendBulkCatalogService = async (req) => {
       templateName,
       fileName,
       totalContacts: 0,
-      status: "scheduled", 
+      status: "scheduled",
       startTime: new Date(),
       templateDetails: {
         components: localTemplate.components,
@@ -869,11 +872,21 @@ const sendBulkCatalogService = async (req) => {
       metaCatalogId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (metaCatalogId || null) : null
     });
 
-    (async () => {
-      try { await runBulkSendJob(bulkSendJob._id, tempFilePath); } catch (e) {}
-    })();
+    // Run immediate job and wait for summary
+    const summary = await runBulkSendJob(bulkSendJob._id, tempFilePath);
 
-    return { status: statusCode.OK, success: true, message: resMessage.Bulk_send_started, data: { bulkSendJobId: bulkSendJob._id } };
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Bulk_send_started,
+      data: {
+        bulkSendJobId: bulkSendJob._id,
+        totalSent: summary.totalSent,
+        totalFailed: summary.totalFailed,
+        errorsSummary: summary.errorsSummary
+      }
+    };
+
   } catch (error) {
     return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
   }
