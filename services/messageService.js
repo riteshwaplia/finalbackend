@@ -786,18 +786,28 @@ const sendBulkCatalogService = async (req) => {
       job.status = totalFailed ? "completed_with_errors" : "completed";
       await job.save();
 
-      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) {}
+      // ------------------ unlink file only after job runs ------------------
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch(e) {}
+
       return { totalSent, totalFailed, errorsSummary };
     }
 
     // ---------------------- Schedule or immediate ----------------------
     if (scheduledTimeStr) {
-      let scheduledMoment = moment.tz(scheduledTimeStr, moment.ISO_8601, "Asia/Kolkata");
-      if (!scheduledMoment.isValid()) return { status: 400, success: false, message: "Invalid scheduledTime format" };
+      let scheduledMoment = moment.tz(scheduledTimeStr, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) {
+        scheduledMoment = moment.tz(scheduledTimeStr, moment.ISO_8601, "Asia/Kolkata");
+      }
+
+      if (!scheduledMoment.isValid()) {
+        return { status: 400, success: false, message: "Invalid scheduledTime format. Use 'YYYY-MM-DD HH:mm' or ISO format (IST)." };
+      }
 
       const scheduledAt = scheduledMoment.toDate();
       const delayMs = scheduledAt.getTime() - Date.now();
-      if (delayMs <= 0) return { status: 400, success: false, message: "Scheduled time must be in the future" };
+      if (delayMs <= 0) {
+        return { status: 400, success: false, message: "Scheduled time must be in the future (IST)." };
+      }
 
       const bulkSendJob = await BulkSendJob.create({
         tenantId,
@@ -870,7 +880,6 @@ const sendBulkCatalogService = async (req) => {
     return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
   }
 };
-
 
 const BulkSendGroupService = async (req) => {
   const { templateName, message = {}, groupId, contactfields = [] } = req.body;
