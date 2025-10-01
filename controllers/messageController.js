@@ -1,4 +1,4 @@
-const { sendBulkMessageService , getAllBulkSendJobsService, getBulkSendJobDetailsService , sendBulkCatalogService } = require('../services/messageService');
+const { sendBulkMessageService, sendBulkCatalogService , getAllBulkSendJobsService, getBulkSendJobDetailsService } = require('../services/messageService');
 const messageService = require("../services/messageService");
 const fs = require("fs");
 const path = require("path");

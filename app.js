@@ -28,6 +28,9 @@ const projectDashboardRoutes = require('./routes/projectDashboard');
 const flowRoutes = require('./routes/flowRoutes');
 const catalogRoutes = require('./routes/catalog');
 const productRoutes = require('./routes/product');
+const mediaRoutes = require('./routes/media');
+const templateCategoryRoutes = require('./routes/templateCategoryRoutes');
+const admintemplateRoutes = require('./routes/admintemplateRoutes');
 
 connectDB();
 initScheduler();
