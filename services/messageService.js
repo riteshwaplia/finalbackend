@@ -596,7 +596,15 @@ const ScheduleBulkSendService = async (req) => {
 
 const sendBulkCatalogService = async (req) => {
   try {
-    const { templateName, parameters: defaultParameters = [], scheduledTime: scheduledTimeStr, typeofmessage, productId, metaCatalogId } = req.body;
+    const {
+      templateName,
+      parameters: defaultParameters = [],
+      scheduledTime: scheduledTimeStr,
+      typeofmessage,
+      productId,
+      metaCatalogId
+    } = req.body;
+
     const userId = req.user._id;
     const tenantId = req.tenant._id;
     const projectId = req.params.projectId;
@@ -605,16 +613,17 @@ const sendBulkCatalogService = async (req) => {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: resMessage.Missing_required_fields + " (templateName and file are required).",
+        message: `${resMessage.Missing_required_fields} (templateName and file are required)`
       };
     }
 
+    // ---------------------- Fetch project and business data ----------------------
     const projectData = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
     if (!projectData) {
       return {
         status: statusCode.NOT_FOUND,
         success: false,
-        message: resMessage.No_data_found + " (Project not found or not owned by user).",
+        message: `${resMessage.No_data_found} (Project not found or not owned by user)`
       };
     }
 
@@ -622,7 +631,7 @@ const sendBulkCatalogService = async (req) => {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: resMessage.Project_whatsapp_number_not_configured,
+        message: resMessage.Project_whatsapp_number_not_configured
       };
     }
 
@@ -631,13 +640,14 @@ const sendBulkCatalogService = async (req) => {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: resMessage.Meta_API_credentials_not_configured,
+        message: resMessage.Meta_API_credentials_not_configured
       };
     }
 
     const accessToken = businessData.metaAccessToken;
     const phoneNumberId = projectData.metaPhoneNumberID;
 
+    // ---------------------- Fetch approved template ----------------------
     const localTemplate = await Template.findOne({
       tenantId,
       userId,
@@ -650,38 +660,35 @@ const sendBulkCatalogService = async (req) => {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: `Template '${templateName}' not found locally or not approved. Please sync the template first.`,
+        message: `Template '${templateName}' not found locally or not approved. Please sync the template first.`
       };
     }
 
     const templateLanguage = localTemplate.language || "en_US";
     const originalFilePath = path.resolve(req.file.path);
-    const fileName = req.file?.originalname || "manual_upload.xlsx";
+    const fileName = req.file.originalname || "manual_upload.xlsx";
 
-    async function runBulkSendJob(bulkSendJobId, scheduledFilePath) {
+    // ---------------------- Core job execution ----------------------
+    async function runBulkSendJob(bulkSendJobId, filePath) {
       const job = await BulkSendJob.findById(bulkSendJobId);
       if (!job) return;
+
       job.status = "in_progress";
       job.startTime = job.startTime || new Date();
       await job.save();
 
       let contacts = [];
       try {
-        const workbook = xlsx.readFile(scheduledFilePath);
+        const workbook = xlsx.readFile(filePath);
         const sheetName = workbook.SheetNames[0];
         const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-
-        const normalized = sheetData.map((row) => {
+        contacts = sheetData.map(row => {
           const out = {};
-          Object.keys(row).forEach((k) => {
-            if (typeof k === "string") out[k.trim()] = row[k];
-            else out[k] = row[k];
-          });
+          Object.keys(row).forEach(k => out[String(k).trim()] = row[k]);
           return out;
-        });
+        }).filter(row => row.mobilenumber);
 
-        contacts = normalized.filter((row) => row.mobilenumber);
-        if (contacts.length === 0) {
+        if (!contacts.length) {
           job.status = "completed_with_errors";
           job.totalSent = 0;
           job.totalFailed = 0;
@@ -698,90 +705,77 @@ const sendBulkCatalogService = async (req) => {
         return { totalSent: 0, totalFailed: 0, errorsSummary: job.errorsSummary };
       }
 
-      const userBatchSize = (await User.findOne({ _id: job.userId, tenantId: job.tenantId }).select("batch_size"))?.batch_size || 20;
-      const contactBatches = chunkArray(contacts, userBatchSize);
+      const batchSize = (await User.findById(job.userId).select("batch_size"))?.batch_size || 20;
+      const contactBatches = chunkArray(contacts, batchSize);
 
       let totalSent = 0;
       let totalFailed = 0;
       const errorsSummary = [];
 
       const bodyPlaceholders = localTemplate.components
-        .filter((c) => c.type === "BODY" && typeof c.text === "string" && c.text.includes("{{"))
-        .map((c) => {
-          const matches = c.text.match(/{{(\d+)}}/g) || [];
-          return matches.map((m) => Number(m.match(/{{(\d+)}}/)[1]));
-        })
+        .filter(c => c.type === "BODY" && typeof c.text === "string" && c.text.includes("{{"))
+        .map(c => [...c.text.matchAll(/{{(\d+)}}/g)].map(m => Number(m[1])))
         .flat();
       const uniqueSortedPlaceholderIndexes = [...new Set(bodyPlaceholders)].sort((a, b) => a - b);
 
       for (const batch of contactBatches) {
-        const sendPromises = batch.map(async (contactRow) => {
+        const sendPromises = batch.map(async contactRow => {
           const mobileNumber = String(contactRow.mobilenumber).trim();
           const countryCode = String(contactRow.countrycode || "").trim();
           const to = `${countryCode}${mobileNumber}`;
 
           if (!mobileNumber || mobileNumber.length < 5) {
             totalFailed++;
-            errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format" });
+            errorsSummary.push({ to, error: "Invalid mobile number format" });
             return;
           }
 
+          // Build parameters
           let contactParameters = [];
           try {
-            if (uniqueSortedPlaceholderIndexes.length > 0) {
-              contactParameters = uniqueSortedPlaceholderIndexes.map((index) => {
-                const col1 = `variable_${index}`;
-                const col2 = `body_Example_${index}`;
-                const valueRaw = contactRow[col1] ?? contactRow[col2] ?? contactRow[`variable ${index}`] ?? contactRow[`body_Example ${index}`] ?? "";
-                const value = typeof valueRaw === "string" ? valueRaw.trim() : valueRaw;
-                return value;
+            if (uniqueSortedPlaceholderIndexes.length) {
+              contactParameters = uniqueSortedPlaceholderIndexes.map(index => {
+                const value = contactRow[`variable_${index}`] ??
+                              contactRow[`body_Example_${index}`] ??
+                              contactRow[`variable ${index}`] ??
+                              contactRow[`body_Example ${index}`] ?? "";
+                return typeof value === "string" ? value.trim() : value;
               });
-              const missingIndex = contactParameters.findIndex((v) => v === undefined || v === null || String(v).trim() === "");
+              const missingIndex = contactParameters.findIndex(v => v === undefined || v === null || String(v).trim() === "");
               if (missingIndex !== -1) {
                 totalFailed++;
-                errorsSummary.push({ to, error: `Missing required template variable value for variable_${uniqueSortedPlaceholderIndexes[missingIndex]}` });
+                errorsSummary.push({ to, error: `Missing template variable ${uniqueSortedPlaceholderIndexes[missingIndex]}` });
                 return;
               }
             } else {
               contactParameters = job.defaultParameters || [];
             }
-          } catch (paramErr) {
+          } catch (err) {
             totalFailed++;
-            errorsSummary.push({ to, error: "Parameter build error: " + paramErr.message });
+            errorsSummary.push({ to, error: "Parameter build error: " + err.message });
             return;
           }
 
           try {
-            if (job.typeofmessage && job.typeofmessage.toLowerCase() === "spm") {
-              const productRetailerId = job.productId || contactRow.product_id || contactRow.productid || contactRow['product id'];
-              const metaCatalog = job.metaCatalogId || contactRow.metaCatalogId || contactRow.meta_catalog_id || contactRow.catalog_id || contactRow.catalogid || contactRow['catalog id'];
-              if (!productRetailerId || !metaCatalog) {
+            if (job.typeofmessage?.toLowerCase() === "spm") {
+              const product = job.productId || contactRow.product_id || contactRow.productid;
+              const catalog = job.metaCatalogId || contactRow.metaCatalogId || contactRow.meta_catalog_id;
+              if (!product || !catalog) {
                 totalFailed++;
-                errorsSummary.push({ to, error: "Missing product id or metaCatalogId for SPM message." });
+                errorsSummary.push({ to, error: "Missing product id or metaCatalogId for SPM" });
                 return;
               }
-
-              const response = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken, productRetailerId, metaCatalog , templateLanguage);
-              if (response && response.messages && response.messages.length > 0) totalSent++;
-              else {
-                totalFailed++;
-                errorsSummary.push({ to, error: "Failed to send SPM template (no messages returned)" });
-              }
+              const res = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, product, catalog, templateLanguage);
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
             } else {
-              const response = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName || templateName, accessToken , templateLanguage);
-              if (response && response.messages && response.messages.length > 0) totalSent++;
-              else {
-                totalFailed++;
-                errorsSummary.push({ to, error: "Failed to send catalog template (no messages returned)" });
-              }
+              const res = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, templateLanguage);
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
             }
           } catch (err) {
             totalFailed++;
-            const errMsg = err?.message || JSON.stringify(err);
-            errorsSummary.push({ to, error: errMsg });
+            errorsSummary.push({ to, error: err.message || JSON.stringify(err) });
           }
         });
-
         await Promise.allSettled(sendPromises);
       }
 
@@ -789,25 +783,21 @@ const sendBulkCatalogService = async (req) => {
       job.totalFailed = totalFailed;
       job.errorsSummary = errorsSummary;
       job.endTime = new Date();
-      job.status = totalFailed > 0 ? "completed_with_errors" : "completed";
+      job.status = totalFailed ? "completed_with_errors" : "completed";
       await job.save();
 
-      try { if (fs.existsSync(scheduledFilePath)) fs.unlinkSync(scheduledFilePath); } catch (e) {}
-
-      return { totalSent, totalFailed, errorsSummary }; // Return summary for immediate jobs
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch (e) {}
+      return { totalSent, totalFailed, errorsSummary };
     }
 
+    // ---------------------- Schedule or immediate ----------------------
     if (scheduledTimeStr) {
-      let scheduledMoment = moment.tz(scheduledTimeStr, "Asia/Kolkata");
-      if (!scheduledMoment.isValid()) {
-        const alt = moment.tz(scheduledTimeStr, "DD-MM-YYYY HH:mm", "Asia/Kolkata");
-        if (alt.isValid()) scheduledMoment = alt;
-      }
-
-      if (!scheduledMoment.isValid()) return { status: statusCode.BAD_REQUEST, success: false, message: "Invalid scheduledTime. Provide a valid datetime (interpreted as Asia/Kolkata)." };
+      let scheduledMoment = moment.tz(scheduledTimeStr, moment.ISO_8601, "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) return { status: 400, success: false, message: "Invalid scheduledTime format" };
 
       const scheduledAt = scheduledMoment.toDate();
-      if (scheduledAt <= new Date()) return { status: statusCode.BAD_REQUEST, success: false, message: "scheduledTime must be in the future (Asia/Kolkata)." };
+      const delayMs = scheduledAt.getTime() - Date.now();
+      if (delayMs <= 0) return { status: 400, success: false, message: "Scheduled time must be in the future" };
 
       const bulkSendJob = await BulkSendJob.create({
         tenantId,
@@ -818,40 +808,37 @@ const sendBulkCatalogService = async (req) => {
         totalContacts: 0,
         status: "scheduled",
         scheduledTime: scheduledAt,
-        templateDetails: {
-          components: localTemplate.components,
-          language: templateLanguage,
-        },
+        templateDetails: { components: localTemplate.components, language: templateLanguage },
         defaultParameters,
         typeofmessage: typeofmessage || "catalog",
-        productId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (productId || null) : null,
-        metaCatalogId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (metaCatalogId || null) : null
+        productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
+        metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null
       });
 
       const scheduledDir = path.resolve("uploads", "scheduled");
-      if (!fs.existsSync(scheduledDir)) fs.mkdirSync(scheduledDir, { recursive: true });
-
+      fs.mkdirSync(scheduledDir, { recursive: true });
       const scheduledFilePath = path.join(scheduledDir, `${bulkSendJob._id}_${fileName}`);
-      try { fs.copyFileSync(originalFilePath, scheduledFilePath); } catch (copyErr) {
-        await BulkSendJob.findByIdAndUpdate(bulkSendJob._id, { status: "failed", errorsSummary: [{ error: "Failed to persist uploaded file for scheduled job" }] });
-        return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: "Failed to schedule job: could not persist uploaded file." };
-      }
+      fs.copyFileSync(originalFilePath, scheduledFilePath);
+      try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch(e){}
 
-      try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch (e) {}
+      scheduleLongTimeout(async () => {
+        await runBulkSendJob(bulkSendJob._id, scheduledFilePath);
+      }, delayMs);
 
-      const delayMs = scheduledAt.getTime() - Date.now();
-      scheduleLongTimeout(async () => { try { await runBulkSendJob(bulkSendJob._id, scheduledFilePath); } catch (e) {} }, delayMs);
-
-      return { status: statusCode.OK, success: true, message: "Bulk send scheduled successfully.", data: { bulkSendJobId: bulkSendJob._id, scheduledTime: scheduledAt } };
+      return {
+        status: 200,
+        success: true,
+        message: "Bulk send scheduled successfully.",
+        data: { bulkSendJobId: bulkSendJob._id, scheduledTime: scheduledAt }
+      };
     }
 
-    // Immediate send (no scheduledTime)
+    // ---------------------- Immediate send ----------------------
     const tempDir = path.resolve("uploads", "bulk");
-    if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+    fs.mkdirSync(tempDir, { recursive: true });
     const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
-    try { fs.copyFileSync(originalFilePath, tempFilePath); } catch (copyErr) { return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: "Failed to process uploaded file." }; }
-
-    try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch (e) {}
+    fs.copyFileSync(originalFilePath, tempFilePath);
+    try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch(e){}
 
     const bulkSendJob = await BulkSendJob.create({
       tenantId,
@@ -862,35 +849,28 @@ const sendBulkCatalogService = async (req) => {
       totalContacts: 0,
       status: "scheduled",
       startTime: new Date(),
-      templateDetails: {
-        components: localTemplate.components,
-        language: templateLanguage,
-      },
+      templateDetails: { components: localTemplate.components, language: templateLanguage },
       defaultParameters,
       typeofmessage: typeofmessage || "catalog",
-      productId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (productId || null) : null,
-      metaCatalogId: typeofmessage && typeofmessage.toLowerCase() === "spm" ? (metaCatalogId || null) : null
+      productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
+      metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null
     });
 
-    // Run immediate job and wait for summary
     const summary = await runBulkSendJob(bulkSendJob._id, tempFilePath);
 
     return {
       status: statusCode.OK,
       success: true,
       message: resMessage.Bulk_send_started,
-      data: {
-        bulkSendJobId: bulkSendJob._id,
-        totalSent: summary.totalSent,
-        totalFailed: summary.totalFailed,
-        errorsSummary: summary.errorsSummary
-      }
+      data: { bulkSendJobId: bulkSendJob._id, ...summary }
     };
 
   } catch (error) {
+    console.error("sendBulkCatalogService error:", error);
     return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
   }
 };
+
 
 const BulkSendGroupService = async (req) => {
   const { templateName, message = {}, groupId, contactfields = [] } = req.body;
