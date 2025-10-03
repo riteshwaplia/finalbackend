@@ -14,7 +14,7 @@ const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
-const {sendCatalogTemplateMessage , scheduleLongTimeout ,sendSPMTemplateMessage} = require('../functions/functions');
+const {sendCatalogTemplateMessage , sendMPMTemplateMessage ,scheduleLongTimeout ,sendSPMTemplateMessage} = require('../functions/functions');
 const moment = require("moment-timezone");
 
 const sendWhatsAppMessage = async ({
@@ -602,7 +602,9 @@ const sendBulkCatalogService = async (req) => {
       scheduledTime: scheduledTimeStr,
       typeofmessage,
       productId,
-      metaCatalogId
+      metaCatalogId,
+      thumbnail_product_retailer_id,
+      sections = [] 
     } = req.body;
 
     const userId = req.user._id;
@@ -712,11 +714,13 @@ const sendBulkCatalogService = async (req) => {
       let totalFailed = 0;
       const errorsSummary = [];
 
-      const bodyPlaceholders = localTemplate.components
-        .filter(c => c.type === "BODY" && typeof c.text === "string" && c.text.includes("{{"))
+      // --------------------- Collect placeholders from all template components ---------------------
+      const allComponents = localTemplate.components || [];
+      const placeholders = allComponents
+        .filter(c => ["BODY", "HEADER", "FOOTER"].includes(c.type.toUpperCase()) && typeof c.text === "string")
         .map(c => [...c.text.matchAll(/{{(\d+)}}/g)].map(m => Number(m[1])))
         .flat();
-      const uniqueSortedPlaceholderIndexes = [...new Set(bodyPlaceholders)].sort((a, b) => a - b);
+      const uniqueSortedPlaceholderIndexes = [...new Set(placeholders)].sort((a, b) => a - b);
 
       for (const batch of contactBatches) {
         const sendPromises = batch.map(async contactRow => {
@@ -767,6 +771,23 @@ const sendBulkCatalogService = async (req) => {
               }
               const res = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, product, catalog, templateLanguage);
               res?.messages?.length > 0 ? totalSent++ : totalFailed++;
+            } else if (job.typeofmessage?.toLowerCase() === "mpm") {
+              if (!thumbnail_product_retailer_id || !sections.length) {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Missing thumbnail_product_retailer_id or sections for MPM" });
+                return;
+              }
+              const res = await sendMPMTemplateMessage(
+                to,
+                contactParameters,
+                phoneNumberId,
+                job.templateName,
+                accessToken,
+                thumbnail_product_retailer_id,
+                sections,
+                templateLanguage
+              );
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
             } else {
               const res = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, templateLanguage);
               res?.messages?.length > 0 ? totalSent++ : totalFailed++;
@@ -786,30 +807,29 @@ const sendBulkCatalogService = async (req) => {
       job.status = totalFailed ? "completed_with_errors" : "completed";
       await job.save();
 
-      // ------------------ unlink file only after job runs ------------------
       try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch(e) {}
 
       return { totalSent, totalFailed, errorsSummary };
     }
 
     // ---------------------- Schedule or immediate ----------------------
+    const tempDir = path.resolve("uploads", "bulk");
+    fs.mkdirSync(tempDir, { recursive: true });
+    const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
+    fs.copyFileSync(originalFilePath, tempFilePath);
+    try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch(e){}
+
+    let bulkSendJob;
     if (scheduledTimeStr) {
       let scheduledMoment = moment.tz(scheduledTimeStr, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
-      if (!scheduledMoment.isValid()) {
-        scheduledMoment = moment.tz(scheduledTimeStr, moment.ISO_8601, "Asia/Kolkata");
-      }
-
-      if (!scheduledMoment.isValid()) {
-        return { status: 400, success: false, message: "Invalid scheduledTime format. Use 'YYYY-MM-DD HH:mm' or ISO format (IST)." };
-      }
+      if (!scheduledMoment.isValid()) scheduledMoment = moment.tz(scheduledTimeStr, moment.ISO_8601, "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) return { status: 400, success: false, message: "Invalid scheduledTime format. Use 'YYYY-MM-DD HH:mm' or ISO format (IST)." };
 
       const scheduledAt = scheduledMoment.toDate();
       const delayMs = scheduledAt.getTime() - Date.now();
-      if (delayMs <= 0) {
-        return { status: 400, success: false, message: "Scheduled time must be in the future (IST)." };
-      }
+      if (delayMs <= 0) return { status: 400, success: false, message: "Scheduled time must be in the future (IST)." };
 
-      const bulkSendJob = await BulkSendJob.create({
+      bulkSendJob = await BulkSendJob.create({
         tenantId,
         userId,
         projectId,
@@ -822,14 +842,16 @@ const sendBulkCatalogService = async (req) => {
         defaultParameters,
         typeofmessage: typeofmessage || "catalog",
         productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
-        metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null
+        metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null,
+        thumbnail_product_retailer_id: typeofmessage?.toLowerCase() === "mpm" ? (thumbnail_product_retailer_id || null) : null,
+        sections: typeofmessage?.toLowerCase() === "mpm" ? (sections || []) : []
       });
 
       const scheduledDir = path.resolve("uploads", "scheduled");
       fs.mkdirSync(scheduledDir, { recursive: true });
       const scheduledFilePath = path.join(scheduledDir, `${bulkSendJob._id}_${fileName}`);
-      fs.copyFileSync(originalFilePath, scheduledFilePath);
-      try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch(e){}
+      fs.copyFileSync(tempFilePath, scheduledFilePath);
+      try { if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath); } catch(e){}
 
       scheduleLongTimeout(async () => {
         await runBulkSendJob(bulkSendJob._id, scheduledFilePath);
@@ -843,14 +865,7 @@ const sendBulkCatalogService = async (req) => {
       };
     }
 
-    // ---------------------- Immediate send ----------------------
-    const tempDir = path.resolve("uploads", "bulk");
-    fs.mkdirSync(tempDir, { recursive: true });
-    const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
-    fs.copyFileSync(originalFilePath, tempFilePath);
-    try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch(e){}
-
-    const bulkSendJob = await BulkSendJob.create({
+    bulkSendJob = await BulkSendJob.create({
       tenantId,
       userId,
       projectId,
@@ -863,7 +878,9 @@ const sendBulkCatalogService = async (req) => {
       defaultParameters,
       typeofmessage: typeofmessage || "catalog",
       productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
-      metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null
+      metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null,
+      thumbnail_product_retailer_id: typeofmessage?.toLowerCase() === "mpm" ? (thumbnail_product_retailer_id || null) : null,
+      sections: typeofmessage?.toLowerCase() === "mpm" ? (sections || []) : []
     });
 
     const summary = await runBulkSendJob(bulkSendJob._id, tempFilePath);

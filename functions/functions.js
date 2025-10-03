@@ -539,6 +539,62 @@ exports.sendSPMTemplateMessage = async (to, parameters = [], PHONE_NUMBER_ID, TE
   }
 };
 
+exports.sendMPMTemplateMessage = async (to, parameters = [], PHONE_NUMBER_ID, TEMPLATE_NAME, ACCESS_TOKEN, thumbnailProductRetailerId, sections, LANGUAGE_CODE) => {
+  try {
+    if (!thumbnailProductRetailerId || !sections.length) throw new Error("Missing thumbnailProductRetailerId or sections for MPM.");
+    const url = `https://graph.facebook.com/v17.0/${PHONE_NUMBER_ID}/messages`;
+
+    const template = {
+      name: TEMPLATE_NAME,
+      language: { code: LANGUAGE_CODE || "en_US" },
+      components: [
+        {
+          type: "header",
+          parameters: parameters.map((p, i) => ({ type: "text", text: p })) // header variables
+        },
+        {
+          type: "body",
+          parameters: parameters.map((p) => ({ type: "text", text: p })) // body variables
+        },
+        {
+          type: "button",
+          sub_type: "mpm",
+          index: 0,
+          parameters: [
+            {
+              type: "action",
+              action: {
+                thumbnail_product_retailer_id: String(thumbnailProductRetailerId),
+                sections
+              }
+            }
+          ]
+        }
+      ]
+    };
+
+    const data = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "template",
+      template
+    };
+
+    const response = await axios.post(url, data, {
+      headers: { Authorization: `Bearer ${ACCESS_TOKEN}`, "Content-Type": "application/json" }
+    });
+
+    console.log("qwertyuiop" ,response );
+    
+
+    return response.data;
+  } catch (error) {
+    if (error.response) throw new Error(JSON.stringify(error.response.data));
+    throw new Error(error.message);
+  }
+};
+
 exports.scheduleLongTimeout =(fn, delayMs) => {
   const MAX_TIMEOUT_MS = 2147483647;
   if (delayMs <= 0) {

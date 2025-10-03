@@ -72,7 +72,7 @@ const BulkSendJobSchema = new mongoose.Schema({
 
   typeofmessage: {
     type: String,
-    enum: ['normal', 'catalog', 'carousel', 'spm'],
+    enum: ['normal', 'catalog', 'carousel', 'spm', 'mpm'],
     default: 'catalog',
     index: true
   },
@@ -85,6 +85,10 @@ const BulkSendJobSchema = new mongoose.Schema({
     type: String,
     default: null,
     trim: true
+  },
+  mpmAction: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
   },
   defaultParameters: {
     type: [mongoose.Schema.Types.Mixed],
