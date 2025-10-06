@@ -67,17 +67,6 @@ const createBusinessProfileLogic = async (req) => {
                     message: resMessage.Business_portfolio_id_already_linked
                 };
             }
-            newProfile = await BusinessProfile.create({
-                userId,
-                tenantId,
-                name,
-                businessAddress,
-                metaAccessToken,
-                metaAppId,
-                catalogAccess,
-                metaBusinessId,
-                metaId
-            });
         }
 
         newProfile = await BusinessProfile.create({
@@ -87,6 +76,7 @@ const createBusinessProfileLogic = async (req) => {
             businessAddress,
             metaAccessToken,
             metaAppId,
+            catalogAccess,
             metaBusinessId,
             metaId
         });

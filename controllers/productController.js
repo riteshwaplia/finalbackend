@@ -25,6 +25,18 @@ exports.listProductsController = async (req) => {
     }
 }
 
+exports.listProductsNameController = async (req) => {
+    try {
+        return await service.listProductsName(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        }
+    }
+}
+
 exports.syncProductController = async (req) => {
     try {
         return await service.syncProduct(req);

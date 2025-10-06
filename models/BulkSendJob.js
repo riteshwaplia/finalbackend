@@ -55,7 +55,7 @@ const BulkSendJobSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'in_progress', 'completed', 'completed_with_errors', 'failed', 'cancelled'],
+        enum: ['pending', 'in_progress', 'completed', 'completed_with_errors', 'failed' , 'scheduled', 'cancelled'],
         default: 'pending',
         index: true // Index for status filtering
     },
@@ -68,12 +68,37 @@ const BulkSendJobSchema = new mongoose.Schema({
     },
     // Optional: Add a field to store the original template components/variables used
     // This can be useful for auditing or re-running failed segments
-    templateDetails: mongoose.Schema.Types.Mixed,
+
+
+  typeofmessage: {
+    type: String,
+    enum: ['normal', 'catalog', 'carousel', 'spm', 'mpm'],
+    default: 'catalog',
+    index: true
+  },
+  productId: {
+    type: String,
+    default: null,
+    trim: true
+  },
+  metaCatalogId: {
+    type: String,
+    default: null,
+    trim: true
+  },
+  mpmAction: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null
+  },
+  defaultParameters: {
+    type: [mongoose.Schema.Types.Mixed],
+    default: []
+  },
+  templateDetails: mongoose.Schema.Types.Mixed
 }, {
-    timestamps: true // Adds createdAt and updatedAt automatically
+  timestamps: true
 });
 
-// Compound index for efficient querying by tenant, user, and project
 BulkSendJobSchema.index({ tenantId: 1, userId: 1, projectId: 1, startTime: -1 });
 
 module.exports = mongoose.model('BulkSendJob', BulkSendJobSchema);

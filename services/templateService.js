@@ -1232,7 +1232,7 @@ exports.getPlainTextTemplates = async (req) => {
 exports.createCatalogTemplate = async (req) => {
   try {
     const { businessProfileId } = req.params;
-    const { name, language, category, bodyText } = req.body;
+    const {name, language, category, bodyText, parameter_format, footer_text, example } = req.body;
     const businessData = await BusinessProfile.findOne({ _id: businessProfileId, tenantId: req.tenant._id, userId: req.user._id });
     if (!businessData) {
       return {
@@ -1241,8 +1241,40 @@ exports.createCatalogTemplate = async (req) => {
         message: resMessage.Invalid_business_ID
       }
     }
+
+    // Find max variable length
+    const placeholderRegex = /{{\s*(\d+)\s*}}/g;
+    const matches = bodyText ? [...bodyText.matchAll(placeholderRegex)].map(m => parseInt(m[1], 10)) : [];
+    const maxIndex = matches.length ? Math.max(...matches.filter(n => !isNaN(n))) : 0;
+
+    // match variable to example number 
+    if (maxIndex > 0) {
+      if (!example || !example.body_text || !Array.isArray(example.body_text) || example.body_text.length === 0) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: "Example values are required for templates with placeholders (provide example.body_text)."
+        };
+      }
+      const firstExampleRow = example.body_text[0];
+      if (!Array.isArray(firstExampleRow) || firstExampleRow.length < maxIndex) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: `Example must include at least ${maxIndex} positional values in example.body_text[0].`
+        };
+      }
+    }
+
+    //options
+    const options = {
+      ...(parameter_format && { parameter_format }),
+      ...(footer_text && { footer_text }),
+      ...(example && { example })
+    };
+
     try {
-      const result = await createCatalogTemplate(businessData.metaBusinessId, name, language, category, bodyText, businessData.metaAccessToken);
+      const result = await createCatalogTemplate(businessData.metaBusinessId, name, language, category, bodyText, businessData.metaAccessToken, options);
       return {
         status: statusCode.SUCCESS,
         success: true,

@@ -17,7 +17,7 @@ exports.create = async (req) => {
             };
         }
 
-        const isMetaId = await Businessprofile.findOne({ _id: businessProfileId, userId: req.user._id, tenantId: req.tenant._id });
+        const isMetaId = await Businessprofile.findOne({ _id: businessProfileId, userId: req.user._id, tenantId: req.tenant._id, catalogAccess: true });
         if (!isMetaId) {
             return {
                 status: statusCode.BAD_REQUEST,
@@ -86,7 +86,8 @@ exports.catalogList = async (req) => {
         const isMetaId = await Businessprofile.findOne({
             _id: businessProfileId,
             userId: req.user._id,
-            tenantId: req.tenant._id
+            tenantId: req.tenant._id,
+            catalogAccess: true
         });
         if (!isMetaId) {
             return {
@@ -154,7 +155,7 @@ exports.syncCatalogs = async (req) => {
             };
         }
 
-        const isMetaId = await Businessprofile.findOne({ _id: businessProfileId, userId: req.user._id, tenantId: req.tenant._id });
+        const isMetaId = await Businessprofile.findOne({ _id: businessProfileId, userId: req.user._id, tenantId: req.tenant._id, catalogAccess: true });
         if (!isMetaId) {
             return {
                 status: statusCode.BAD_REQUEST,
@@ -275,9 +276,11 @@ exports.deleteCatalog = async (req, res) => {
             message: resMessage.Catalog_deleted
         }
     } catch (error) {
-        res.status(500).json({
+        console.log("Error while deleting catalog", error);
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
             success: false,
-            message: error.message || "Server error"
-        });
+            message: error.error.error_user_msg
+        };
     }
 };

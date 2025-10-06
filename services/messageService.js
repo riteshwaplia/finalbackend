@@ -14,6 +14,8 @@ const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
+const {sendCatalogTemplateMessage , sendMPMTemplateMessage ,scheduleLongTimeout ,sendSPMTemplateMessage} = require('../functions/functions');
+const moment = require("moment-timezone");
 
 const sendWhatsAppMessage = async ({
   to,
@@ -93,8 +95,6 @@ const sendWhatsAppMessage = async ({
     return { success: false, error };
   }
 };
-
-// http://localhost:5173
 
 const sendMessageService = async (req) => {
   const { to, type, message } = req.body;
@@ -227,8 +227,7 @@ const sendMessageService = async (req) => {
 };
 
 const sendBulkMessageService = async (req) => {
-  const { templateName, message = {}, imageId } = req.body;
-  console.log("imgageId", imageId);
+  const { templateName, message = {} } = req.body;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
@@ -532,9 +531,6 @@ const sendBulkMessageService = async (req) => {
   };
 };
 
-// @desc    Send bulk messages from an group
-// @access  Private
-
 const ScheduleBulkSendService = async (req) => {
   const { templateName, scheduledAt } = req.body;
   const userId = req.user._id;
@@ -598,7 +594,309 @@ const ScheduleBulkSendService = async (req) => {
   }
 };
 
+const sendBulkCatalogService = async (req) => {
+  try {
+    const {
+      templateName,
+      parameters: defaultParameters = [],
+      scheduledTime: scheduledTimeStr,
+      typeofmessage,
+      productId,
+      metaCatalogId,
+      thumbnail_product_retailer_id,
+      sections = [] 
+    } = req.body;
 
+    const userId = req.user._id;
+    const tenantId = req.tenant._id;
+    const projectId = req.params.projectId;
+
+    if (!templateName || !req.file) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `${resMessage.Missing_required_fields} (templateName and file are required)`
+      };
+    }
+
+    // ---------------------- Fetch project and business data ----------------------
+    const projectData = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+    if (!projectData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: `${resMessage.No_data_found} (Project not found or not owned by user)`
+      };
+    }
+
+    if (!projectData.isWhatsappVerified || !projectData.metaPhoneNumberID) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Project_whatsapp_number_not_configured
+      };
+    }
+
+    const businessData = projectData.businessProfileId;
+    if (!businessData || !businessData.metaAccessToken || !businessData.metaBusinessId) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Meta_API_credentials_not_configured
+      };
+    }
+
+    const accessToken = businessData.metaAccessToken;
+    const phoneNumberId = projectData.metaPhoneNumberID;
+
+    // ---------------------- Fetch approved template ----------------------
+    const localTemplate = await Template.findOne({
+      tenantId,
+      userId,
+      businessProfileId: businessData._id,
+      name: templateName,
+      metaStatus: "APPROVED",
+    });
+
+    if (!localTemplate) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `Template '${templateName}' not found locally or not approved. Please sync the template first.`
+      };
+    }
+
+    const templateLanguage = localTemplate.language || "en_US";
+    const originalFilePath = path.resolve(req.file.path);
+    const fileName = req.file.originalname || "manual_upload.xlsx";
+
+    // ---------------------- Core job execution ----------------------
+    async function runBulkSendJob(bulkSendJobId, filePath) {
+      const job = await BulkSendJob.findById(bulkSendJobId);
+      if (!job) return;
+
+      job.status = "in_progress";
+      job.startTime = job.startTime || new Date();
+      await job.save();
+
+      let contacts = [];
+      try {
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        contacts = sheetData.map(row => {
+          const out = {};
+          Object.keys(row).forEach(k => out[String(k).trim()] = row[k]);
+          return out;
+        }).filter(row => row.mobilenumber);
+
+        if (!contacts.length) {
+          job.status = "completed_with_errors";
+          job.totalSent = 0;
+          job.totalFailed = 0;
+          job.errorsSummary = [{ error: "Invalid file format or no mobilenumber column" }];
+          job.endTime = new Date();
+          await job.save();
+          return { totalSent: 0, totalFailed: 0, errorsSummary: job.errorsSummary };
+        }
+      } catch (err) {
+        job.status = "completed_with_errors";
+        job.errorsSummary = [{ error: "Invalid file format at send time: " + (err.message || err) }];
+        job.endTime = new Date();
+        await job.save();
+        return { totalSent: 0, totalFailed: 0, errorsSummary: job.errorsSummary };
+      }
+
+      const batchSize = (await User.findById(job.userId).select("batch_size"))?.batch_size || 20;
+      const contactBatches = chunkArray(contacts, batchSize);
+
+      let totalSent = 0;
+      let totalFailed = 0;
+      const errorsSummary = [];
+
+      // --------------------- Collect placeholders from all template components ---------------------
+      const allComponents = localTemplate.components || [];
+      const placeholders = allComponents
+        .filter(c => ["BODY", "HEADER", "FOOTER"].includes(c.type.toUpperCase()) && typeof c.text === "string")
+        .map(c => [...c.text.matchAll(/{{(\d+)}}/g)].map(m => Number(m[1])))
+        .flat();
+      const uniqueSortedPlaceholderIndexes = [...new Set(placeholders)].sort((a, b) => a - b);
+
+      for (const batch of contactBatches) {
+        const sendPromises = batch.map(async contactRow => {
+          const mobileNumber = String(contactRow.mobilenumber).trim();
+          const countryCode = String(contactRow.countrycode || "").trim();
+          const to = `${countryCode}${mobileNumber}`;
+
+          if (!mobileNumber || mobileNumber.length < 5) {
+            totalFailed++;
+            errorsSummary.push({ to, error: "Invalid mobile number format" });
+            return;
+          }
+
+          // Build parameters
+          let contactParameters = [];
+          try {
+            if (uniqueSortedPlaceholderIndexes.length) {
+              contactParameters = uniqueSortedPlaceholderIndexes.map(index => {
+                const value = contactRow[`variable_${index}`] ??
+                              contactRow[`body_Example_${index}`] ??
+                              contactRow[`variable ${index}`] ??
+                              contactRow[`body_Example ${index}`] ?? "";
+                return typeof value === "string" ? value.trim() : value;
+              });
+              const missingIndex = contactParameters.findIndex(v => v === undefined || v === null || String(v).trim() === "");
+              if (missingIndex !== -1) {
+                totalFailed++;
+                errorsSummary.push({ to, error: `Missing template variable ${uniqueSortedPlaceholderIndexes[missingIndex]}` });
+                return;
+              }
+            } else {
+              contactParameters = job.defaultParameters || [];
+            }
+          } catch (err) {
+            totalFailed++;
+            errorsSummary.push({ to, error: "Parameter build error: " + err.message });
+            return;
+          }
+
+          try {
+            if (job.typeofmessage?.toLowerCase() === "spm") {
+              const product = job.productId || contactRow.product_id || contactRow.productid;
+              const catalog = job.metaCatalogId || contactRow.metaCatalogId || contactRow.meta_catalog_id;
+              if (!product || !catalog) {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Missing product id or metaCatalogId for SPM" });
+                return;
+              }
+              const res = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, product, catalog, templateLanguage);
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
+            } else if (job.typeofmessage?.toLowerCase() === "mpm") {
+              if (!thumbnail_product_retailer_id || !sections.length) {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Missing thumbnail_product_retailer_id or sections for MPM" });
+                return;
+              }
+              const res = await sendMPMTemplateMessage(
+                to,
+                contactParameters,
+                phoneNumberId,
+                job.templateName,
+                accessToken,
+                thumbnail_product_retailer_id,
+                sections,
+                templateLanguage
+              );
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
+            } else {
+              const res = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, templateLanguage);
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
+            }
+          } catch (err) {
+            totalFailed++;
+            errorsSummary.push({ to, error: err.message || JSON.stringify(err) });
+          }
+        });
+        await Promise.allSettled(sendPromises);
+      }
+
+      job.totalSent = totalSent;
+      job.totalFailed = totalFailed;
+      job.errorsSummary = errorsSummary;
+      job.endTime = new Date();
+      job.status = totalFailed ? "completed_with_errors" : "completed";
+      await job.save();
+
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch(e) {}
+
+      return { totalSent, totalFailed, errorsSummary };
+    }
+
+    // ---------------------- Schedule or immediate ----------------------
+    const tempDir = path.resolve("uploads", "bulk");
+    fs.mkdirSync(tempDir, { recursive: true });
+    const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
+    fs.copyFileSync(originalFilePath, tempFilePath);
+    try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch(e){}
+
+    let bulkSendJob;
+    if (scheduledTimeStr) {
+      let scheduledMoment = moment.tz(scheduledTimeStr, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) scheduledMoment = moment.tz(scheduledTimeStr, moment.ISO_8601, "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) return { status: 400, success: false, message: "Invalid scheduledTime format. Use 'YYYY-MM-DD HH:mm' or ISO format (IST)." };
+
+      const scheduledAt = scheduledMoment.toDate();
+      const delayMs = scheduledAt.getTime() - Date.now();
+      if (delayMs <= 0) return { status: 400, success: false, message: "Scheduled time must be in the future (IST)." };
+
+      bulkSendJob = await BulkSendJob.create({
+        tenantId,
+        userId,
+        projectId,
+        templateName,
+        fileName,
+        totalContacts: 0,
+        status: "scheduled",
+        scheduledTime: scheduledAt,
+        templateDetails: { components: localTemplate.components, language: templateLanguage },
+        defaultParameters,
+        typeofmessage: typeofmessage || "catalog",
+        productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
+        metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null,
+        thumbnail_product_retailer_id: typeofmessage?.toLowerCase() === "mpm" ? (thumbnail_product_retailer_id || null) : null,
+        sections: typeofmessage?.toLowerCase() === "mpm" ? (sections || []) : []
+      });
+
+      const scheduledDir = path.resolve("uploads", "scheduled");
+      fs.mkdirSync(scheduledDir, { recursive: true });
+      const scheduledFilePath = path.join(scheduledDir, `${bulkSendJob._id}_${fileName}`);
+      fs.copyFileSync(tempFilePath, scheduledFilePath);
+      try { if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath); } catch(e){}
+
+      scheduleLongTimeout(async () => {
+        await runBulkSendJob(bulkSendJob._id, scheduledFilePath);
+      }, delayMs);
+
+      return {
+        status: 200,
+        success: true,
+        message: "Bulk send scheduled successfully.",
+        data: { bulkSendJobId: bulkSendJob._id, scheduledTime: scheduledAt }
+      };
+    }
+
+    bulkSendJob = await BulkSendJob.create({
+      tenantId,
+      userId,
+      projectId,
+      templateName,
+      fileName,
+      totalContacts: 0,
+      status: "scheduled",
+      startTime: new Date(),
+      templateDetails: { components: localTemplate.components, language: templateLanguage },
+      defaultParameters,
+      typeofmessage: typeofmessage || "catalog",
+      productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
+      metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null,
+      thumbnail_product_retailer_id: typeofmessage?.toLowerCase() === "mpm" ? (thumbnail_product_retailer_id || null) : null,
+      sections: typeofmessage?.toLowerCase() === "mpm" ? (sections || []) : []
+    });
+
+    const summary = await runBulkSendJob(bulkSendJob._id, tempFilePath);
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Bulk_send_started,
+      data: { bulkSendJobId: bulkSendJob._id, ...summary }
+    };
+
+  } catch (error) {
+    console.error("sendBulkCatalogService error:", error);
+    return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
+  }
+};
 
 const BulkSendGroupService = async (req) => {
   const { templateName, message = {}, groupId, contactfields = [] } = req.body;
@@ -1265,5 +1563,6 @@ module.exports = {
   getAllBulkSendJobsService,
   getBulkSendJobDetailsService,
   downloadMedia,
-  ScheduleBulkSendService
+  ScheduleBulkSendService,
+  sendBulkCatalogService
 };
