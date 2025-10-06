@@ -2,8 +2,8 @@ const Tenant = require('../models/Tenant');
 
 const tenantResolver = async (req, res, next) => {
 
-  // const domain = [ "http://localhost:5173"];
-    const domain = req.headers.origin;
+  const domain =  "http://localhost:5173";
+    // const domain = req.headers.origin;
   // const domain = ["https://wachaat.netlify.app"];
 
   console.log("domain",domain)

@@ -1035,7 +1035,7 @@ exports.syncTemplatesFromMeta = async (req) => {
     }
 
     const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
-    const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
+    const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates?limit=250`; 
 
     const response = await axios.get(url, {
       headers: {

@@ -23,5 +23,10 @@ router.get(
   protect,
   responseHandler(feedController.listFeedsController)
 );
+router.delete(
+  "/feed/:catalogId/:feedId",
+  protect,
+  responseHandler(feedController.deleteFeedController)
+);
 
 module.exports = router;

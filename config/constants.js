@@ -156,6 +156,14 @@ const resMessage = {
     Invalid_feed_ID: "Invalid feed ID",
     Feed_not_found: "Feed not found for the provided ID",
     Meta_API_error: "Error from Meta API",
+
+    Meta_Flow_created_successfully: "Meta Flow created successfully",
+    Meta_Flows_fetched_successfully: "Meta Flows fetched successfully",
+    Meta_Flow_fetched_successfully: "Meta Flow fetched successfully",
+    Meta_Flow_updated_successfully: "Meta Flow updated successfully",
+    Meta_Flow_deleted_successfully: "Meta Flow deleted successfully",
+    Meta_Flow_not_found: "Meta Flow not found for the provided ID",
+    Meta_API_error: "Error from Meta API",
 };
 
 module.exports = {

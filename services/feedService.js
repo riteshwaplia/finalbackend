@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const { createFeedOnMeta } = require("../functions/functions");
-const { syncFeedOnMeta, updateFeedOnMeta, getFeedFromMeta } = require("../functions/functions");
+const { syncFeedOnMeta, updateFeedOnMeta, getFeedFromMeta,deleteFeedOnMeta } = require("../functions/functions");
 const { listFeedsFromMeta } = require("../functions/functions");
 const  Feed =require("../models/Feed")
 const Catalog = require('../models/Catalog');
@@ -70,6 +70,7 @@ exports.createFeed = async (req) => {
       schedule,
       meta_feed_id: metaResponse.id,
       businessProfileId,
+      status: 'SCHEDULED' // initial status
     });
 
     return {
@@ -232,7 +233,8 @@ exports.updateFeed = async (req) => {
       catalogDetails.businessProfileId.metaAccessToken,
       feedData.schedule?.url // make sure url exists
     );
-
+feedData.status = 'ACTIVE'; // update status
+    await feedData.save();
     return {
       status: statusCode.OK,
       success: true,
@@ -331,6 +333,68 @@ exports.listFeeds = async (req) => {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: error.message
+    };
+  }
+};
+
+
+
+
+
+exports.deleteFeed = async (req) => {
+  try {
+    const { catalogId, feedId } = req.params;
+
+    // get catalog & business profile
+    const catalogDetails = await Catalog.findOne({
+      _id: catalogId,
+      tenantId: req.tenant._id,
+      userId: req.user._id,
+    }).populate("businessProfileId", "metaAccessToken");
+
+    if (!catalogDetails) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Catalog_id_not_found,
+      };
+    }
+
+    const feedData = await Feed.findOne({
+      _id: feedId,
+      tenantId: req.tenant._id,
+      userId: req.user._id,
+    });
+
+    if (!feedData) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Feed_not_found,
+      };
+    }
+
+    // call Meta API delete
+    const result = await deleteFeedOnMeta(
+      feedData.meta_feed_id,
+      catalogDetails.businessProfileId.metaAccessToken
+    );
+
+    // delete from DB too
+    await feedData.deleteOne({ _id: feedId });
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Feed_deleted,
+      data: result,
+    };
+  } catch (error) {
+    console.error("Delete Feed error:", error);
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || "Failed to delete feed",
     };
   }
 };

@@ -19,6 +19,11 @@ const feedSchema = new mongoose.Schema(
     },
     name: { type: String, required: true, trim: true },
     file_name: { type: String, trim: true },
+    status: {
+      type: String,
+      enum: ["ACTIVE", "INACTIVE", "ERROR", "UPLOADING", "SCHEDULED"],
+      default: "INACTIVE",
+    },
     schedule: {
       id: { type: String },
       interval: {

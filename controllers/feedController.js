@@ -59,3 +59,14 @@ exports.listFeedsController = async (req) => {
     };
   }
 };
+exports.deleteFeedController = async (req) => {
+  try {
+    return await service.deleteFeed(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message
+    };
+  }
+};

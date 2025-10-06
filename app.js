@@ -33,7 +33,7 @@ const mediaRoutes = require('./routes/media');
 const catalogRoutes = require('./routes/catalog');
 const productRoutes = require('./routes/product');
 const feedRoutes = require('./routes/feed');
-
+const metaflows = require('./routes/metaFlows');
 connectDB();
 initScheduler();
 
@@ -94,6 +94,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/project', projectRoutes);
 app.use('/api/whatsapp/', whatsappRoutes); 
 app.use('/api/templates', templateRoutes);
+app.use('/api/metaflows', metaflows);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/projects/:projectId/groups', groupRoutes);
 app.use('/api/projects/:projectId/contacts', conntactRoutes);
@@ -108,7 +109,6 @@ app.use('/api/projects/:projectId/orders', orderRoutes);
 
 //super admin and  tanent routes
 app.use('/api/tenants', tenantRoutes);
-
 
 
 

@@ -629,3 +629,57 @@ exports.listFeedsFromMeta = async (catalogId, metaAccessToken) => {
     throw error.response?.data || error.message;
   }
 };
+exports.deleteFeedOnMeta = async (feedId, metaAccessToken) => {
+  try {
+    const apiUrl = `https://graph.facebook.com/v21.0/${feedId}`;
+
+    const response = await axios.delete(apiUrl, {
+      params: { access_token: metaAccessToken },
+    });
+
+    console.log("Feed deleted on Meta:", response.data);
+    return response.data; // { success: true }
+  } catch (error) {
+    console.error(
+      "Error deleting feed:",
+      error?.response?.data || error.message
+    );
+    throw error.response?.data || { message: error.message };
+  }
+};
+
+
+exports.createMetaFlowsOnMeta = async (metaAccessToken, businessProfileId, payload) => {
+  try {
+    const apiUrl = `https://graph.facebook.com/v21.0/${businessProfileId}/flows`;
+console.log("metaAccessToken, businessProfileId, payload", metaAccessToken, businessProfileId, payload);
+    const response = await axios.post(apiUrl, payload, {
+      params: { access_token: metaAccessToken },
+    });
+console.log("response",response.data);
+    return response.data;
+  } catch (error) {
+    return {
+      error: true,
+      details: error.response?.data || { message: error.message },
+    };
+  }
+};
+
+
+exports.listMetaFlowsOnMeta = async (metaAccessToken, businessProfileId) => {
+  try {
+    const apiUrl = `https://graph.facebook.com/v21.0/${businessProfileId}/flows`;
+    console.log('metaAccessToken, businessProfileId',metaAccessToken, businessProfileId)
+    const response = await axios.get(apiUrl, {
+      params: { access_token: metaAccessToken },
+    });
+
+    return response.data?.data || [];
+  } catch (error) {
+    return {
+      error: true,
+      details: error.response?.data || { message: error.message },
+    };
+  }
+};
