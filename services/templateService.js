@@ -917,7 +917,208 @@ exports.updateTemplate = async (req) => {
   }
 };
 
+exports.getAllCatalogTemplates = async (req) => {
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+  const { businessProfileId, page = 1, limit = 100 } = req.query;
 
+  // base match: approved, same tenant/user, exclude CAROUSEL component
+  const baseMatch = {
+    tenantId,
+    userId,
+    metaStatus: 'APPROVED',
+    components: {
+      $not: {
+        $elemMatch: {
+          type: "CAROUSEL"
+        }
+      }
+    }
+  };
+
+  if (businessProfileId) {
+    baseMatch.businessProfileId = mongoose.Types.ObjectId(businessProfileId);
+  }
+
+  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+  const limitNum = Math.max(parseInt(limit, 10) || 100, 1);
+  const skip = (pageNum - 1) * limitNum;
+
+  try {
+    // pipeline to compute buttonTypes and headerFormats and derive catalogType
+    const basePipeline = [
+      { $match: baseMatch },
+
+      // Build arrays: buttonTypes (all buttons' type values) and headerFormats
+      {
+        $addFields: {
+          buttonTypes: {
+            $reduce: {
+              input: "$components",
+              initialValue: [],
+              in: {
+                $concatArrays: [
+                  "$$value",
+                  {
+                    $cond: [
+                      { $isArray: "$$this.buttons" },
+                      { $map: { input: "$$this.buttons", as: "b", in: { $toUpper: "$$b.type" } } },
+                      []
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          headerFormats: {
+            $map: {
+              input: {
+                $filter: {
+                  input: "$components",
+                  as: "c",
+                  cond: { $eq: ["$$c.type", "HEADER"] }
+                }
+              },
+              as: "h",
+              in: { $toUpper: "$$h.format" }
+            }
+          }
+        }
+      },
+
+      // Normalize buttonTypes/headerFormats to uppercase and decide catalogType by priority
+      {
+        $addFields: {
+          catalogType: {
+            $switch: {
+              branches: [
+                // SPM: explicit SPM button OR header PRODUCT
+                { case: { $in: ["SPM", "$buttonTypes"] }, then: "SPM" },
+                { case: { $in: ["PRODUCT", "$headerFormats"] }, then: "SPM" },
+
+                // MPM: explicit MPM button
+                { case: { $in: ["MPM", "$buttonTypes"] }, then: "MPM" },
+
+                // CATALOG_SIMPLE: explicit CATALOG button
+                { case: { $in: ["CATALOG", "$buttonTypes"] }, then: "CATALOG_SIMPLE" }
+              ],
+              default: "NOT_CATALOG"
+            }
+          }
+        }
+      },
+
+      // keep only catalog-like templates
+      { $match: { catalogType: { $in: ["SPM", "MPM", "CATALOG_SIMPLE"] } } }
+    ];
+
+    // 1) Get counts (total + per-type)
+    const countsPipeline = [
+      ...basePipeline,
+      {
+        $group: {
+          _id: "$catalogType",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          counts: {
+            $push: { k: "$_id", v: "$count" }
+          },
+          total: { $sum: "$count" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          counts: { $arrayToObject: "$counts" }
+        }
+      }
+    ];
+
+    const countsResult = await Template.aggregate(countsPipeline);
+    const countsObj = (countsResult && countsResult[0]) || { total: 0, counts: {} };
+
+    // 2) Get paginated documents (apply sort/skip/limit)
+    const docsPipeline = [
+      ...basePipeline,
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limitNum },
+      {
+        $project: {
+          // choose fields you want to return
+          name: 1,
+          metaTemplateId: 1,
+          metaStatus: 1,
+          metaCategory: 1,
+          language: 1,
+          components: 1,
+          catalogType: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          businessProfileId: 1
+        }
+      }
+    ];
+
+    const docs = await Template.aggregate(docsPipeline);
+
+    // 3) Split the paginated docs into three groups
+    const spm = [];
+    const mpm = [];
+    const simple = [];
+
+    docs.forEach(d => {
+      if (d.catalogType === 'SPM') spm.push(d);
+      else if (d.catalogType === 'MPM') mpm.push(d);
+      else if (d.catalogType === 'CATALOG_SIMPLE') simple.push(d);
+    });
+
+    const totalCount = countsObj.total || 0;
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    const message =
+      totalCount === 0
+        ? 'No catalog templates found' + (businessProfileId ? ' for the selected business profile.' : '')
+        : 'Catalog templates fetched successfully';
+
+    return {
+      status: 200,
+      success: true,
+      message,
+      data: {
+        spm,       // single product templates (SPM)
+        mpm,       // multi product templates (MPM)
+        simple     // simple catalog button templates (CATALOG_SIMPLE)
+      },
+      counts: {
+        total: totalCount,
+        byType: {
+          SPM: countsObj.counts?.SPM || 0,
+          MPM: countsObj.counts?.MPM || 0,
+          CATALOG_SIMPLE: countsObj.counts?.CATALOG_SIMPLE || 0
+        }
+      },
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: pageNum,
+        pageSize: limitNum
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching catalog templates:', error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || 'Internal server error'
+    };
+  }
+};
 
 // @desc    Delete a template (locally + from Meta)
 // @access  Private (User/Team Member)

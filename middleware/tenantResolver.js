@@ -2,7 +2,7 @@ const Tenant = require('../models/Tenant');
 
 const tenantResolver = async (req, res, next) => {
 
-  const domain = ["https://wachaat.netlify.app", "http://164.52.197.192:5173"];
+  const domain = ["https://sabnode.netlify.app"];
 
   console.log("domain",domain)
   try {

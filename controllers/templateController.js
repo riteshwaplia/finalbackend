@@ -27,6 +27,9 @@ exports.getByIdController = async (req) => {
 exports.getAllApprovedTemplatesController = async (req) => {
     return await templateService.getAllApprovedTemplates(req);
 };
+exports.getAllApprovedCatalogTemplatesController = async (req) => {
+    return await templateService.getAllCatalogTemplates(req);
+};
 exports.getAllApprovedCarosualTemplatesController = async (req) => {
     return await templateService.getAllCarouselTemplates(req);
 };
