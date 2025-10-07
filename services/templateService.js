@@ -949,7 +949,7 @@ exports.getAllCatalogTemplates = async (req) => {
     const basePipeline = [
       { $match: baseMatch },
 
-      // Build arrays: buttonTypes (all buttons' type values) and headerFormats
+      // Build arrays: buttonTypes and headerFormats
       {
         $addFields: {
           buttonTypes: {
@@ -986,20 +986,15 @@ exports.getAllCatalogTemplates = async (req) => {
         }
       },
 
-      // Normalize buttonTypes/headerFormats to uppercase and decide catalogType by priority
+      // Determine catalogType
       {
         $addFields: {
           catalogType: {
             $switch: {
               branches: [
-                // SPM: explicit SPM button OR header PRODUCT
                 { case: { $in: ["SPM", "$buttonTypes"] }, then: "SPM" },
                 { case: { $in: ["PRODUCT", "$headerFormats"] }, then: "SPM" },
-
-                // MPM: explicit MPM button
                 { case: { $in: ["MPM", "$buttonTypes"] }, then: "MPM" },
-
-                // CATALOG_SIMPLE: explicit CATALOG button
                 { case: { $in: ["CATALOG", "$buttonTypes"] }, then: "CATALOG_SIMPLE" }
               ],
               default: "NOT_CATALOG"
@@ -1024,9 +1019,7 @@ exports.getAllCatalogTemplates = async (req) => {
       {
         $group: {
           _id: null,
-          counts: {
-            $push: { k: "$_id", v: "$count" }
-          },
+          counts: { $push: { k: "$_id", v: "$count" } },
           total: { $sum: "$count" }
         }
       },
@@ -1042,7 +1035,7 @@ exports.getAllCatalogTemplates = async (req) => {
     const countsResult = await Template.aggregate(countsPipeline);
     const countsObj = (countsResult && countsResult[0]) || { total: 0, counts: {} };
 
-    // 2) Get paginated documents (apply sort/skip/limit)
+    // 2) Get paginated documents (only _id and name)
     const docsPipeline = [
       ...basePipeline,
       { $sort: { createdAt: -1 } },
@@ -1050,17 +1043,9 @@ exports.getAllCatalogTemplates = async (req) => {
       { $limit: limitNum },
       {
         $project: {
-          // choose fields you want to return
+          _id: 1,
           name: 1,
-          metaTemplateId: 1,
-          metaStatus: 1,
-          metaCategory: 1,
-          language: 1,
-          components: 1,
-          catalogType: 1,
-          createdAt: 1,
-          updatedAt: 1,
-          businessProfileId: 1
+          catalogType: 1 // still keep catalogType for splitting
         }
       }
     ];
@@ -1090,11 +1075,7 @@ exports.getAllCatalogTemplates = async (req) => {
       status: 200,
       success: true,
       message,
-      data: {
-        spm,       // single product templates (SPM)
-        mpm,       // multi product templates (MPM)
-        simple     // simple catalog button templates (CATALOG_SIMPLE)
-      },
+      data: { spm, mpm, simple },
       counts: {
         total: totalCount,
         byType: {
