@@ -38,7 +38,7 @@ exports.createMetaFlowsService = async (req) => {
   const payload = {
     version: "7.2",
     name: req.body.name,
-    screens: [req.body.flowJson],
+    flow_json: JSON.stringify(req.body.flowJson), 
     flowName: req.body.flowName || req.body.name,
     categories: req.body.categories,
   };
