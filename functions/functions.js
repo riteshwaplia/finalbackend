@@ -175,6 +175,31 @@ exports.sendEmail = async (to, subject, text, html) => {
   }
 };
 
+exports.ensureFlowPublished = async (metaAccessToken, businessProfileId, { flow_id, flow_name } = {}) => {
+  try {
+    if (flow_id) {
+      const flows = await exports.listMetaFlowsOnMeta(metaAccessToken, businessProfileId);
+      if (!Array.isArray(flows)) return { ok: false, message: 'Unable to list flows from Meta' };
+      const found = flows.find((f) => String(f.id) === String(flow_id));
+      if (!found) return { ok: false, message: `Flow with id ${flow_id} not found on Meta` };
+      if (String(found.status || '').toLowerCase() === 'published' || found.published === true) return { ok: true, flowId: flow_id };
+      return { ok: false, message: 'Flow exists but is not published' };
+    }
+    if (flow_name) {
+      const flows = await exports.listMetaFlowsOnMeta(metaAccessToken, businessProfileId);
+      if (!Array.isArray(flows)) return { ok: false, message: 'Unable to list flows from Meta' };
+      const found = flows.find((f) => String(f.name).toLowerCase() === String(flow_name).toLowerCase());
+      if (!found) return { ok: false, message: `Flow with name "${flow_name}" not found on Meta` };
+      if (String(found.status || '').toLowerCase() === 'published' || found.published === true) return { ok: true, flowId: found.id };
+      return { ok: false, message: `Flow "${flow_name}" exists but is not published` };
+    }
+    return { ok: true, flowId: null };
+  } catch (error) {
+    console.error('ensureFlowPublished error:', error?.response?.data || error.message);
+    return { ok: false, message: 'Error checking flow status on Meta' };
+  }
+};
+
 exports.createAuthTemplate = async (
   templateName,
   otp_type,

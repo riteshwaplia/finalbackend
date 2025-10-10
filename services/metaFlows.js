@@ -180,3 +180,102 @@ exports.listMetaFlowsService = async (req) => {
     data: flows,
   };
 };
+
+// exports.sendFlowMessageService = async (req) => {
+//   const { businessProfileId } = req.params;
+//   const { phoneNumber, flowId } = req.body;
+
+//   // Validate input
+//   if (!phoneNumber || !flowId) {
+//     return {
+//       status: statusCode.BAD_REQUEST,
+//       success: false,
+//       message: 'Please provide phoneNumber and flowId',
+//     };
+//   }
+
+//   // Fetch business profile
+//   const businessProfile = await BusinessProfile.findOne({
+//     _id: businessProfileId,
+//     userId: req.user._id,
+//     tenantId: req.tenant._id,
+//   });
+
+//   if (!businessProfile) {
+//     return {
+//       status: statusCode.BAD_REQUEST,
+//       success: false,
+//       message: resMessage.Business_profile_not_found,
+//     };
+//   }
+
+//   // Fetch the flow
+//   const flow = await MetaFlows.findOne({
+//     _id: flowId,
+//     tenantId: req.tenant._id,
+//     userId: req.user._id,
+//     businessProfileId,
+//   });
+
+//   if (!flow) {
+//     return {
+//       status: statusCode.BAD_REQUEST,
+//       success: false,
+//       message: 'Flow not found',
+//     };
+//   }
+
+//   // Prepare payload to send flow as message
+//   const payload = {
+//     messaging_product: 'whatsapp',
+//     recipient_type: 'individual',
+//     to: phoneNumber,
+//     type: 'template',
+//     template: {
+//       name: flow.metaFlowId,
+//       language: {
+//         code: 'en_US',
+//       },
+//       components: [
+//         {
+//           type: 'body',
+//           parameters: [
+//             {
+//               type: 'text',
+//               text: 'Hello, this is a message from your flow!',
+//             },
+//           ],
+//         },
+//       ],
+//     },
+//   };
+
+//   // Call Meta WhatsApp API
+//   try {
+//     const apiUrl = `https://graph.facebook.com/v14.0/${businessProfile.metaBusinessId}/messages`;
+//     const response = await axios.post(apiUrl, payload, {
+//       params: { access_token: businessProfile.metaAccessToken },
+//     });
+
+//     if (response.data.error) {
+//       return {
+//         status: statusCode.BAD_REQUEST,
+//         success: false,
+//         message: response.data.error.message,
+//       };
+//     }
+
+//     return {
+//       status: statusCode.OK,
+//       success: true,
+//       message: 'Flow sent successfully',
+//       data: response.data,
+//     };
+//   } catch (error) {
+//     return {
+//       status: statusCode.INTERNAL_SERVER_ERROR,
+//       success: false,
+//       message: error.response?.data?.error?.message || error.message,
+//     };
+//   }
+// };

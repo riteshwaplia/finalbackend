@@ -497,6 +497,183 @@ exports.createCarouselTemplate = async (req) => {
   }
 };
 
+// @desc    Create a new template with a FLOW button (locally first, then submit to Meta)
+// @access  Private (User/Team Member)
+exports.createTemplateWithFlow = async (req) => {
+  const { name, language, category = 'MARKETING', components, businessProfileId } = req.body;
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+
+  if (!name || !language || !businessProfileId) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Missing_required_fields + ' (name, language, businessProfileId required).',
+    };
+  }
+
+  if (!components || !Array.isArray(components)) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: 'components array is required and must contain a BUTTONS component with FLOW button.',
+    };
+  }
+
+  try {
+    // 1. Validate business profile
+    const businessProfile = await BusinessProfile.findOne({
+      _id: businessProfileId,
+      userId,
+      tenantId,
+    });
+    if (!businessProfile) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: 'Selected Business Profile not found or does not belong to your account.',
+      };
+    }
+
+    // 2. Check for local duplicate template
+    const templateExistsLocally = await Template.findOne({
+      name,
+      language,
+      tenantId,
+      userId,
+      businessProfileId,
+    });
+    if (templateExistsLocally) {
+      return {
+        status: statusCode.CONFLICT,
+        success: false,
+        message: 'Template with this name and language already exists locally for this business profile.',
+      };
+    }
+
+    // 3. Get Meta API credentials
+    const metaCredentials = await getBusinessProfileMetaApiCredentials(businessProfileId, userId, tenantId);
+    if (!metaCredentials.success) {
+      return {
+        status: metaCredentials.status || statusCode.BAD_REQUEST,
+        success: false,
+        message: metaCredentials.message,
+      };
+    }
+
+    const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
+
+    // 4. Validate FLOW button exists in components
+    const buttonsComponent = components.find(c => String(c.type).toUpperCase() === 'BUTTONS');
+    if (!buttonsComponent || !Array.isArray(buttonsComponent.buttons) || buttonsComponent.buttons.length === 0) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: 'Please include a BUTTONS component with a FLOW button.',
+      };
+    }
+
+    const flowButton = buttonsComponent.buttons.find(b => String(b.type).toUpperCase() === 'FLOW');
+    if (!flowButton) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: 'No FLOW button found in BUTTONS component.',
+      };
+    }
+
+    // 5. Ensure flow is published on Meta
+    const { flow_id, flow_name, flow_json } = flowButton;
+    const flowCheck = await functions.ensureFlowPublished(accessToken, businessProfileId, { flow_id, flow_name });
+    if (!flowCheck.ok) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `Flow validation failed: ${flowCheck.message}`,
+      };
+    }
+
+    // 6. Prepare components for Meta API
+    const componentsForMeta = (components || []).map(comp => {
+      const type = String(comp.type || '').toUpperCase();
+
+      if (type === 'BUTTONS') {
+        const buttons = (comp.buttons || []).map(btn => {
+          if (String(btn.type).toUpperCase() === 'FLOW') {
+            const button = { type: 'FLOW', text: btn.text || 'Open flow' };
+            if (flow_id) button.flow_id = String(flow_id);
+            else if (flow_name) button.flow_name = String(flow_name);
+            else if (flow_json) button.flow_json = typeof flow_json === 'string' ? flow_json : JSON.stringify(flow_json);
+            return button;
+          }
+          return { ...btn, type: String(btn.type || '').toUpperCase() };
+        });
+        return { type: 'BUTTONS', buttons };
+      }
+
+      if (type === 'BODY') {
+        const { text, example } = comp;
+        const body = {};
+        if (text) body.text = text;
+        if (example) body.example = example;
+        return { type: 'BODY', ...body };
+      }
+
+      if (type === 'HEADER') return { type: 'HEADER', ...comp };
+      if (type === 'FOOTER') return { type: 'FOOTER', ...comp };
+
+      return { ...comp, type: type || comp.type };
+    });
+
+    // 7. Send template to Meta API
+    const metaUrl = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
+    const payload = { name, language, category, components: componentsForMeta };
+
+    console.log('Creating template with FLOW on Meta:', JSON.stringify(payload, null, 2));
+
+    const response = await axios.post(metaUrl, payload, {
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    });
+
+    // 8. Determine template type
+    const templateType = components?.some(c => String((c.type || '')).toUpperCase() === 'CAROUSEL') ? 'CAROUSEL' : 'STANDARD';
+
+    // 9. Save template locally
+    const newTemplate = await Template.create({
+      name,
+      category,
+      language,
+      components: components || [],
+      tenantId,
+      userId,
+      businessProfileId,
+      metaTemplateId: response.data.id,
+      metaStatus: response.data.status || 'PENDING_REVIEW',
+      metaCategory: response.data.category || category,
+      isSynced: true,
+      lastSyncedAt: new Date(),
+      type: templateType
+    });
+
+    return {
+      status: statusCode.CREATED,
+      success: true,
+      message: resMessage.Template_submitted + ' to Meta for approval and saved locally.',
+      data: newTemplate,
+      metaResponse: response.data
+    };
+  } catch (error) {
+    console.error('Error in createTemplateWithFlow:', error.response?.data || error.message);
+    const metaError = error.response?.data?.error?.message || error.message;
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: `Failed to create template with flow: ${metaError}`,
+      metaError: error.response?.data || null
+    };
+  }
+};
+
 // @desc    Submit a template to Meta for approval
 // @access  Private (User/Team Member)
 exports.submitTemplateToMeta = async (req) => {
