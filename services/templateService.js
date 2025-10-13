@@ -1099,7 +1099,6 @@ exports.getAllCatalogTemplates = async (req) => {
   const userId = req.user._id;
   const { businessProfileId, page = 1, limit = 100 } = req.query;
 
-  // base match: approved, same tenant/user, exclude CAROUSEL component
   const baseMatch = {
     tenantId,
     userId,
@@ -1122,11 +1121,8 @@ exports.getAllCatalogTemplates = async (req) => {
   const skip = (pageNum - 1) * limitNum;
 
   try {
-    // pipeline to compute buttonTypes and headerFormats and derive catalogType
     const basePipeline = [
       { $match: baseMatch },
-
-      // Build arrays: buttonTypes and headerFormats
       {
         $addFields: {
           buttonTypes: {
@@ -1162,8 +1158,6 @@ exports.getAllCatalogTemplates = async (req) => {
           }
         }
       },
-
-      // Determine catalogType
       {
         $addFields: {
           catalogType: {
@@ -1179,12 +1173,9 @@ exports.getAllCatalogTemplates = async (req) => {
           }
         }
       },
-
-      // keep only catalog-like templates
       { $match: { catalogType: { $in: ["SPM", "MPM", "CATALOG_SIMPLE"] } } }
     ];
 
-    // 1) Get counts (total + per-type)
     const countsPipeline = [
       ...basePipeline,
       {
@@ -1212,7 +1203,6 @@ exports.getAllCatalogTemplates = async (req) => {
     const countsResult = await Template.aggregate(countsPipeline);
     const countsObj = (countsResult && countsResult[0]) || { total: 0, counts: {} };
 
-    // 2) Get paginated documents (only _id and name)
     const docsPipeline = [
       ...basePipeline,
       { $sort: { createdAt: -1 } },
@@ -1222,14 +1212,14 @@ exports.getAllCatalogTemplates = async (req) => {
         $project: {
           _id: 1,
           name: 1,
-          catalogType: 1 // still keep catalogType for splitting
+          catalogType: 1,
+          components: 1
         }
       }
     ];
 
     const docs = await Template.aggregate(docsPipeline);
 
-    // 3) Split the paginated docs into three groups
     const spm = [];
     const mpm = [];
     const simple = [];
