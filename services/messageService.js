@@ -14,7 +14,7 @@ const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
-const {sendCatalogTemplateMessage , sendMPMTemplateMessage ,scheduleLongTimeout ,sendSPMTemplateMessage} = require('../functions/functions');
+const {sendTemplateMessage ,sendCatalogTemplateMessage , sendMPMTemplateMessage ,scheduleLongTimeout ,sendSPMTemplateMessage} = require('../functions/functions');
 const moment = require("moment-timezone");
 
 const sendWhatsAppMessage = async ({
@@ -222,6 +222,114 @@ const sendMessageService = async (req) => {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
       message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+const sendFlowTemplateService = async (req) => {
+  const { to, templateName, languageCode = "en_US", flowToken, flowActionData = {} } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+
+  if (!to || !templateName) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Missing_required_fields + " (to and templateName are required).",
+    };
+  }
+
+  const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+  if (!project) {
+    return {
+      status: statusCode.NOT_FOUND,
+      success: false,
+      message: resMessage.No_data_found + " (Project not found).",
+    };
+  }
+
+  if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Project_whatsapp_number_not_configured,
+    };
+  }
+
+  const businessProfile = project.businessProfileId;
+  if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Meta_API_credentials_not_configured,
+    };
+  }
+
+  const phoneNumberId = project.metaPhoneNumberID;
+  const accessToken = businessProfile.metaAccessToken;
+
+  // Build Flow button component
+  const components = [
+    {
+      type: "button",
+      sub_type: "flow",
+      index: "0",
+      parameters: [
+        {
+          type: "action",
+          action: {
+            flow_token: flowToken || "unused",
+            flow_action_data: flowActionData
+          }
+        }
+      ]
+    }
+  ];
+
+  try {
+    const response = await sendTemplateMessage({
+      to,
+      templateName,
+      languageCode,
+      phoneNumberId,
+      accessToken,
+      components
+    });
+
+    // Save message to DB
+    const messageData = new Message({
+      to,
+      type: "template",
+      message: { name: templateName, components },
+      metaResponse: response,
+      status: "sent",
+      userId,
+      tenantId,
+      projectId,
+      metaPhoneNumberID: phoneNumberId,
+      direction: "outbound",
+      templateName,
+      templateLanguage: languageCode
+    });
+
+    await messageData.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Message_sent_successfully,
+      data: { apiResponse: response, dbEntry: messageData },
+    };
+  } catch (err) {
+    const error = err.response?.data || err.message;
+    console.error("sendFlowTemplateService Error:", error);
+
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: resMessage.Message_send_failed,
+      error,
     };
   }
 };
@@ -1564,5 +1672,6 @@ module.exports = {
   getBulkSendJobDetailsService,
   downloadMedia,
   ScheduleBulkSendService,
-  sendBulkCatalogService
+  sendBulkCatalogService,
+  sendFlowTemplateService
 };

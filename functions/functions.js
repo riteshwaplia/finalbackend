@@ -695,6 +695,46 @@ console.log("response",response.data);
   }
 };
 
+exports.sendTemplateMessage = async ({
+  to,
+  templateName,
+  languageCode = "en_US",
+  phoneNumberId,
+  accessToken,
+  components = []
+}) => {
+  try {
+    if (!to || !templateName || !phoneNumberId || !accessToken) {
+      throw new Error("Missing required parameters to send WhatsApp template message.");
+    }
+
+    const url = `https://graph.facebook.com/v17.0/${phoneNumberId}/messages`;
+
+    const payload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to,
+      type: "template",
+      template: {
+        name: templateName,
+        language: { code: languageCode },
+        components
+      }
+    };
+
+    const response = await axios.post(url, payload, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json"
+      }
+    });
+
+    return response.data;
+  } catch (error) {
+    if (error.response) throw new Error(JSON.stringify(error.response.data));
+    throw new Error(error.message);
+  }
+};
 
 exports.listMetaFlowsOnMeta = async (metaAccessToken, businessProfileId) => {
   try {

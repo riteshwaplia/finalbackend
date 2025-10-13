@@ -7,6 +7,10 @@ exports.sendMessageController = async (req) => {
     return await messageService.sendMessageService(req);
 };
 
+exports.sendFlowTemplateController = async (req) => {
+  return await messageService.sendFlowTemplateService(req);
+};
+
 exports.sendBulkMessageController = async (req) => {
     return await sendBulkMessageService(req);
 };

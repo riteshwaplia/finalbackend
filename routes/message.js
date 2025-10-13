@@ -11,6 +11,7 @@ const router = express.Router({ mergeParams: true });
 
 
 router.post("/send", protect, validateRequest(messageValidation.sendMessage), responseHandler(messageController.sendMessageController));
+router.post("/send-flow-template", protect,validateRequest(messageValidation.sendFlowTemplate),responseHandler(messageController.sendFlowTemplateController));
 router.post("/bulk-messages", protect, uploadExcel.single("file"), responseHandler(messageController.sendBulkMessageController));
 router.post("/bulk-catalog-messages", protect, uploadExcel.single("file"), responseHandler(messageController.sendBulkCatalogController));
 router.post('/upload-media', protect, mediaUploadDir.single('file'), responseHandler(messageController.uploadMedia));
