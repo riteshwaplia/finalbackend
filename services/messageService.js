@@ -1362,16 +1362,27 @@ const getAllBulkSendJobsService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
-  const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit 10
+  const { page = 1, limit = 10, from, to } = req.query; 
 
   try {
-    // Calculate skip value for pagination
     const skip = (page - 1) * limit;
+
+    let dateFilter = {};
+    
+    if (from && to) {
+      const fromDate = new Date(`${from}T00:00:00+05:30`);
+      const toDate = new Date(`${to}T23:59:59+05:30`); 
+      
+      dateFilter = {
+        startTime: { $gte: fromDate, $lte: toDate }, 
+      };
+    }
 
     const jobs = await BulkSendJob.find({
       tenantId,
       userId,
       projectId,
+      ...dateFilter,
     })
     .sort({ startTime: -1 })
     .skip(skip) // Skip documents based on pagination
@@ -1382,6 +1393,7 @@ const getAllBulkSendJobsService = async (req) => {
       tenantId,
       userId,
       projectId,
+      ...dateFilter, 
     });
 
     return {
