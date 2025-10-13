@@ -497,6 +497,183 @@ exports.createCarouselTemplate = async (req) => {
   }
 };
 
+// @desc    Create a new template with a FLOW button (locally first, then submit to Meta)
+// @access  Private (User/Team Member)
+exports.createTemplateWithFlow = async (req) => {
+  const { name, language, category = 'MARKETING', components, businessProfileId } = req.body;
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+
+  if (!name || !language || !businessProfileId) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Missing_required_fields + ' (name, language, businessProfileId required).',
+    };
+  }
+
+  if (!components || !Array.isArray(components)) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: 'components array is required and must contain a BUTTONS component with FLOW button.',
+    };
+  }
+
+  try {
+    // 1. Validate business profile
+    const businessProfile = await BusinessProfile.findOne({
+      _id: businessProfileId,
+      userId,
+      tenantId,
+    });
+    if (!businessProfile) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: 'Selected Business Profile not found or does not belong to your account.',
+      };
+    }
+
+    // 2. Check for local duplicate template
+    const templateExistsLocally = await Template.findOne({
+      name,
+      language,
+      tenantId,
+      userId,
+      businessProfileId,
+    });
+    if (templateExistsLocally) {
+      return {
+        status: statusCode.CONFLICT,
+        success: false,
+        message: 'Template with this name and language already exists locally for this business profile.',
+      };
+    }
+
+    // 3. Get Meta API credentials
+    const metaCredentials = await getBusinessProfileMetaApiCredentials(businessProfileId, userId, tenantId);
+    if (!metaCredentials.success) {
+      return {
+        status: metaCredentials.status || statusCode.BAD_REQUEST,
+        success: false,
+        message: metaCredentials.message,
+      };
+    }
+
+    const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
+
+    // 4. Validate FLOW button exists in components
+    const buttonsComponent = components.find(c => String(c.type).toUpperCase() === 'BUTTONS');
+    if (!buttonsComponent || !Array.isArray(buttonsComponent.buttons) || buttonsComponent.buttons.length === 0) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: 'Please include a BUTTONS component with a FLOW button.',
+      };
+    }
+
+    const flowButton = buttonsComponent.buttons.find(b => String(b.type).toUpperCase() === 'FLOW');
+    if (!flowButton) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: 'No FLOW button found in BUTTONS component.',
+      };
+    }
+
+    // 5. Ensure flow is published on Meta
+    const { flow_id, flow_name, flow_json } = flowButton;
+    const flowCheck = await functions.ensureFlowPublished(accessToken, businessProfileId, { flow_id, flow_name });
+    if (!flowCheck.ok) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `Flow validation failed: ${flowCheck.message}`,
+      };
+    }
+
+    // 6. Prepare components for Meta API
+    const componentsForMeta = (components || []).map(comp => {
+      const type = String(comp.type || '').toUpperCase();
+
+      if (type === 'BUTTONS') {
+        const buttons = (comp.buttons || []).map(btn => {
+          if (String(btn.type).toUpperCase() === 'FLOW') {
+            const button = { type: 'FLOW', text: btn.text || 'Open flow' };
+            if (flow_id) button.flow_id = String(flow_id);
+            else if (flow_name) button.flow_name = String(flow_name);
+            else if (flow_json) button.flow_json = typeof flow_json === 'string' ? flow_json : JSON.stringify(flow_json);
+            return button;
+          }
+          return { ...btn, type: String(btn.type || '').toUpperCase() };
+        });
+        return { type: 'BUTTONS', buttons };
+      }
+
+      if (type === 'BODY') {
+        const { text, example } = comp;
+        const body = {};
+        if (text) body.text = text;
+        if (example) body.example = example;
+        return { type: 'BODY', ...body };
+      }
+
+      if (type === 'HEADER') return { type: 'HEADER', ...comp };
+      if (type === 'FOOTER') return { type: 'FOOTER', ...comp };
+
+      return { ...comp, type: type || comp.type };
+    });
+
+    // 7. Send template to Meta API
+    const metaUrl = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
+    const payload = { name, language, category, components: componentsForMeta };
+
+    console.log('Creating template with FLOW on Meta:', JSON.stringify(payload, null, 2));
+
+    const response = await axios.post(metaUrl, payload, {
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+    });
+
+    // 8. Determine template type
+    const templateType = components?.some(c => String((c.type || '')).toUpperCase() === 'CAROUSEL') ? 'CAROUSEL' : 'STANDARD';
+
+    // 9. Save template locally
+    const newTemplate = await Template.create({
+      name,
+      category,
+      language,
+      components: components || [],
+      tenantId,
+      userId,
+      businessProfileId,
+      metaTemplateId: response.data.id,
+      metaStatus: response.data.status || 'PENDING_REVIEW',
+      metaCategory: response.data.category || category,
+      isSynced: true,
+      lastSyncedAt: new Date(),
+      type: templateType
+    });
+
+    return {
+      status: statusCode.CREATED,
+      success: true,
+      message: resMessage.Template_submitted + ' to Meta for approval and saved locally.',
+      data: newTemplate,
+      metaResponse: response.data
+    };
+  } catch (error) {
+    console.error('Error in createTemplateWithFlow:', error.response?.data || error.message);
+    const metaError = error.response?.data?.error?.message || error.message;
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: `Failed to create template with flow: ${metaError}`,
+      metaError: error.response?.data || null
+    };
+  }
+};
+
 // @desc    Submit a template to Meta for approval
 // @access  Private (User/Team Member)
 exports.submitTemplateToMeta = async (req) => {
@@ -917,7 +1094,189 @@ exports.updateTemplate = async (req) => {
   }
 };
 
+exports.getAllCatalogTemplates = async (req) => {
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+  const { businessProfileId, page = 1, limit = 100 } = req.query;
 
+  // base match: approved, same tenant/user, exclude CAROUSEL component
+  const baseMatch = {
+    tenantId,
+    userId,
+    metaStatus: 'APPROVED',
+    components: {
+      $not: {
+        $elemMatch: {
+          type: "CAROUSEL"
+        }
+      }
+    }
+  };
+
+  if (businessProfileId) {
+    baseMatch.businessProfileId = mongoose.Types.ObjectId(businessProfileId);
+  }
+
+  const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+  const limitNum = Math.max(parseInt(limit, 10) || 100, 1);
+  const skip = (pageNum - 1) * limitNum;
+
+  try {
+    // pipeline to compute buttonTypes and headerFormats and derive catalogType
+    const basePipeline = [
+      { $match: baseMatch },
+
+      // Build arrays: buttonTypes and headerFormats
+      {
+        $addFields: {
+          buttonTypes: {
+            $reduce: {
+              input: "$components",
+              initialValue: [],
+              in: {
+                $concatArrays: [
+                  "$$value",
+                  {
+                    $cond: [
+                      { $isArray: "$$this.buttons" },
+                      { $map: { input: "$$this.buttons", as: "b", in: { $toUpper: "$$b.type" } } },
+                      []
+                    ]
+                  }
+                ]
+              }
+            }
+          },
+          headerFormats: {
+            $map: {
+              input: {
+                $filter: {
+                  input: "$components",
+                  as: "c",
+                  cond: { $eq: ["$$c.type", "HEADER"] }
+                }
+              },
+              as: "h",
+              in: { $toUpper: "$$h.format" }
+            }
+          }
+        }
+      },
+
+      // Determine catalogType
+      {
+        $addFields: {
+          catalogType: {
+            $switch: {
+              branches: [
+                { case: { $in: ["SPM", "$buttonTypes"] }, then: "SPM" },
+                { case: { $in: ["PRODUCT", "$headerFormats"] }, then: "SPM" },
+                { case: { $in: ["MPM", "$buttonTypes"] }, then: "MPM" },
+                { case: { $in: ["CATALOG", "$buttonTypes"] }, then: "CATALOG_SIMPLE" }
+              ],
+              default: "NOT_CATALOG"
+            }
+          }
+        }
+      },
+
+      // keep only catalog-like templates
+      { $match: { catalogType: { $in: ["SPM", "MPM", "CATALOG_SIMPLE"] } } }
+    ];
+
+    // 1) Get counts (total + per-type)
+    const countsPipeline = [
+      ...basePipeline,
+      {
+        $group: {
+          _id: "$catalogType",
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          counts: { $push: { k: "$_id", v: "$count" } },
+          total: { $sum: "$count" }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          counts: { $arrayToObject: "$counts" }
+        }
+      }
+    ];
+
+    const countsResult = await Template.aggregate(countsPipeline);
+    const countsObj = (countsResult && countsResult[0]) || { total: 0, counts: {} };
+
+    // 2) Get paginated documents (only _id and name)
+    const docsPipeline = [
+      ...basePipeline,
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limitNum },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          catalogType: 1 // still keep catalogType for splitting
+        }
+      }
+    ];
+
+    const docs = await Template.aggregate(docsPipeline);
+
+    // 3) Split the paginated docs into three groups
+    const spm = [];
+    const mpm = [];
+    const simple = [];
+
+    docs.forEach(d => {
+      if (d.catalogType === 'SPM') spm.push(d);
+      else if (d.catalogType === 'MPM') mpm.push(d);
+      else if (d.catalogType === 'CATALOG_SIMPLE') simple.push(d);
+    });
+
+    const totalCount = countsObj.total || 0;
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    const message =
+      totalCount === 0
+        ? 'No catalog templates found' + (businessProfileId ? ' for the selected business profile.' : '')
+        : 'Catalog templates fetched successfully';
+
+    return {
+      status: 200,
+      success: true,
+      message,
+      data: { spm, mpm, simple },
+      counts: {
+        total: totalCount,
+        byType: {
+          SPM: countsObj.counts?.SPM || 0,
+          MPM: countsObj.counts?.MPM || 0,
+          CATALOG_SIMPLE: countsObj.counts?.CATALOG_SIMPLE || 0
+        }
+      },
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: pageNum,
+        pageSize: limitNum
+      }
+    };
+  } catch (error) {
+    console.error('Error fetching catalog templates:', error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || 'Internal server error'
+    };
+  }
+};
 
 // @desc    Delete a template (locally + from Meta)
 // @access  Private (User/Team Member)

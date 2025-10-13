@@ -5,6 +5,19 @@ const{ statusCode } = require('../config/constants');
 exports.createController = async (req) => {
     return await templateService.createTemplate(req);
 };
+
+exports.createWithFlowController = async (req) => {
+  try {
+    return await templateService.createTemplateWithFlow(req);
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || 'Internal server error while creating template with flow'
+    };
+  }
+};
+
 exports.uploadMedia = async (req) => {
     return await templateService.uploadMedia(req);
 };
@@ -26,6 +39,9 @@ exports.getByIdController = async (req) => {
 };
 exports.getAllApprovedTemplatesController = async (req) => {
     return await templateService.getAllApprovedTemplates(req);
+};
+exports.getAllApprovedCatalogTemplatesController = async (req) => {
+    return await templateService.getAllCatalogTemplates(req);
 };
 exports.getAllApprovedCarosualTemplatesController = async (req) => {
     return await templateService.getAllCarouselTemplates(req);
