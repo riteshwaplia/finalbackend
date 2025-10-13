@@ -1362,19 +1362,39 @@ const getAllBulkSendJobsService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
+  const { page = 1, limit = 10 } = req.query; // Default to page 1 and limit 10
 
   try {
+    // Calculate skip value for pagination
+    const skip = (page - 1) * limit;
+
     const jobs = await BulkSendJob.find({
       tenantId,
       userId,
       projectId,
-    }).sort({ startTime: -1 });
+    })
+    .sort({ startTime: -1 })
+    .skip(skip) // Skip documents based on pagination
+    .limit(parseInt(limit)); // Limit the number of documents fetched
+
+    // Count total jobs to calculate total pages
+    const totalJobs = await BulkSendJob.countDocuments({
+      tenantId,
+      userId,
+      projectId,
+    });
 
     return {
       status: statusCode.OK,
       success: true,
       message: resMessage.Bulk_send_jobs_fetched,
       data: jobs,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalJobs,
+        totalPages: Math.ceil(totalJobs / limit), // Calculate total pages
+      },
     }; 
   } catch (error) {
     console.error("Error fetching all bulk send jobs:", error.stack);
