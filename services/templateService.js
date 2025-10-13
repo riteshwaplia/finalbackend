@@ -1099,9 +1099,19 @@ exports.getAllCatalogTemplates = async (req) => {
   const userId = req.user._id;
   const { businessProfileId, page = 1, limit = 100 } = req.query;
 
+  // ✅ Make businessProfileId mandatory
+  if (!businessProfileId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing businessProfileId in request"
+    };
+  }
+
   const baseMatch = {
     tenantId,
     userId,
+    businessProfileId: new mongoose.Types.ObjectId(businessProfileId),
     metaStatus: 'APPROVED',
     components: {
       $not: {
@@ -1111,10 +1121,6 @@ exports.getAllCatalogTemplates = async (req) => {
       }
     }
   };
-
-  if (businessProfileId) {
-    baseMatch.businessProfileId = mongoose.Types.ObjectId(businessProfileId);
-  }
 
   const pageNum = Math.max(parseInt(page, 10) || 1, 1);
   const limitNum = Math.max(parseInt(limit, 10) || 100, 1);
@@ -1235,7 +1241,7 @@ exports.getAllCatalogTemplates = async (req) => {
 
     const message =
       totalCount === 0
-        ? 'No catalog templates found' + (businessProfileId ? ' for the selected business profile.' : '')
+        ? 'No catalog templates found for the selected business profile.'
         : 'Catalog templates fetched successfully';
 
     return {
