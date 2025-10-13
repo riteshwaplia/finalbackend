@@ -332,6 +332,17 @@ exports.switchCatalog = async (req) => {
             businessProfileId
         });
 
+        if (activeCatalog && activeCatalog._id.equals(newCatalog._id)) {
+            return {
+                status: statusCode.OK,
+                success: true,
+                message: "Catalog is already active",
+                data: {
+                    activeCatalogId: activeCatalog._id
+                }
+            };
+        }
+
         if (activeCatalog) {
             await unlinkCatalogMeta(activeCatalog.catalogId, business.metaAccessToken, business.metaBusinessId);
             activeCatalog.active = false;
