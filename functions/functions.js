@@ -875,3 +875,38 @@ exports.scheduleLongTimeout =(fn, delayMs) => {
 
   setTimeout(fn, delayMs);
 }
+
+exports.unlinkCatalogMeta = async (catalogId, accessToken, businessId) => {
+    try {
+
+        const url = `https://graph.facebook.com/v20.0/${businessId}/product_catalogs`;
+
+        const response = await axios.delete(url, {
+            params: {
+                catalog_id: catalogId,
+                access_token: accessToken,
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        throw new Error("Failed to unlink catalog from Meta");
+    }
+}
+
+exports.linkCatalogMeta = async (catalogId, accessToken, businessId) => {
+    try {
+        const url = `https://graph.facebook.com/v20.0/${businessId}/product_catalogs`;
+
+        const response = await axios.post(url, null, {
+            params: {
+                catalog_id: catalogId,
+                access_token: accessToken,
+            }
+        });
+
+        return response.data;
+    } catch (error) {
+        throw new Error("Failed to link catalog to Meta");
+    }
+}
