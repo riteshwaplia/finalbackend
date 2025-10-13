@@ -359,3 +359,61 @@ exports.switchCatalog = async (req) => {
         };
     }
 };
+
+exports.getActiveCatalog = async (req) => {
+    try {
+        const { businessProfileId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(businessProfileId)) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: "Invalid businessProfileId"
+            };
+        }
+
+        const business = await Businessprofile.findOne({
+            _id: businessProfileId,
+            userId: req.user._id,
+            tenantId: req.tenant._id,
+            catalogAccess: true
+        });
+
+        if (!business) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: resMessage.Business_profile_not_found
+            };
+        }
+
+        const activeCatalog = await Catalog.findOne({
+            active: true,
+            userId: req.user._id,
+            tenantId: req.tenant._id,
+            businessProfileId
+        });
+
+        if (!activeCatalog) {
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: "No active catalog found"
+            };
+        }
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: "Active catalog fetched successfully",
+            data: activeCatalog
+        };
+
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message
+        };
+    }
+};
