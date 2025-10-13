@@ -60,3 +60,15 @@ exports.switchCatalogController = async (req) => {
         }
     }
 }
+
+exports.getActiveCatalogController = async (req) => {
+    try {
+        return await service.getActiveCatalog(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        }
+    }
+}

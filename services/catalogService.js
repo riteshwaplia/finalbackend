@@ -332,6 +332,17 @@ exports.switchCatalog = async (req) => {
             businessProfileId
         });
 
+        if (activeCatalog && activeCatalog._id.equals(newCatalog._id)) {
+            return {
+                status: statusCode.OK,
+                success: true,
+                message: "Catalog is already active",
+                data: {
+                    activeCatalogId: activeCatalog._id
+                }
+            };
+        }
+
         if (activeCatalog) {
             await unlinkCatalogMeta(activeCatalog.catalogId, business.metaAccessToken, business.metaBusinessId);
             activeCatalog.active = false;
@@ -351,6 +362,64 @@ exports.switchCatalog = async (req) => {
                 newActiveCatalogId: newCatalog._id
             }
         };
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message
+        };
+    }
+};
+
+exports.getActiveCatalog = async (req) => {
+    try {
+        const { businessProfileId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(businessProfileId)) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: "Invalid businessProfileId"
+            };
+        }
+
+        const business = await Businessprofile.findOne({
+            _id: businessProfileId,
+            userId: req.user._id,
+            tenantId: req.tenant._id,
+            catalogAccess: true
+        });
+
+        if (!business) {
+            return {
+                status: statusCode.BAD_REQUEST,
+                success: false,
+                message: resMessage.Business_profile_not_found
+            };
+        }
+
+        const activeCatalog = await Catalog.findOne({
+            active: true,
+            userId: req.user._id,
+            tenantId: req.tenant._id,
+            businessProfileId
+        });
+
+        if (!activeCatalog) {
+            return {
+                status: statusCode.NOT_FOUND,
+                success: false,
+                message: "No active catalog found"
+            };
+        }
+
+        return {
+            status: statusCode.OK,
+            success: true,
+            message: "Active catalog fetched successfully",
+            data: activeCatalog
+        };
+
     } catch (error) {
         return {
             status: statusCode.INTERNAL_SERVER_ERROR,
