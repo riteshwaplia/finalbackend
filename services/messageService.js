@@ -79,7 +79,7 @@ const sendWhatsAppMessage = async ({
     default:
       return { success: false, error: resMessage.Invalid_message_type };
   }
-
+console.log("payloadxcvbnmnbvcxcvbnbvc---------",payload)
   try {
     const response = await axios.post(url, payload, {
       headers: {
@@ -335,7 +335,8 @@ const sendFlowTemplateService = async (req) => {
 };
 
 const sendBulkMessageService = async (req) => {
-  const { templateName, message = {} } = req.body;
+  const { templateName, message = {}, imageId } = req.body;
+  console.log("imgageId", imageId);
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
@@ -489,72 +490,95 @@ const sendBulkMessageService = async (req) => {
 
       const components = [];
 
-      for (const comp of templateComponents) {
-        if (comp.type === 'HEADER') {
-          const headerParameters = [];
-          const hasVariables = comp.text?.includes('{{');
+  for (const comp of templateComponents) {
+  // 🟩 HEADER HANDLING
+  if (comp.type === "HEADER") {
+    // 1️⃣ IMAGE / VIDEO / DOCUMENT HEADER
+    if (comp.format === "IMAGE" && imageId) {
+      components.push({
+        type: "header",
+        parameters: [{ type: "image", image: { id: imageId } }],
+      });
+    }
 
-          if (comp.format === 'IMAGE' && imageId) {
-            components.push({
-              type: 'header',
-              parameters: [{ type: 'image', image: { id: imageId } }],
-            });
-          } else if (comp.format === 'TEXT' && hasVariables) {
-            const variableValue = contactRow['header_Example 1'];
+    // 2️⃣ TEXT HEADER WITH VARIABLES (like "Hello {{1}}")
+    else if (comp.format === "TEXT" && comp.text?.includes("{{")) {
+      const headerParameters = [];
+      const headerVariables = comp.text.match(/{{(\d+)}}/g);
 
-            if (variableValue) {
-              headerParameters.push({ type: 'text', text: variableValue });
-            }
-            components.push({
-              type: 'header',
-              parameters: headerParameters,
-            });
-          } else if (comp.format === 'TEXT' && comp.text) {
-            components.push({
-              type: 'header',
-              parameters: [{ type: 'text', text: comp.text }],
-            });
-          }
-        } else if (comp.type === 'BODY') {
-          const bodyParameters = [];
-          const bodyVariables = comp.text?.match(/{{(\d)}}/g);
-
-          if (bodyVariables) {
-            for (const variable of bodyVariables) {
-              const varIndex = variable.match(/{{(\d)}}/)[1];
-              const variableValue = contactRow[`body_Example_${varIndex}`];
-
-              if (variableValue) {
-                bodyParameters.push({ type: 'text', text: variableValue });
-              }
-            }
-          }
-          
-          components.push({
-            type: 'body',
-            parameters: bodyParameters,
-          });
-
-        } else if (comp.type === 'FOOTER') {
-          components.push({
-            type: 'footer',
-          });
-        } else if (comp.type === 'BUTTONS') {
-          if (comp.buttons && comp.buttons.length > 0) {
-            comp.buttons.forEach((button, index) => {
-              if (button.type === 'QUICK_REPLY') {
-                const payload = button.text.toLowerCase().replace(/ /g, '_') + '_payload';
-                components.push({
-                  type: 'button',
-                  sub_type: 'quick_reply',
-                  index: String(index),
-                  parameters: [{ type: 'payload', payload: payload }],
-                });
-              }
-            });
+      if (headerVariables) {
+        for (const variable of headerVariables) {
+          const varIndex = variable.match(/{{(\d+)}}/)[1];
+          const value = contactRow[`header_Example_${varIndex}`];
+          if (value) {
+            headerParameters.push({ type: "text", text: value });
           }
         }
       }
+
+      if (headerParameters.length > 0) {
+        components.push({
+          type: "header",
+          parameters: headerParameters,
+        });
+      } else {
+        // No matching variable → skip header parameters entirely
+        components.push({ type: "header" });
+      }
+    }
+
+    // 3️⃣ STATIC TEXT HEADER (NO VARIABLES)
+    else if (comp.format === "TEXT" && !comp.text?.includes("{{")) {
+      // ✅ Do NOT include parameters — Meta expects none
+      components.push({ type: "header" });
+    }
+  }
+
+  // 🟦 BODY HANDLING
+  else if (comp.type === "BODY") {
+    const bodyParameters = [];
+    const bodyVariables = comp.text?.match(/{{(\d+)}}/g);
+
+    if (bodyVariables) {
+      for (const variable of bodyVariables) {
+        const varIndex = variable.match(/{{(\d+)}}/)[1];
+        const value = contactRow[`body_Example_${varIndex}`];
+        if (value) {
+          bodyParameters.push({ type: "text", text: value });
+        }
+      }
+    }
+
+    if (bodyParameters.length > 0) {
+      components.push({
+        type: "body",
+        parameters: bodyParameters,
+      });
+    }
+  }
+
+  // 🟨 FOOTER (just include type)
+  else if (comp.type === "FOOTER") {
+    components.push({ type: "footer" });
+  }
+
+  // 🟥 BUTTONS (QUICK REPLY)
+  else if (comp.type === "BUTTONS" && comp.buttons?.length > 0) {
+    comp.buttons.forEach((button, index) => {
+      if (button.type === "QUICK_REPLY") {
+        const payload = button.text.toLowerCase().replace(/ /g, "_") + "_payload";
+        components.push({
+          type: "button",
+          sub_type: "quick_reply",
+          index: String(index),
+          parameters: [{ type: "payload", payload }],
+        });
+      }
+    });
+  }
+}
+
+
       
       const templateMessage = {
         name: baseMessage.name,
@@ -568,7 +592,7 @@ const sendBulkMessageService = async (req) => {
         type: "template",
         template: templateMessage,
       };
-
+console.log("templateMessage",templateMessage)
       try {
         const sendResult = await sendWhatsAppMessage({
           to,
@@ -638,6 +662,8 @@ const sendBulkMessageService = async (req) => {
     },
   };
 };
+
+
 
 const ScheduleBulkSendService = async (req) => {
   const { templateName, scheduledAt } = req.body;
@@ -1011,6 +1037,7 @@ const BulkSendGroupService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
+  const BATCH_SIZE = 20;
 
   if (!templateName || !groupId) {
     return {
@@ -1714,6 +1741,172 @@ const downloadMedia = async (req) => {
   }
 };
 
+// Get broadcast details by ID
+const getBulkSendJobById = async (req) => {
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+  const jobId = req.params.jobId;
+
+  try {
+    const job = await BulkSendJob.findOne({
+      _id: jobId,
+      tenantId,
+      userId,
+      projectId
+    });
+
+    if (!job) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Bulk_send_job_not_found,
+      };
+    }
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Bulk_send_job_fetched,
+      data: {
+        jobDetails: job,
+        messages: [] // You might want to include some message stats here
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching bulk send job:", error.stack);
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+// Get messages for a specific broadcast with pagination
+const getBroadcastMessages = async (req) => {
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+  const jobId = req.params.jobId;
+  const page = parseInt(req.query.page || 1, 10);
+  const limit = parseInt(req.query.limit || 10, 10);
+
+  try {
+    const skip = (page - 1) * limit;
+
+    // Verify job exists and belongs to user
+    const job = await BulkSendJob.findOne({
+      _id: jobId,
+      tenantId,
+      userId,
+      projectId
+    });
+
+    if (!job) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Bulk_send_job_not_found,
+      };
+    }
+
+    // Fetch messages for this job
+    const messages = await Message.find({
+      bulkSendJobId: jobId,
+      tenantId,
+      projectId
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .select('to status errorMessage createdAt updatedAt');
+
+    const totalMessages = await Message.countDocuments({
+      bulkSendJobId: jobId,
+      tenantId,
+      projectId
+    });
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Messages_fetched,
+      data: messages,
+      pagination: {
+        page,
+        limit,
+        total: totalMessages,
+        totalPages: Math.ceil(totalMessages / limit),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching broadcast messages:", error.stack);
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+// Export messages to CSV
+const exportBroadcastMessages = async (req, res) => {
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+  const jobId = req.params.jobId;
+
+  try {
+    // Verify job exists and belongs to user
+    const job = await BulkSendJob.findOne({
+      _id: jobId,
+      tenantId,
+      userId,
+      projectId
+    });
+
+    if (!job) {
+      return res.status(statusCode.NOT_FOUND).json({
+        success: false,
+        message: resMessage.Bulk_send_job_not_found,
+      });
+    }
+
+    // Fetch all messages for this job
+    const messages = await Message.find({
+      bulkSendJobId: jobId,
+      tenantId,
+      projectId
+    }).sort({ createdAt: -1 });
+
+    // Create CSV content
+    const csvHeaders = ['Recipient', 'Status', 'Time', 'Error Message'];
+    const csvRows = messages.map(message => [
+      message.to,
+      message.status,
+      new Date(message.updatedAt).toLocaleString(),
+      message.errorMessage || ''
+    ]);
+
+    const csvContent = [
+      csvHeaders,
+      ...csvRows
+    ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=broadcast-${jobId}-messages.csv`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error("Error exporting broadcast messages:", error.stack);
+    return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message || resMessage.Server_error,
+    });
+  }
+};
+
 module.exports = {
   sendMessageService,
   sendWhatsAppMessages,
@@ -1725,5 +1918,8 @@ module.exports = {
   downloadMedia,
   ScheduleBulkSendService,
   sendBulkCatalogService,
+  getBulkSendJobById,
+  getBroadcastMessages,
+  exportBroadcastMessages,
   sendFlowTemplateService
 };
