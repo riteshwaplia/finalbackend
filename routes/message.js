@@ -17,6 +17,7 @@ router.post("/bulk-catalog-messages", protect, uploadExcel.single("file"), respo
 router.post('/upload-media', protect, mediaUploadDir.single('file'), responseHandler(messageController.uploadMedia));
 router.get('/bulk-send-jobs', protect, responseHandler(messageController.getAllBulkSendJobsService));
 router.get('/bulk-send-jobs/:bulkSendJobId', protect, responseHandler(messageController.getBulkSendJobDetailsService));
+router.get('/bulk-stats', protect , responseHandler(messageController.getBulkSendStatsController));
 
 router.post('/bulk-send-group', protect, responseHandler(messageController.BulkSendGroupController));
 router.post(

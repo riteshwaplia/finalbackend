@@ -54,3 +54,7 @@ exports.downloadMediaControllerRaw = async (req, res) => {
   res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
   result.stream.pipe(res);
 };
+
+exports.getBulkSendStatsController = async (req) => {
+    return await messageService.getBulkSendStatsService(req);
+};
