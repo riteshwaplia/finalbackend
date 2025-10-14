@@ -11670,3 +11670,11 @@
 [25/9/2025, 18:21:26] No pending jobs found.
 [25/9/2025, 18:22:00] [2025-09-25T12:52:00.010Z] Checking for scheduled jobs...
 [25/9/2025, 18:22:00] No pending jobs found.
+[14/10/2025, 16:38:01] Server running on port 5001
+[14/10/2025, 16:38:02] MongoDB Connected: ac-hpitsto-shard-00-02.emmkmiu.mongodb.net
+[14/10/2025, 16:39:00] [2025-10-14T11:09:00.015Z] Checking for scheduled jobs...
+[14/10/2025, 16:39:00] No pending jobs found.
+[14/10/2025, 16:39:26] domain http://localhost:5173
+[14/10/2025, 16:39:59] domain http://localhost:5173
+[14/10/2025, 16:40:00] [2025-10-14T11:10:00.008Z] Checking for scheduled jobs...
+[14/10/2025, 16:40:00] No pending jobs found.
