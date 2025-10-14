@@ -376,123 +376,104 @@ exports.createTemplate = async (req) => {
 
 
 
-exports.createCarouselTemplate = async (req) => {
-  const { name, language, category, components, businessProfileId, projectId } =
-    req.body;
-  const userId = req.user._id;
+exports.createTemplateWithFlow = async (req) => {
+  const { name, language, category = 'MARKETING', businessProfileId, bodyText, flowId, buttonText } = req.body;
   const tenantId = req.tenant._id;
+  const userId = req.user._id;
 
-  if (
-    !name ||
-    !language ||
-    !category ||
-    !components ||
-    !businessProfileId ||
-    !projectId
-  ) {
+  if (!name || !language || !businessProfileId || !bodyText || !flowId || !buttonText) {
     return {
-      status: statusCode.BAD_REQUEST,
+      status: 400,
       success: false,
-      message:
-        resMessage.Missing_required_fields +
-        " (name, language, category, components, businessProfileId, projectId are required for carousel template).",
+      message: 'Missing required fields: name, language, businessProfileId, bodyText, flowId, buttonText.',
     };
-  }
-
-  const carouselComponent = components.find((comp) => comp.type === "CAROUSEL");
-  if (
-    !carouselComponent ||
-    !carouselComponent.cards ||
-    carouselComponent.cards.length === 0
-  ) {
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message:
-        "Carousel template must have a 'CAROUSEL' component with at least one card.",
-    };
-  }
-
-  if (carouselComponent.cards.length > 10) {
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Carousel_limit_exceed,
-      statusCode: statusCode.BAD_REQUEST
-    }
   }
 
   try {
-    const metaCredentials = await getBusinessProfileMetaApiCredentials(
-      businessProfileId,
+    const businessProfile = await BusinessProfile.findOne({
+      _id: businessProfileId,
       userId,
-      tenantId
-    );
+      tenantId,
+    });
+
+    if (!businessProfile) {
+      return {
+        status: 404,
+        success: false,
+        message: 'Business Profile not found or does not belong to your account.',
+      };
+    }
+
+    const metaCredentials = await getBusinessProfileMetaApiCredentials(businessProfileId, userId, tenantId);
     if (!metaCredentials.success) {
       return {
-        status: metaCredentials.status || statusCode.BAD_REQUEST,
+        status: metaCredentials.status || 400,
         success: false,
         message: metaCredentials.message,
       };
     }
 
-    const { accessToken, wabaId } = metaCredentials;
-    const url = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
+    const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
+
+    const componentsForMeta = [
+      {
+        type: 'BODY',
+        text: bodyText,
+      },
+      {
+        type: 'BUTTONS',
+        buttons: [
+          {
+            type: 'FLOW',
+            text: buttonText,
+            flow_id: flowId,
+          },
+        ],
+      },
+    ];
 
     const payload = {
       name,
       language,
       category,
-      components: components,
+      components: componentsForMeta,
     };
 
-    console.log(
-      "Sending carousel template creation request to Meta:",
-      JSON.stringify(payload, null, 2)
-    );
+    const metaUrl = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
-    const response = await axios.post(url, payload, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
+    const response = await axios.post(metaUrl, payload, {
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     });
-
-    console.log("Meta API carousel template creation response:", response.data);
 
     const newTemplate = await Template.create({
       name,
       category,
       language,
-      components: components || [],
+      components: componentsForMeta,
       tenantId,
       userId,
       businessProfileId,
       metaTemplateId: response.data.id,
-      metaStatus: response.data.status,
-      metaCategory: response.data.category,
+      metaStatus: response.data.status || 'PENDING_REVIEW',
+      metaCategory: response.data.category || category,
       isSynced: true,
       lastSyncedAt: new Date(),
-      type: "CAROUSEL",
     });
 
     return {
-      status: statusCode.CREATED,
+      status: 201,
       success: true,
-      message: resMessage.Template_submitted + " (Carousel)",
+      message: 'Template submitted to Meta for approval and saved locally.',
       data: newTemplate,
+      metaResponse: response.data,
     };
   } catch (error) {
-    console.error(
-      "Error creating carousel template on Meta:",
-      error.response?.data || error.message
-    );
+    console.error('Error in createTemplateWithFlow:', error.message || error.response?.data?.error?.message);
     return {
-      status: error.response?.status || statusCode.INTERNAL_SERVER_ERROR,
+      status: 500,
       success: false,
-      message: `Failed to create carousel template: ${error.response?.data?.error?.message || error.message
-        }`,
-      metaError: error.response?.data?.error || null,
+      message: `Failed to create template with flow: ${error.message || error.response?.data?.error?.message}`,
+      metaError: error.response?.data || null,
     };
   }
 };
