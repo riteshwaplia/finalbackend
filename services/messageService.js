@@ -1362,7 +1362,9 @@ const getAllBulkSendJobsService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
-  const { page = 1, limit = 10, from, to } = req.query; 
+  const { from, to } = req.query;
+  const page = parseInt(req.query.page || 1, 10);
+  const limit = parseInt(req.query.limit || 10, 10);
 
   try {
     const skip = (page - 1) * limit;
@@ -1378,15 +1380,24 @@ const getAllBulkSendJobsService = async (req) => {
       };
     }
 
-    const jobs = await BulkSendJob.find({
+    const projection = {
+      templateName: 1,
+      totalSent: 1,
+      totalFailed: 1,
+      status: 1,
+      startTime: 1,
+      _id: 1 
+    };
+
+    const jobsRaw = await BulkSendJob.find({
       tenantId,
       userId,
       projectId,
       ...dateFilter,
-    })
+    }, projection)
     .sort({ startTime: -1 })
-    .skip(skip) // Skip documents based on pagination
-    .limit(parseInt(limit)); // Limit the number of documents fetched
+    .skip(skip)
+    .limit(limit);
 
     // Count total jobs to calculate total pages
     const totalJobs = await BulkSendJob.countDocuments({
@@ -1396,16 +1407,25 @@ const getAllBulkSendJobsService = async (req) => {
       ...dateFilter, 
     });
 
+    const jobs = jobsRaw.map(job => ({
+      _id: job._id,
+      templateName: job.templateName,
+      totalSent: job.totalSent,
+      totalFailed: job.totalFailed,
+      status: job.status,
+      startTime: job.startTime ? job.startTime : null
+    }));
+
     return {
       status: statusCode.OK,
       success: true,
       message: resMessage.Bulk_send_jobs_fetched,
       data: jobs,
       pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
+        page,
+        limit,
         totalJobs,
-        totalPages: Math.ceil(totalJobs / limit), // Calculate total pages
+        totalPages: Math.ceil(totalJobs / limit),
       },
     }; 
   } catch (error) {
