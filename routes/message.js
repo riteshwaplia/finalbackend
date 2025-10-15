@@ -41,4 +41,8 @@ router.post(
   responseHandler(messageController.ScheduleBulkSendServiceController)
 );
 
+
+router.get('/bulk-send-jobs/:jobId', protect, responseHandler(messageController.getBulkSendJobById));
+router.get('/bulk-send-jobs/:jobId/messages', protect, responseHandler(messageController.getBroadcastMessages));
+router.get('/bulk-send-jobs/:jobId/export', protect, messageController.exportBroadcastMessages);
 module.exports = router;
