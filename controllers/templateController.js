@@ -38,8 +38,13 @@ exports.getByIdController = async (req) => {
     return await templateService.getTemplateById(req);
 };
 exports.getAllApprovedTemplatesController = async (req) => {
-    return await templateService.getAllApprovedTemplates(req);
+    return await templateService.getAllApprovedTemplates(req);getAllRegularTemplates
 };
+
+exports.getAllRegularTemplates = async (req) => {
+    return await templateService.getAllRegularTemplates(req);
+};
+
 exports.getAllApprovedCatalogTemplatesController = async (req) => {
     return await templateService.getAllCatalogTemplates(req);
 };

@@ -1678,3 +1678,103 @@ exports.sendCatalogTemplate = async (req, res) => {
     };
   }
 };
+
+exports.getAllRegularTemplates = async (req) => {
+  const tenantId = req.tenant._id;
+  const userId = req.user._id;
+  const { businessProfileId, page = 1, limit = 10, search = "" } = req.query;
+
+  if (!tenantId || !userId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing tenantId or userId in request",
+    };
+  }
+
+  if (!businessProfileId) {
+    return {
+      status: 400,
+      success: false,
+      message: "Missing businessProfileId in request",
+    };
+  }
+
+  const pageNum = Math.max(parseInt(page, 10), 1);
+  const limitNum = Math.max(parseInt(limit, 10), 1);
+  const skip = (pageNum - 1) * limitNum;
+
+  try {
+    const pipeline = [
+      {
+        $match: {
+          tenantId,
+          userId,
+          businessProfileId: new mongoose.Types.ObjectId(businessProfileId),
+          metaStatus: "APPROVED",
+          $or: [{ type: { $exists: false } }, { type: "STANDARD" }]
+        }
+      },
+      // Exclude templates with catalog buttons
+      {
+        $match: {
+          components: {
+            $not: {
+              $elemMatch: {
+                "buttons.type": { $in: ["SPM", "MPM", "CATALOG"] }
+              }
+            }
+          }
+        }
+      },
+      // Optional: search by name
+      ...(search
+        ? [
+            {
+              $match: {
+                name: { $regex: search, $options: "i" }
+              }
+            }
+          ]
+        : []),
+      {
+        $facet: {
+          templates: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limitNum }
+          ],
+          totalCount: [{ $count: "count" }]
+        }
+      }
+    ];
+
+    const result = await Template.aggregate(pipeline);
+
+    const templates = result?.[0]?.templates || [];
+    const totalCount = result?.[0]?.totalCount?.[0]?.count || 0;
+    const totalPages = Math.ceil(totalCount / limitNum);
+
+    return {
+      status: 200,
+      success: true,
+      message: templates.length
+        ? "Regular templates fetched successfully"
+        : "No regular templates found for the selected business profile.",
+      data: templates,
+      pagination: {
+        totalCount,
+        totalPages,
+        currentPage: pageNum,
+        pageSize: limitNum
+      }
+    };
+  } catch (error) {
+    console.error("❌ Error in getAllRegularTemplates:", error);
+    return {
+      status: 500,
+      success: false,
+      message: error.message || "Server error",
+    };
+  }
+};

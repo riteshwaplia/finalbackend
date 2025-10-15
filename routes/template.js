@@ -18,6 +18,7 @@ router.post('/send-catalog-template/:projectId', protect, responseHandler(templa
 router.post("/:id/submit-to-meta", protect, responseHandler(templateController.submitToMetaController));
 router.get("/", protect, responseHandler(templateController.getAllController));
 router.get("/allapprovedtemplates", protect, responseHandler(templateController.getAllApprovedTemplatesController));
+router.get("/templates-regular",protect , responseHandler(templateController.getAllRegularTemplates));
 router.get("/allapprovedcatalogtemplates", protect, responseHandler(templateController.getAllApprovedCatalogTemplatesController));
 router.get("/allapprovedcarouseltemplates", protect, responseHandler(templateController.getAllApprovedCarosualTemplatesController))
 router.get("/:id", protect, responseHandler(templateController.getByIdController));
