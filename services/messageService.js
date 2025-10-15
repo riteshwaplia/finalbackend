@@ -1935,7 +1935,7 @@ const getBulkSendStatsService = async () => {
             error: error.message
         };
     }
-};
+}}
 
 module.exports = {
   sendMessageService,
@@ -1952,5 +1952,5 @@ module.exports = {
   getBroadcastMessages,
   exportBroadcastMessages,
   sendFlowTemplateService,
-  getBulkSendStatsService
+  // getBulkSendStatsService
 };
