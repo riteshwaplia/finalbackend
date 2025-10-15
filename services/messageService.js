@@ -1905,6 +1905,36 @@ const exportBroadcastMessages = async (req, res) => {
       message: error.message || resMessage.Server_error,
     });
   }
+const getBulkSendStatsService = async () => {
+    try {
+        const result = await BulkSendJob.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    finalSent: { $sum: '$totalContacts' },
+                    finalSuccess: { $sum: '$totalSent' },
+                    finalFailed: { $sum: '$totalFailed' }
+                }
+            }
+        ]);
+
+        const stats = result[0] || { finalSent: 0, finalSuccess: 0, finalFailed: 0 };
+
+        return {
+            status: 200,
+            success: true,
+            message: 'Bulk send stats fetched successfully',
+            data: stats
+        };
+    } catch (error) {
+        console.error('Error in getBulkSendStatsService:', error);
+        return {
+            status: 500,
+            success: false,
+            message: 'Failed to fetch bulk send stats',
+            error: error.message
+        };
+    }
 };
 
 module.exports = {
@@ -1921,5 +1951,6 @@ module.exports = {
   getBulkSendJobById,
   getBroadcastMessages,
   exportBroadcastMessages,
-  sendFlowTemplateService
+  sendFlowTemplateService,
+  getBulkSendStatsService
 };

@@ -416,7 +416,7 @@ exports.updateBusinessProfile = async (req) => {
   const businessProfileId = req.params.id;
   const userId = req.user._id;
   const tenantId = req.tenant._id;
-  const { name, businessAddress, metaAccessToken, metaAppId } = req.body;
+  const { name, businessAddress, metaAccessToken, metaAppId, catalogAccess, metaId } = req.body;
 
   try {
     const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
@@ -445,12 +445,23 @@ exports.updateBusinessProfile = async (req) => {
       }
     }
 
+    // Check if catalogAccess is set to true, metaId must also be provided
+    if (catalogAccess && !metaId) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: "metaId is required when catalogAccess is true."
+      };
+    }
+
+    // Update the business profile with new data
     Object.assign(businessProfile, {
       name: name ?? businessProfile.name,
       businessAddress: businessAddress ?? businessProfile.businessAddress,
       metaAccessToken: metaAccessToken ?? businessProfile.metaAccessToken,
-      metaAppId: metaAppId ?? businessProfile.metaAppId
-      // No metaBusinessId update
+      metaAppId: metaAppId ?? businessProfile.metaAppId,
+      catalogAccess: catalogAccess ?? businessProfile.catalogAccess,
+      metaId: metaId ?? businessProfile.metaId
     });
 
     await businessProfile.save();
