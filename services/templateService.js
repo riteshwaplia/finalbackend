@@ -758,7 +758,7 @@ exports.submitTemplateToMeta = async (req) => {
 exports.getAllTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
-  const { businessProfileId, page = 1, limit = 10, type } = req.query;
+  const { businessProfileId, page = 1, limit = 10, type, metaStatus } = req.query;
 
   const query = { tenantId, userId };
   if (businessProfileId) {
@@ -770,6 +770,10 @@ exports.getAllTemplates = async (req) => {
   }
   else if (type === "regular") {
     query['components.type'] = { $ne: "CAROUSEL" };
+  }
+
+  if (metaStatus && ['APPROVED', 'PENDING', 'REJECTED'].includes(metaStatus)) {
+    query.metaStatus = metaStatus;
   }
 
   const skip = (parseInt(page) - 1) * parseInt(limit);
