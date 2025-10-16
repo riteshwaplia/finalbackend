@@ -376,7 +376,7 @@ exports.createTemplate = async (req) => {
 
 
 
-exports.createTemplateWithFlow = async (req) => {
+exports.createTemplateWithMetaFlows = async (req) => {
   const { name, language, category = 'MARKETING', businessProfileId, bodyText, flowId, buttonText } = req.body;
   const tenantId = req.tenant._id;
   const userId = req.user._id;
@@ -390,20 +390,13 @@ exports.createTemplateWithFlow = async (req) => {
   }
 
   try {
-    const businessProfile = await BusinessProfile.findOne({
-      _id: businessProfileId,
-      userId,
-      tenantId,
-    });
-
+    // ✅ Validate business profile ownership
+    const businessProfile = await BusinessProfile.findOne({ _id: businessProfileId, userId, tenantId });
     if (!businessProfile) {
-      return {
-        status: 404,
-        success: false,
-        message: 'Business Profile not found or does not belong to your account.',
-      };
+      return { status: 404, success: false, message: 'Business Profile not found or not owned by you.' };
     }
 
+    // ✅ Get Meta credentials
     const metaCredentials = await getBusinessProfileMetaApiCredentials(businessProfileId, userId, tenantId);
     if (!metaCredentials.success) {
       return {
@@ -415,23 +408,26 @@ exports.createTemplateWithFlow = async (req) => {
 
     const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
 
+    // ✅ Correct Meta component format
     const componentsForMeta = [
       {
         type: 'BODY',
-        text: bodyText,
+        text: bodyText.trim(),
       },
       {
         type: 'BUTTONS',
         buttons: [
           {
             type: 'FLOW',
-            text: buttonText,
+            text: buttonText.trim(),
+            // id: `${name}_flow_button_${Date.now()}`,
             flow_id: flowId,
           },
         ],
       },
     ];
 
+    // ✅ Final payload
     const payload = {
       name,
       language,
@@ -441,10 +437,16 @@ exports.createTemplateWithFlow = async (req) => {
 
     const metaUrl = `${facebookUrl}/${graphVersion}/${wabaId}/message_templates`;
 
+    console.log("📤 Sending to Meta:", JSON.stringify(payload, null, 2));
+
+    // ✅ Call Meta Graph API
     const response = await axios.post(metaUrl, payload, {
       headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
     });
 
+    console.log("✅ Meta Response:", response.data);
+
+    // ✅ Save locally
     const newTemplate = await Template.create({
       name,
       category,
@@ -468,15 +470,16 @@ exports.createTemplateWithFlow = async (req) => {
       metaResponse: response.data,
     };
   } catch (error) {
-    console.error('Error in createTemplateWithFlow:', error.message || error.response?.data?.error?.message);
+    console.error("❌ Error in createTemplateWithFlow:", error.response?.data || error.message);
     return {
       status: 500,
       success: false,
-      message: `Failed to create template with flow: ${error.message || error.response?.data?.error?.message}`,
+      message: `Failed to create template with flow: ${error.response?.data?.error?.message || error.message}`,
       metaError: error.response?.data || null,
     };
   }
 };
+
 
 // @desc    Create a new template with a FLOW button (locally first, then submit to Meta)
 // @access  Private (User/Team Member)

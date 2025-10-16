@@ -1904,7 +1904,7 @@ const exportBroadcastMessages = async (req, res) => {
       success: false,
       message: error.message || resMessage.Server_error,
     });
-  }
+  }}                                                                 
 const getBulkSendStatsService = async () => {
     try {
         const result = await BulkSendJob.aggregate([
@@ -1935,7 +1935,7 @@ const getBulkSendStatsService = async () => {
             error: error.message
         };
     }
-}}
+}
 
 module.exports = {
   sendMessageService,
@@ -1952,5 +1952,5 @@ module.exports = {
   getBroadcastMessages,
   exportBroadcastMessages,
   sendFlowTemplateService,
-  // getBulkSendStatsService
+  getBulkSendStatsService
 };

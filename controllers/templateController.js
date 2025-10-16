@@ -8,7 +8,7 @@ exports.createController = async (req) => {
 
 exports.createWithFlowController = async (req) => {
   try {
-    return await templateService.createTemplateWithFlow(req);
+    return await templateService.createTemplateWithMetaFlows(req);
   } catch (error) {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
