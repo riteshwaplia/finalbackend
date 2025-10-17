@@ -4,6 +4,7 @@ const tenantResolver = async (req, res, next) => {
 
   const domain = ["https://wachaat.netlify.app", "http://164.52.197.192:5173"];
 
+  console.log("domain",domain)
   try {
     const tenant = await Tenant.findOne({ domain: { $in: domain } });
     

@@ -1,16 +1,16 @@
 // server/services/whatsappService.js
 const axios = require("axios");
 const fs = require("fs");
-const path = require("path");
 const FormData = require("form-data"); // Ensure you have installed this: npm install form-data
 const mongoose = require('mongoose');
-
 const BusinessProfile = require("../models/BusinessProfile");
 const { statusCode, resMessage } = require("../config/constants");
 const Template = require("../models/Template");
-const sharp = require("sharp"); // NEW: Import sharp
 const facebookUrl = "https://graph.facebook.com";
 const graphVersion = "v19.0"; // Use default if not
+const { createCatalogTemplate, sendCatalogTemplateMessage } = require('../functions/functions');
+const Project = require('../models/Project');
+
 // Helper function to get Meta API credentials from Business Profile
 const getBusinessProfileMetaApiCredentials = async (
   businessProfileId,
@@ -234,176 +234,7 @@ exports.uploadMedia = async (req) => {
     };
   }
 };
-// exports.uploadMedia = async (req) => {
-//   const { projectId, businessProfileId } = req.body;
-//   const file = req.file; // This is the file object from multer
-//   const userId = req.user._id;
-//   const tenantId = req.tenant._id;
 
-//   if (!file) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.Media_required,
-//     };
-//   }
-//   if (!projectId || !businessProfileId) {
-//     return {
-//       status: statusCode.BAD_REQUEST,
-//       success: false,
-//       message: resMessage.Missing_required_fields + " (projectId and businessProfileId are required).",
-//     };
-//   }
-
-//   let processedFileBuffer = null;
-//   let finalMimeType = file.mimetype;
-//   let finalFileSize = file.size;
-
-//   try {
-//     // NEW: Image processing with sharp for JPGs
-//     if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
-//       console.log(`[Sharp] Processing image: ${file.originalname} (${file.mimetype})`);
-//       try {
-//         // Read the original file buffer
-//         const originalBuffer = fs.readFileSync(file.path);
-
-//         // Process with sharp: resize (optional, but good for profile pics),
-//         // then output as a clean JPG with a specific quality.
-//         // This re-encodes the image, often fixing obscure format issues.
-//         processedFileBuffer = await sharp(originalBuffer)
-//           .resize(300, 300, {
-//             fit: sharp.fit.inside, // Ensures image fits within dimensions without cropping
-//             withoutEnlargement: true // Prevents enlarging if smaller
-//           })
-//           .jpeg({ quality: 80, progressive: true }) // Re-encode as JPG, 80% quality, progressive scan
-//           .toBuffer();
-
-//         finalMimeType = 'image/jpeg';
-//         finalFileSize = processedFileBuffer.length;
-//         console.log(`[Sharp] Image processed to JPG. New size: ${finalFileSize} bytes.`);
-
-//       } catch (sharpError) {
-//         console.error("[Sharp] Error processing image with sharp, falling back to original file:", sharpError);
-//         // If sharp fails, proceed with the original file
-//         processedFileBuffer = null;
-//       }
-//     }
-
-//     const metaCredentials = await getBusinessProfileMetaApiCredentials(
-//       businessProfileId,
-//       userId,
-//       tenantId
-//     );
-//     if (!metaCredentials.success) {
-//       console.warn("Meta credential fetch failed:", metaCredentials.message);
-//       return {
-//         status: metaCredentials.status || statusCode.BAD_REQUEST,
-//         success: false,
-//         message: metaCredentials.message,
-//       };
-//     }
-
-//     const { accessToken, wabaId, facebookUrl, graphVersion } = metaCredentials;
-
-//     console.log("🟡 Resumable Upload params (after processing):", {
-//       facebookUrl,
-//       graphVersion,
-//       appIdUsedForUploads: wabaId,
-//       accessToken: !!accessToken,
-//       mimeType: finalMimeType,
-//       fileSize: finalFileSize,
-//     });
-
-//     const initUrl = `${facebookUrl}/${graphVersion}/736244065439007/uploads`;
-//     console.log("Resumable Upload Init URL:", initUrl);
-
-//     const initResponse = await axios.post(
-//       initUrl,
-//       {
-//         file_length: finalFileSize,
-//         file_type: finalMimeType,
-//         messaging_product: 'whatsapp',
-//       },
-//       {
-//         headers: {
-//           Authorization: `Bearer ${accessToken}`,
-//           'Content-Type': 'application/json',
-//         }
-//       }
-//     );
-
-//     console.log("✅ Init upload session response:", initResponse.data);
-
-//     const uploadId = initResponse.data?.id;
-//     if (!uploadId) {
-//       throw new Error("Upload session ID not received from Meta during initialization.");
-//     }
-
-//     const form = new FormData();
-//     // Use the processed buffer if available, otherwise read from original path
-//     const fileStream = processedFileBuffer ? processedFileBuffer : fs.createReadStream(file.path);
-
-//     form.append("file", fileStream, {
-//       filename: file.originalname.replace(/\..+$/, '.jpg'), // Ensure filename ends with .jpg if processed
-//       contentType: finalMimeType,
-//     });
-//     form.append("type", finalMimeType); // Redundant but harmless
-
-//     const uploadUrl = `${facebookUrl}/${graphVersion}/${uploadId}`;
-//     console.log("Resumable Upload File URL:", uploadUrl);
-//     console.log("Attempting to upload file with Content-Type:", finalMimeType);
-
-//     const uploadResponse = await axios.post(
-//       uploadUrl,
-//       form,
-//       {
-//         headers: {
-//           ...form.getHeaders(),
-//           Authorization: `Bearer ${accessToken}`,
-//         },
-//         maxContentLength: Infinity,
-//         maxBodyLength: Infinity,
-//       }
-//     );
-
-//     console.log("✅ Media uploaded to Meta:", uploadResponse.data);
-
-//     const hValue = uploadResponse.data?.h;
-//     if (!hValue) {
-//       throw new Error("Media handle ('h' value) not returned from Meta after resumable upload.");
-//     }
-
-//     // Clean up the original uploaded file after successful processing/upload
-//     if (fs.existsSync(file.path)) {
-//       fs.unlinkSync(file.path);
-//     }
-
-//     return {
-//       status: statusCode.OK,
-//       success: true,
-//       message: resMessage.Media_uploaded,
-//       id: hValue, // Return the 'h' handle
-//       mimeType: finalMimeType,
-//       fileSize: finalFileSize,
-//     };
-//   } catch (error) {
-//     // Ensure original file is cleaned up even on error
-//     if (file?.path && fs.existsSync(file.path)) {
-//       fs.unlinkSync(file.path);
-//     }
-
-//     const metaError = error.response?.data?.error || error.message;
-//     console.error("❌ Resumable Media upload error:", metaError);
-//     console.error("❌ Full error response:", JSON.stringify(error.response?.data || {}));
-
-//     return {
-//       status: statusCode.INTERNAL_SERVER_ERROR,
-//       success: false,
-//       message: `Media upload failed: ${metaError.message || metaError}`,
-//       metaError: error.response?.data || null,
-//     };
-//   }
-// };
 
 // @desc    Create a new template (locally first)
 // @access  Private (User/Team Member)
@@ -543,6 +374,8 @@ exports.createTemplate = async (req) => {
   }
 };
 
+
+
 exports.createCarouselTemplate = async (req) => {
   const { name, language, category, components, businessProfileId, projectId } =
     req.body;
@@ -580,7 +413,7 @@ exports.createCarouselTemplate = async (req) => {
     };
   }
 
-  if(carouselComponent.cards.length > 10) {
+  if (carouselComponent.cards.length > 10) {
     return {
       status: statusCode.BAD_REQUEST,
       success: false,
@@ -657,9 +490,8 @@ exports.createCarouselTemplate = async (req) => {
     return {
       status: error.response?.status || statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: `Failed to create carousel template: ${
-        error.response?.data?.error?.message || error.message
-      }`,
+      message: `Failed to create carousel template: ${error.response?.data?.error?.message || error.message
+        }`,
       metaError: error.response?.data?.error || null,
     };
   }
@@ -759,9 +591,8 @@ exports.submitTemplateToMeta = async (req) => {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: `Failed to submit template to Meta: ${
-        error.response?.data?.error?.message || error.message
-      }`,
+      message: `Failed to submit template to Meta: ${error.response?.data?.error?.message || error.message
+        }`,
     };
   }
 };
@@ -776,10 +607,10 @@ exports.getAllTemplates = async (req) => {
     query.businessProfileId = businessProfileId;
   }
 
-  if(type === "carousel") {
+  if (type === "carousel") {
     query['components.type'] = "CAROUSEL"
   }
-  else if(type === "regular") {
+  else if (type === "regular") {
     query['components.type'] = { $ne: "CAROUSEL" };
   }
 
@@ -835,7 +666,7 @@ exports.getAllTemplates = async (req) => {
 exports.getAllApprovedTemplates = async (req) => {
   const tenantId = req.tenant._id;
   const userId = req.user._id;
-  const { businessProfileId,page=1,limit=100 } = req.query;
+  const { businessProfileId, page = 1, limit = 100 } = req.query;
 
   const query = {
     tenantId,
@@ -870,7 +701,7 @@ exports.getAllApprovedTemplates = async (req) => {
       message:
         templates.length === 0
           ? 'No approved templates found' +
-            (businessProfileId ? ' for the selected business profile.' : '')
+          (businessProfileId ? ' for the selected business profile.' : '')
           : 'Templates fetched successfully',
       data: templates,
       pagination: {
@@ -925,7 +756,7 @@ exports.getAllCarouselTemplates = async (req) => {
       message:
         templates.length === 0
           ? 'No carousel templates found' +
-            (businessProfileId ? ' for the selected business profile.' : '')
+          (businessProfileId ? ' for the selected business profile.' : '')
           : 'Carousel templates fetched successfully',
       data: templates,
       pagination: {
@@ -1086,52 +917,7 @@ exports.updateTemplate = async (req) => {
   }
 };
 
-// @desc    Delete a template
-// @access  Private (User/Team Member)
-// exports.deleteTemplate = async (req) => {
-//   const templateId = req.params.id;
-//   const tenantId = req.tenant._id;
-//   const userId = req.user._id;
-//   const { businessProfileId } = req.body;
 
-//   try {
-//     const template = await Template.findOne({
-//       _id: templateId,
-//       tenantId,
-//       userId,
-//       businessProfileId,
-//     });
-//     if (!template) {
-//       return {
-//         status: statusCode.NOT_FOUND,
-//         success: false,
-//         message: resMessage.No_data_found,
-//       };
-//     }
-
-//     await template.deleteOne();
-
-//     return {
-//       status: statusCode.OK,
-//       success: true,
-//       message: resMessage.Template_deleted_successfully,
-//     };
-//   } catch (error) {
-//     console.error("Error deleting template:", error);
-//     if (error.name === "CastError") {
-//       return {
-//         status: statusCode.BAD_REQUEST,
-//         success: false,
-//         message: "Invalid Template ID format.",
-//       };
-//     }
-//     return {
-//       status: statusCode.INTERNAL_SERVER_ERROR,
-//       success: false,
-//       message: error.message || resMessage.Server_error,
-//     };
-//   }
-// };
 
 // @desc    Delete a template (locally + from Meta)
 // @access  Private (User/Team Member)
@@ -1338,9 +1124,8 @@ exports.syncTemplatesFromMeta = async (req) => {
     return {
       status: statusCode.INTERNAL_SERVER_ERROR,
       success: false,
-      message: `Failed to synchronize templates from Meta: ${
-        error.response?.data?.error?.message || error.message
-      }. Ensure your selected business profile has correct WABA ID and Access Token.`,
+      message: `Failed to synchronize templates from Meta: ${error.response?.data?.error?.message || error.message
+        }. Ensure your selected business profile has correct WABA ID and Access Token.`,
     };
   }
 };
@@ -1370,7 +1155,7 @@ exports.getPlainTextTemplates = async (req) => {
     tenantId,
     userId,
     metaStatus: 'APPROVED',
-    businessProfileId: new mongoose.Types.ObjectId(businessProfileId), 
+    businessProfileId: new mongoose.Types.ObjectId(businessProfileId),
     $or: [
       { type: { $exists: false } },
       { type: 'STANDARD' }
@@ -1393,7 +1178,7 @@ exports.getPlainTextTemplates = async (req) => {
               $elemMatch: {
                 $or: [
                   { type: "CAROUSEL" },
-                  { format: { $in: [ 'CAROUSEL'] } },
+                  { format: { $in: ['CAROUSEL'] } },
                   { text: { $regex: "{{.*}}", $options: "i" } }
                 ]
               }
@@ -1440,6 +1225,116 @@ exports.getPlainTextTemplates = async (req) => {
       status: 500,
       success: false,
       message: error.message || "Server error"
+    };
+  }
+};
+
+exports.createCatalogTemplate = async (req) => {
+  try {
+    const { businessProfileId } = req.params;
+    const {name, language, category, bodyText, parameter_format, footer_text, example } = req.body;
+    const businessData = await BusinessProfile.findOne({ _id: businessProfileId, tenantId: req.tenant._id, userId: req.user._id });
+    if (!businessData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Invalid_business_ID
+      }
+    }
+
+    // Find max variable length
+    const placeholderRegex = /{{\s*(\d+)\s*}}/g;
+    const matches = bodyText ? [...bodyText.matchAll(placeholderRegex)].map(m => parseInt(m[1], 10)) : [];
+    const maxIndex = matches.length ? Math.max(...matches.filter(n => !isNaN(n))) : 0;
+
+    // match variable to example number 
+    if (maxIndex > 0) {
+      if (!example || !example.body_text || !Array.isArray(example.body_text) || example.body_text.length === 0) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: "Example values are required for templates with placeholders (provide example.body_text)."
+        };
+      }
+      const firstExampleRow = example.body_text[0];
+      if (!Array.isArray(firstExampleRow) || firstExampleRow.length < maxIndex) {
+        return {
+          status: statusCode.BAD_REQUEST,
+          success: false,
+          message: `Example must include at least ${maxIndex} positional values in example.body_text[0].`
+        };
+      }
+    }
+
+    //options
+    const options = {
+      ...(parameter_format && { parameter_format }),
+      ...(footer_text && { footer_text }),
+      ...(example && { example })
+    };
+
+    try {
+      const result = await createCatalogTemplate(businessData.metaBusinessId, name, language, category, bodyText, businessData.metaAccessToken, options);
+      return {
+        status: statusCode.SUCCESS,
+        success: true,
+        message: resMessage.Catalog_template_created,
+        data: result
+      };
+    } catch (serviceError) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: serviceError.message || "Failed to create catalog template"
+      };
+    }
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+}
+
+exports.sendCatalogTemplate = async (req, res) => {
+  try {
+    const { projectId } = req.params;
+    const { to, parameters, template_name } = req.body;
+    const projectData = await Project.findOne({ _id: projectId, tenantId: req.tenant._id, userId: req.user._id });
+    if (!projectData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.ProjectId_dont_exists
+      }
+    }
+    const businessData = await BusinessProfile.findOne({ _id: projectData.businessProfileId, tenantId: req.tenant._id, userId: req.user._id, catalogAccess: true });
+    if (!businessData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Invalid_business_ID
+      }
+    }
+    const response = await sendCatalogTemplateMessage(to, parameters, projectData.metaPhoneNumberID, template_name, businessData.metaAccessToken);
+    if (!response.success) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: response.error
+      }
+    }
+    return {
+        status: statusCode.OK,
+        success: true,
+        message: resMessage.Catalog_template_sent
+      }
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
     };
   }
 };

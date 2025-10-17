@@ -4,6 +4,9 @@ const { statusCode } = require("../config/constants");
 exports.createController = async (req) => {
     return await contactService.create(req);
 };
+exports.contactByIdController = async (req) => {
+    return await contactService.contactByIdService(req);
+};
 
 exports.uploadContactController = async (req) => {
     return await contactService.uploadContact(req);

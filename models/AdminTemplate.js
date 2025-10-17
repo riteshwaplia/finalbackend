@@ -1,21 +1,10 @@
 const mongoose = require("mongoose");
 
-const TemplateSchema = new mongoose.Schema({
+const AdminTemplateSchema = new mongoose.Schema({
   tenantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Tenant",
     required: true,
-  },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  businessProfileId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "BusinessProfile",
-    required: true,
-    index: true,
   },
   name: {
     type: String,
@@ -40,9 +29,10 @@ const TemplateSchema = new mongoose.Schema({
     unique: true,
     sparse: true,
   },
-  metaStatus: {
+  tag: {
     type: String,
-    default: "PENDING_REVIEW",
+    trim: true,
+    default: null,
   },
   metaCategory: {
     type: String,
@@ -50,15 +40,7 @@ const TemplateSchema = new mongoose.Schema({
   },
   TemplateCategory: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "TemplateCategorySchema",
-  },
-
-  isSynced: {
-    type: Boolean,
-    default: false,
-  },
-  lastSyncedAt: {
-    type: Date,
+    ref: "OccasionCategory",
   },
   type: {
     type: String,
@@ -78,24 +60,9 @@ const TemplateSchema = new mongoose.Schema({
   },
 });
 
-// ✅ Define indexes AFTER schema creation
-TemplateSchema.index(
-  { metaTemplateId: 1, businessProfileId: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { metaTemplateId: { $type: "string" } },
-  }
-);
-
-TemplateSchema.index(
-  { businessProfileId: 1, name: 1, language: 1 },
-  { unique: true }
-);
-
-// ✅ Middleware to auto-update updatedAt
-TemplateSchema.pre("save", function (next) {
+AdminTemplateSchema.pre("save", function (next) {
   this.updatedAt = Date.now();
   next();
 });
 
-module.exports = mongoose.model("Template", TemplateSchema);
+module.exports = mongoose.model("AdminTemplate", AdminTemplateSchema);

@@ -299,7 +299,7 @@ exports.updateWhatsappBusinessProfileOnMeta = async ({ projectId, userId, tenant
             messaging_product: "whatsapp",
             ...profileData
         };
-
+console.log("payload of update profile", metaPayload);
         const response = await axios.post(url, metaPayload, {
             headers: {
                 'Authorization': `Bearer ${metaAccessToken}`,

@@ -1,6 +1,6 @@
 // server/controllers/templateController.js
 const templateService = require('../services/templateService');
-const{ statusCode, resMessage } = require('../config/constants');
+const{ statusCode } = require('../config/constants');
 
 exports.createController = async (req) => {
     return await templateService.createTemplate(req);
@@ -60,3 +60,27 @@ exports.authTemplateController = async (req) => {
 exports.getPlainTextController = async (req) => {
   return await templateService.getPlainTextTemplates(req);
 };
+
+exports.createCatalogTemplateController = async (req) => {
+    try {
+        return await templateService.createCatalogTemplate(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message
+        }
+    }
+}
+
+exports.sendCatalogTemplateController = async (req) => {
+    try {
+        return await templateService.sendCatalogTemplate(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message
+        }
+    }
+}
