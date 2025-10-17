@@ -69,6 +69,11 @@ const createBusinessProfileLogic = async (req) => {
             }
         }
 
+        let cleanedCatalogAccess = catalogAccess;
+        if (cleanedCatalogAccess === "" || cleanedCatalogAccess === undefined) {
+            cleanedCatalogAccess = false;
+        }
+
         newProfile = await BusinessProfile.create({
             userId,
             tenantId,
@@ -76,7 +81,7 @@ const createBusinessProfileLogic = async (req) => {
             businessAddress,
             metaAccessToken,
             metaAppId,
-            catalogAccess,
+            catalogAccess: cleanedCatalogAccess,
             metaBusinessId,
             metaId
         });

@@ -11,11 +11,13 @@ const router = express.Router({ mergeParams: true });
 
 
 router.post("/send", protect, validateRequest(messageValidation.sendMessage), responseHandler(messageController.sendMessageController));
+router.post("/send-flow-template", protect,validateRequest(messageValidation.sendFlowTemplate),responseHandler(messageController.sendFlowTemplateController));
 router.post("/bulk-messages", protect, uploadExcel.single("file"), responseHandler(messageController.sendBulkMessageController));
 router.post("/bulk-catalog-messages", protect, uploadExcel.single("file"), responseHandler(messageController.sendBulkCatalogController));
 router.post('/upload-media', protect, mediaUploadDir.single('file'), responseHandler(messageController.uploadMedia));
 router.get('/bulk-send-jobs', protect, responseHandler(messageController.getAllBulkSendJobsService));
 router.get('/bulk-send-jobs/:bulkSendJobId', protect, responseHandler(messageController.getBulkSendJobDetailsService));
+router.get('/bulk-stats', protect , responseHandler(messageController.getBulkSendStatsController));
 
 router.post('/bulk-send-group', protect, responseHandler(messageController.BulkSendGroupController));
 router.post(
@@ -39,4 +41,8 @@ router.post(
   responseHandler(messageController.ScheduleBulkSendServiceController)
 );
 
+
+router.get('/bulk-send-jobs/:jobId', protect, responseHandler(messageController.getBulkSendJobById));
+router.get('/bulk-send-jobs/:jobId/messages', protect, responseHandler(messageController.getBroadcastMessages));
+router.get('/bulk-send-jobs/:jobId/export', protect, messageController.exportBroadcastMessages);
 module.exports = router;

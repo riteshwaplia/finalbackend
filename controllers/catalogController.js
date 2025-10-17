@@ -48,3 +48,27 @@ exports.deleteCatalogController = async (req) => {
         }
     }
 }
+
+exports.switchCatalogController = async (req) => {
+    try {
+        return await service.switchCatalog(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        }
+    }
+}
+
+exports.getActiveCatalogController = async (req) => {
+    try {
+        return await service.getActiveCatalog(req);
+    } catch (error) {
+        return {
+            status: statusCode.INTERNAL_SERVER_ERROR,
+            success: false,
+            message: error.message,
+        }
+    }
+}

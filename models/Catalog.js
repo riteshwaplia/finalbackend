@@ -12,6 +12,10 @@ const catalogSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
+    active: {
+        type: Boolean,
+        default: false 
+    },
 }, { versionKey: false, timestamps: true });
 
 const catalogModel = mongoose.model('catalog', catalogSchema);

@@ -7,6 +7,10 @@ exports.sendMessageController = async (req) => {
     return await messageService.sendMessageService(req);
 };
 
+exports.sendFlowTemplateController = async (req) => {
+  return await messageService.sendFlowTemplateService(req);
+};
+
 exports.sendBulkMessageController = async (req) => {
     return await sendBulkMessageService(req);
 };
@@ -32,6 +36,15 @@ exports.getAllBulkSendJobsService = async (req) => {
 exports.BulkSendGroupController = async (req) => {
     return await messageService.BulkSendGroupService(req);
 };
+exports.getBulkSendJobById = async (req) => {
+  return await messageService.getBulkSendJobById(req);
+};
+exports.getBroadcastMessages = async (req) => {
+  return await messageService.getBroadcastMessages(req);
+};
+exports.exportBroadcastMessages = async (req, res) => {
+  return await messageService.exportBroadcastMessages(req, res);
+};
 exports.sendBulkCarouselMessage = async (req) => {
     return await messageService.sendBulkCarouselMessageService(req);
 };
@@ -49,4 +62,8 @@ exports.downloadMediaControllerRaw = async (req, res) => {
   res.setHeader('Content-Type', result.mimeType);
   res.setHeader('Content-Disposition', `attachment; filename="${result.fileName}"`);
   result.stream.pipe(res);
+};
+
+exports.getBulkSendStatsController = async (req) => {
+    return await messageService.getBulkSendStatsService(req);
 };

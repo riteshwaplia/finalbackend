@@ -131,6 +131,74 @@ exports.listProducts = async (req) => {
   }
 };
 
+exports.listProductsName = async (req) => {
+  try {
+    const { catalogId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    if (!catalogId) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Catalog_id_not_found
+      };
+    }
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const products = await Product.find(
+      {
+        catalogId,
+        userId: req.user._id,
+        tenantId: req.tenant._id
+      },
+      {
+        retailer_id: 1,
+        name: 1,
+        price: 1,
+        availability: 1,
+        _id: 0 
+      }
+    )
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+
+    const totalRecords = await Product.countDocuments({
+      catalogId,
+      userId: req.user._id,
+      tenantId: req.tenant._id
+    });
+
+    if (!products || products.length === 0) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.No_data_found
+      };
+    }
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Data_fetch_successfully,
+      data: products,
+      pagination: {
+        totalRecords,
+        currentPage: Number(page),
+        totalPages: Math.ceil(totalRecords / Number(limit)),
+        pageSize: Number(limit)
+      }
+    };
+  } catch (error) {
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error
+    };
+  }
+};
+
 exports.syncProduct = async (req) => {
   try {
     const { catalogId } = req.params;

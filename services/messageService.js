@@ -14,7 +14,8 @@ const { v4: uuidv4 } = require("uuid");
 const User = require("../models/User");
 const fsPromises = require("fs/promises");
 const mime = require("mime-types");
-const {sendCatalogTemplateMessage } = require('../functions/functions');
+const {sendTemplateMessage ,sendCatalogTemplateMessage , sendMPMTemplateMessage ,scheduleLongTimeout ,sendSPMTemplateMessage} = require('../functions/functions');
+const moment = require("moment-timezone");
 
 const sendWhatsAppMessage = async ({
   to,
@@ -78,7 +79,7 @@ const sendWhatsAppMessage = async ({
     default:
       return { success: false, error: resMessage.Invalid_message_type };
   }
-
+console.log("payloadxcvbnmnbvcxcvbnbvc---------",payload)
   try {
     const response = await axios.post(url, payload, {
       headers: {
@@ -225,8 +226,117 @@ const sendMessageService = async (req) => {
   }
 };
 
+const sendFlowTemplateService = async (req) => {
+  const { to, templateName, languageCode = "en_US", flowToken, flowActionData = {} } = req.body;
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+
+  if (!to || !templateName) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Missing_required_fields + " (to and templateName are required).",
+    };
+  }
+
+  const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+  if (!project) {
+    return {
+      status: statusCode.NOT_FOUND,
+      success: false,
+      message: resMessage.No_data_found + " (Project not found).",
+    };
+  }
+
+  if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Project_whatsapp_number_not_configured,
+    };
+  }
+
+  const businessProfile = project.businessProfileId;
+  if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
+    return {
+      status: statusCode.BAD_REQUEST,
+      success: false,
+      message: resMessage.Meta_API_credentials_not_configured,
+    };
+  }
+
+  const phoneNumberId = project.metaPhoneNumberID;
+  const accessToken = businessProfile.metaAccessToken;
+
+  // Build Flow button component
+  const components = [
+    {
+      type: "button",
+      sub_type: "flow",
+      index: "0",
+      parameters: [
+        {
+          type: "action",
+          action: {
+            flow_token: flowToken || "unused",
+            flow_action_data: flowActionData
+          }
+        }
+      ]
+    }
+  ];
+
+  try {
+    const response = await sendTemplateMessage({
+      to,
+      templateName,
+      languageCode,
+      phoneNumberId,
+      accessToken,
+      components
+    });
+
+    // Save message to DB
+    const messageData = new Message({
+      to,
+      type: "template",
+      message: { name: templateName, components },
+      metaResponse: response,
+      status: "sent",
+      userId,
+      tenantId,
+      projectId,
+      metaPhoneNumberID: phoneNumberId,
+      direction: "outbound",
+      templateName,
+      templateLanguage: languageCode
+    });
+
+    await messageData.save();
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Message_sent_successfully,
+      data: { apiResponse: response, dbEntry: messageData },
+    };
+  } catch (err) {
+    const error = err.response?.data || err.message;
+    console.error("sendFlowTemplateService Error:", error);
+
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: resMessage.Message_send_failed,
+      error,
+    };
+  }
+};
+
 const sendBulkMessageService = async (req) => {
-  const { templateName, message = {} } = req.body;
+  const { templateName, message = {}, imageId } = req.body;
+  console.log("imgageId", imageId);
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
@@ -380,72 +490,95 @@ const sendBulkMessageService = async (req) => {
 
       const components = [];
 
-      for (const comp of templateComponents) {
-        if (comp.type === 'HEADER') {
-          const headerParameters = [];
-          const hasVariables = comp.text?.includes('{{');
+  for (const comp of templateComponents) {
+  // 🟩 HEADER HANDLING
+  if (comp.type === "HEADER") {
+    // 1️⃣ IMAGE / VIDEO / DOCUMENT HEADER
+    if (comp.format === "IMAGE" && imageId) {
+      components.push({
+        type: "header",
+        parameters: [{ type: "image", image: { id: imageId } }],
+      });
+    }
 
-          if (comp.format === 'IMAGE' && imageId) {
-            components.push({
-              type: 'header',
-              parameters: [{ type: 'image', image: { id: imageId } }],
-            });
-          } else if (comp.format === 'TEXT' && hasVariables) {
-            const variableValue = contactRow['header_Example 1'];
+    // 2️⃣ TEXT HEADER WITH VARIABLES (like "Hello {{1}}")
+    else if (comp.format === "TEXT" && comp.text?.includes("{{")) {
+      const headerParameters = [];
+      const headerVariables = comp.text.match(/{{(\d+)}}/g);
 
-            if (variableValue) {
-              headerParameters.push({ type: 'text', text: variableValue });
-            }
-            components.push({
-              type: 'header',
-              parameters: headerParameters,
-            });
-          } else if (comp.format === 'TEXT' && comp.text) {
-            components.push({
-              type: 'header',
-              parameters: [{ type: 'text', text: comp.text }],
-            });
-          }
-        } else if (comp.type === 'BODY') {
-          const bodyParameters = [];
-          const bodyVariables = comp.text?.match(/{{(\d)}}/g);
-
-          if (bodyVariables) {
-            for (const variable of bodyVariables) {
-              const varIndex = variable.match(/{{(\d)}}/)[1];
-              const variableValue = contactRow[`body_Example_${varIndex}`];
-
-              if (variableValue) {
-                bodyParameters.push({ type: 'text', text: variableValue });
-              }
-            }
-          }
-          
-          components.push({
-            type: 'body',
-            parameters: bodyParameters,
-          });
-
-        } else if (comp.type === 'FOOTER') {
-          components.push({
-            type: 'footer',
-          });
-        } else if (comp.type === 'BUTTONS') {
-          if (comp.buttons && comp.buttons.length > 0) {
-            comp.buttons.forEach((button, index) => {
-              if (button.type === 'QUICK_REPLY') {
-                const payload = button.text.toLowerCase().replace(/ /g, '_') + '_payload';
-                components.push({
-                  type: 'button',
-                  sub_type: 'quick_reply',
-                  index: String(index),
-                  parameters: [{ type: 'payload', payload: payload }],
-                });
-              }
-            });
+      if (headerVariables) {
+        for (const variable of headerVariables) {
+          const varIndex = variable.match(/{{(\d+)}}/)[1];
+          const value = contactRow[`header_Example_${varIndex}`];
+          if (value) {
+            headerParameters.push({ type: "text", text: value });
           }
         }
       }
+
+      if (headerParameters.length > 0) {
+        components.push({
+          type: "header",
+          parameters: headerParameters,
+        });
+      } else {
+        // No matching variable → skip header parameters entirely
+        components.push({ type: "header" });
+      }
+    }
+
+    // 3️⃣ STATIC TEXT HEADER (NO VARIABLES)
+    else if (comp.format === "TEXT" && !comp.text?.includes("{{")) {
+      // ✅ Do NOT include parameters — Meta expects none
+      components.push({ type: "header" });
+    }
+  }
+
+  // 🟦 BODY HANDLING
+  else if (comp.type === "BODY") {
+    const bodyParameters = [];
+    const bodyVariables = comp.text?.match(/{{(\d+)}}/g);
+
+    if (bodyVariables) {
+      for (const variable of bodyVariables) {
+        const varIndex = variable.match(/{{(\d+)}}/)[1];
+        const value = contactRow[`body_Example_${varIndex}`];
+        if (value) {
+          bodyParameters.push({ type: "text", text: value });
+        }
+      }
+    }
+
+    if (bodyParameters.length > 0) {
+      components.push({
+        type: "body",
+        parameters: bodyParameters,
+      });
+    }
+  }
+
+  // 🟨 FOOTER (just include type)
+  else if (comp.type === "FOOTER") {
+    components.push({ type: "footer" });
+  }
+
+  // 🟥 BUTTONS (QUICK REPLY)
+  else if (comp.type === "BUTTONS" && comp.buttons?.length > 0) {
+    comp.buttons.forEach((button, index) => {
+      if (button.type === "QUICK_REPLY") {
+        const payload = button.text.toLowerCase().replace(/ /g, "_") + "_payload";
+        components.push({
+          type: "button",
+          sub_type: "quick_reply",
+          index: String(index),
+          parameters: [{ type: "payload", payload }],
+        });
+      }
+    });
+  }
+}
+
+
       
       const templateMessage = {
         name: baseMessage.name,
@@ -459,7 +592,7 @@ const sendBulkMessageService = async (req) => {
         type: "template",
         template: templateMessage,
       };
-
+console.log("templateMessage",templateMessage)
       try {
         const sendResult = await sendWhatsAppMessage({
           to,
@@ -530,6 +663,8 @@ const sendBulkMessageService = async (req) => {
   };
 };
 
+
+
 const ScheduleBulkSendService = async (req) => {
   const { templateName, scheduledAt } = req.body;
   const userId = req.user._id;
@@ -594,146 +729,307 @@ const ScheduleBulkSendService = async (req) => {
 };
 
 const sendBulkCatalogService = async (req) => {
-  const { templateName, message = {} } = req.body;
-  const userId = req.user._id;
-  const tenantId = req.tenant._id;
-  const projectId = req.params.projectId;
-
-  console.log(`[BulkCatalogService] Start processing bulk catalog send. User: ${userId}, Project: ${projectId}`);
-
-  const userBatchSize = await User.findOne({ _id: userId, tenantId }).select('batch_size');
-  const BATCH_SIZE = userBatchSize?.batch_size || 20;
-  console.log(`[BulkCatalogService] Using batch size: ${BATCH_SIZE}`);
-
-  if (!templateName || !req.file) {
-    console.log(`[BulkCatalogService] Missing required fields: templateName or file`);
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Missing_required_fields + " (templateName and file are required for bulk send).",
-    };
-  }
-
-  const project = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
-  if (!project) {
-    console.log(`[BulkCatalogService] Project not found or not owned by user: ${projectId}`);
-    return {
-      status: statusCode.NOT_FOUND,
-      success: false,
-      message: resMessage.No_data_found + " (Project not found or does not belong to you).",
-    };
-  }
-
-  if (!project.isWhatsappVerified || !project.metaPhoneNumberID) {
-    console.log(`[BulkCatalogService] WhatsApp number not verified/configured for project: ${projectId}`);
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Project_whatsapp_number_not_configured,
-    };
-  }
-
-  const phoneNumberId = project.metaPhoneNumberID;
-  const businessProfile = project.businessProfileId;
-
-  if (!businessProfile || !businessProfile.metaAccessToken || !businessProfile.metaBusinessId) {
-    console.log(`[BulkCatalogService] Meta API credentials missing for project: ${projectId}`);
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Meta_API_credentials_not_configured,
-    };
-  }
-
-  const accessToken = businessProfile.metaAccessToken;
-
-  const filePath = path.resolve(req.file.path);
-  console.log(`[BulkCatalogService] Reading Excel file: ${filePath}`);
-  let contacts = [];
   try {
-    const workbook = xlsx.readFile(filePath);
-    const sheetName = workbook.SheetNames[0];
-    const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
-    contacts = sheetData.filter((row) => row.mobilenumber);
+    const {
+      templateName,
+      parameters: defaultParameters = [],
+      scheduledTime: scheduledTimeStr,
+      typeofmessage,
+      productId,
+      metaCatalogId,
+      thumbnail_product_retailer_id,
+      sections = [] 
+    } = req.body;
 
-    console.log(`[BulkCatalogService] Found ${contacts.length} valid contacts in Excel.`);
+    const userId = req.user._id;
+    const tenantId = req.tenant._id;
+    const projectId = req.params.projectId;
 
-    if (contacts.length === 0) {
-      console.log(`[BulkCatalogService] No valid contacts in Excel.`);
+    if (!templateName || !req.file) {
       return {
         status: statusCode.BAD_REQUEST,
         success: false,
-        message: resMessage.No_valid_contacts_for_bulk_send,
+        message: `${resMessage.Missing_required_fields} (templateName and file are required)`
       };
     }
-  } catch (fileError) {
-    console.log(`[BulkCatalogService] Error reading Excel file:`, fileError.message);
-    return {
-      status: statusCode.BAD_REQUEST,
-      success: false,
-      message: resMessage.Invalid_file_format,
-    };
-  } finally {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-      console.log(`[BulkCatalogService] Deleted uploaded Excel file: ${filePath}`);
+
+    // ---------------------- Fetch project and business data ----------------------
+    const projectData = await Project.findOne({ _id: projectId, tenantId, userId }).populate("businessProfileId");
+    if (!projectData) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: `${resMessage.No_data_found} (Project not found or not owned by user)`
+      };
     }
-  }
 
-  
+    if (!projectData.isWhatsappVerified || !projectData.metaPhoneNumberID) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Project_whatsapp_number_not_configured
+      };
+    }
 
-  const baseMessage = { name: templateName, language: { code: templateLanguageCode } };
-  const contactBatches = chunkArray(contacts, BATCH_SIZE);
-  let totalSent = 0;
-  let totalFailed = 0;
-  const errorsSummary = [];
+    const businessData = projectData.businessProfileId;
+    if (!businessData || !businessData.metaAccessToken || !businessData.metaBusinessId) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: resMessage.Meta_API_credentials_not_configured
+      };
+    }
 
-  for (const [batchIndex, batch] of contactBatches.entries()) {
-    console.log(`[BulkCatalogService] Sending batch ${batchIndex + 1}/${contactBatches.length}, size: ${batch.length}`);
-    const sendPromises = batch.map(async (contactRow) => {
-      const mobileNumber = String(contactRow.mobilenumber);
-      const countryCode = String(contactRow.countrycode || "");
-      const to = `${countryCode}${mobileNumber}`;
+    const accessToken = businessData.metaAccessToken;
+    const phoneNumberId = projectData.metaPhoneNumberID;
 
-      if (!mobileNumber || mobileNumber.length < 5) {
-        totalFailed++;
-        errorsSummary.push({ to: mobileNumber, error: "Invalid mobile number format in Excel." });
-        console.log(`[BulkCatalogService] Invalid mobile number: ${mobileNumber}`);
-        return;
-      }
+    // ---------------------- Fetch approved template ----------------------
+    const localTemplate = await Template.findOne({
+      tenantId,
+      userId,
+      businessProfileId: businessData._id,
+      name: templateName,
+      metaStatus: "APPROVED",
+    });
 
-      const components = [];
-      const templateMessage = { name: baseMessage.name, language: baseMessage.language, components };
+    if (!localTemplate) {
+      return {
+        status: statusCode.BAD_REQUEST,
+        success: false,
+        message: `Template '${templateName}' not found locally or not approved. Please sync the template first.`
+      };
+    }
 
+    const templateLanguage = localTemplate.language || "en_US";
+    const originalFilePath = path.resolve(req.file.path);
+    const fileName = req.file.originalname || "manual_upload.xlsx";
+
+    // ---------------------- Core job execution ----------------------
+    async function runBulkSendJob(bulkSendJobId, filePath) {
+      const job = await BulkSendJob.findById(bulkSendJobId);
+      if (!job) return;
+
+      job.status = "in_progress";
+      job.startTime = job.startTime || new Date();
+      await job.save();
+
+      let contacts = [];
       try {
-        const sendResult = await sendCatalogTemplateMessage(to, parameters, phoneNumberId, templateName,accessToken);
-        console.log(`[BulkCatalogService] Message send result for ${to}: ${sendResult.success ? 'Success' : 'Failed'}`);
+        const workbook = xlsx.readFile(filePath);
+        const sheetName = workbook.SheetNames[0];
+        const sheetData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName]);
+        contacts = sheetData.map(row => {
+          const out = {};
+          Object.keys(row).forEach(k => out[String(k).trim()] = row[k]);
+          return out;
+        }).filter(row => row.mobilenumber);
 
-
-        if (sendResult.success) totalSent++;
-        else {
-          totalFailed++;
-          errorsSummary.push({ to, error: sendResult.error || "Unknown error" });
+        if (!contacts.length) {
+          job.status = "completed_with_errors";
+          job.totalSent = 0;
+          job.totalFailed = 0;
+          job.errorsSummary = [{ error: "Invalid file format or no mobilenumber column" }];
+          job.endTime = new Date();
+          await job.save();
+          return { totalSent: 0, totalFailed: 0, errorsSummary: job.errorsSummary };
         }
       } catch (err) {
-        totalFailed++;
-        errorsSummary.push({ to, error: err.message || "Unhandled exception" });
-        console.log(`[BulkCatalogService] Error sending message to ${to}: ${err.message}`);
+        job.status = "completed_with_errors";
+        job.errorsSummary = [{ error: "Invalid file format at send time: " + (err.message || err) }];
+        job.endTime = new Date();
+        await job.save();
+        return { totalSent: 0, totalFailed: 0, errorsSummary: job.errorsSummary };
       }
-    });
-    await Promise.allSettled(sendPromises);
-  }
-  console.log(`[BulkCatalogService] Bulk send job completed. Sent: ${totalSent}, Failed: ${totalFailed}`);
 
-  return {
-    status: statusCode.OK,
-    success: true,
-    message:
-      totalFailed > 0
-        ? resMessage.Bulk_send_completed_with_errors
-        : resMessage.Bulk_messages_sent_successfully,
-    data: { bulkSendJobId: bulkSendJob._id, totalSent, totalFailed, errorsSummary },
-  };
+      const batchSize = (await User.findById(job.userId).select("batch_size"))?.batch_size || 20;
+      const contactBatches = chunkArray(contacts, batchSize);
+
+      let totalSent = 0;
+      let totalFailed = 0;
+      const errorsSummary = [];
+
+      // --------------------- Collect placeholders from all template components ---------------------
+      const allComponents = localTemplate.components || [];
+      const placeholders = allComponents
+        .filter(c => ["BODY", "HEADER", "FOOTER"].includes(c.type.toUpperCase()) && typeof c.text === "string")
+        .map(c => [...c.text.matchAll(/{{(\d+)}}/g)].map(m => Number(m[1])))
+        .flat();
+      const uniqueSortedPlaceholderIndexes = [...new Set(placeholders)].sort((a, b) => a - b);
+
+      for (const batch of contactBatches) {
+        const sendPromises = batch.map(async contactRow => {
+          const mobileNumber = String(contactRow.mobilenumber).trim();
+          const countryCode = String(contactRow.countrycode || "").trim();
+          const to = `${countryCode}${mobileNumber}`;
+
+          if (!mobileNumber || mobileNumber.length < 5) {
+            totalFailed++;
+            errorsSummary.push({ to, error: "Invalid mobile number format" });
+            return;
+          }
+
+          // Build parameters
+          let contactParameters = [];
+          try {
+            if (uniqueSortedPlaceholderIndexes.length) {
+              contactParameters = uniqueSortedPlaceholderIndexes.map(index => {
+                const value = contactRow[`variable_${index}`] ??
+                              contactRow[`body_Example_${index}`] ??
+                              contactRow[`variable ${index}`] ??
+                              contactRow[`body_Example ${index}`] ?? "";
+                return typeof value === "string" ? value.trim() : value;
+              });
+              const missingIndex = contactParameters.findIndex(v => v === undefined || v === null || String(v).trim() === "");
+              if (missingIndex !== -1) {
+                totalFailed++;
+                errorsSummary.push({ to, error: `Missing template variable ${uniqueSortedPlaceholderIndexes[missingIndex]}` });
+                return;
+              }
+            } else {
+              contactParameters = job.defaultParameters || [];
+            }
+          } catch (err) {
+            totalFailed++;
+            errorsSummary.push({ to, error: "Parameter build error: " + err.message });
+            return;
+          }
+
+          try {
+            if (job.typeofmessage?.toLowerCase() === "spm") {
+              const product = job.productId || contactRow.product_id || contactRow.productid;
+              const catalog = job.metaCatalogId || contactRow.metaCatalogId || contactRow.meta_catalog_id;
+              if (!product || !catalog) {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Missing product id or metaCatalogId for SPM" });
+                return;
+              }
+              const res = await sendSPMTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, product, catalog, templateLanguage);
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
+            } else if (job.typeofmessage?.toLowerCase() === "mpm") {
+              if (!thumbnail_product_retailer_id || !sections.length) {
+                totalFailed++;
+                errorsSummary.push({ to, error: "Missing thumbnail_product_retailer_id or sections for MPM" });
+                return;
+              }
+              const res = await sendMPMTemplateMessage(
+                to,
+                contactParameters,
+                phoneNumberId,
+                job.templateName,
+                accessToken,
+                thumbnail_product_retailer_id,
+                sections,
+                templateLanguage
+              );
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
+            } else {
+              const res = await sendCatalogTemplateMessage(to, contactParameters, phoneNumberId, job.templateName, accessToken, templateLanguage);
+              res?.messages?.length > 0 ? totalSent++ : totalFailed++;
+            }
+          } catch (err) {
+            totalFailed++;
+            errorsSummary.push({ to, error: err.message || JSON.stringify(err) });
+          }
+        });
+        await Promise.allSettled(sendPromises);
+      }
+
+      job.totalSent = totalSent;
+      job.totalFailed = totalFailed;
+      job.errorsSummary = errorsSummary;
+      job.endTime = new Date();
+      job.status = totalFailed ? "completed_with_errors" : "completed";
+      await job.save();
+
+      try { if (fs.existsSync(filePath)) fs.unlinkSync(filePath); } catch(e) {}
+
+      return { totalSent, totalFailed, errorsSummary };
+    }
+
+    // ---------------------- Schedule or immediate ----------------------
+    const tempDir = path.resolve("uploads", "bulk");
+    fs.mkdirSync(tempDir, { recursive: true });
+    const tempFilePath = path.join(tempDir, `${Date.now()}_${fileName}`);
+    fs.copyFileSync(originalFilePath, tempFilePath);
+    try { if (fs.existsSync(originalFilePath)) fs.unlinkSync(originalFilePath); } catch(e){}
+
+    let bulkSendJob;
+    if (scheduledTimeStr) {
+      let scheduledMoment = moment.tz(scheduledTimeStr, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) scheduledMoment = moment.tz(scheduledTimeStr, moment.ISO_8601, "Asia/Kolkata");
+      if (!scheduledMoment.isValid()) return { status: 400, success: false, message: "Invalid scheduledTime format. Use 'YYYY-MM-DD HH:mm' or ISO format (IST)." };
+
+      const scheduledAt = scheduledMoment.toDate();
+      const delayMs = scheduledAt.getTime() - Date.now();
+      if (delayMs <= 0) return { status: 400, success: false, message: "Scheduled time must be in the future (IST)." };
+
+      bulkSendJob = await BulkSendJob.create({
+        tenantId,
+        userId,
+        projectId,
+        templateName,
+        fileName,
+        totalContacts: 0,
+        status: "scheduled",
+        scheduledTime: scheduledAt,
+        templateDetails: { components: localTemplate.components, language: templateLanguage },
+        defaultParameters,
+        typeofmessage: typeofmessage || "catalog",
+        productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
+        metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null,
+        thumbnail_product_retailer_id: typeofmessage?.toLowerCase() === "mpm" ? (thumbnail_product_retailer_id || null) : null,
+        sections: typeofmessage?.toLowerCase() === "mpm" ? (sections || []) : []
+      });
+
+      const scheduledDir = path.resolve("uploads", "scheduled");
+      fs.mkdirSync(scheduledDir, { recursive: true });
+      const scheduledFilePath = path.join(scheduledDir, `${bulkSendJob._id}_${fileName}`);
+      fs.copyFileSync(tempFilePath, scheduledFilePath);
+      try { if (fs.existsSync(tempFilePath)) fs.unlinkSync(tempFilePath); } catch(e){}
+
+      scheduleLongTimeout(async () => {
+        await runBulkSendJob(bulkSendJob._id, scheduledFilePath);
+      }, delayMs);
+
+      return {
+        status: 200,
+        success: true,
+        message: "Bulk send scheduled successfully.",
+        data: { bulkSendJobId: bulkSendJob._id, scheduledTime: scheduledAt }
+      };
+    }
+
+    bulkSendJob = await BulkSendJob.create({
+      tenantId,
+      userId,
+      projectId,
+      templateName,
+      fileName,
+      totalContacts: 0,
+      status: "scheduled",
+      startTime: new Date(),
+      templateDetails: { components: localTemplate.components, language: templateLanguage },
+      defaultParameters,
+      typeofmessage: typeofmessage || "catalog",
+      productId: typeofmessage?.toLowerCase() === "spm" ? (productId || null) : null,
+      metaCatalogId: typeofmessage?.toLowerCase() === "spm" ? (metaCatalogId || null) : null,
+      thumbnail_product_retailer_id: typeofmessage?.toLowerCase() === "mpm" ? (thumbnail_product_retailer_id || null) : null,
+      sections: typeofmessage?.toLowerCase() === "mpm" ? (sections || []) : []
+    });
+
+    const summary = await runBulkSendJob(bulkSendJob._id, tempFilePath);
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Bulk_send_started,
+      data: { bulkSendJobId: bulkSendJob._id, ...summary }
+    };
+
+  } catch (error) {
+    console.error("sendBulkCatalogService error:", error);
+    return { status: statusCode.INTERNAL_SERVER_ERROR, success: false, message: error.message || resMessage.Server_error };
+  }
 };
 
 const BulkSendGroupService = async (req) => {
@@ -741,6 +1037,7 @@ const BulkSendGroupService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
+  const BATCH_SIZE = 20;
 
   if (!templateName || !groupId) {
     return {
@@ -1092,19 +1389,71 @@ const getAllBulkSendJobsService = async (req) => {
   const userId = req.user._id;
   const tenantId = req.tenant._id;
   const projectId = req.params.projectId;
+  const { from, to } = req.query;
+  const page = parseInt(req.query.page || 1, 10);
+  const limit = parseInt(req.query.limit || 10, 10);
 
   try {
-    const jobs = await BulkSendJob.find({
+    const skip = (page - 1) * limit;
+
+    let dateFilter = {};
+    
+    if (from && to) {
+      const fromDate = new Date(`${from}T00:00:00+05:30`);
+      const toDate = new Date(`${to}T23:59:59+05:30`); 
+      
+      dateFilter = {
+        startTime: { $gte: fromDate, $lte: toDate }, 
+      };
+    }
+
+    const projection = {
+      templateName: 1,
+      totalSent: 1,
+      totalFailed: 1,
+      status: 1,
+      startTime: 1,
+      _id: 1 
+    };
+
+    const jobsRaw = await BulkSendJob.find({
       tenantId,
       userId,
       projectId,
-    }).sort({ startTime: -1 });
+      ...dateFilter,
+    }, projection)
+    .sort({ startTime: -1 })
+    .skip(skip)
+    .limit(limit);
+
+    // Count total jobs to calculate total pages
+    const totalJobs = await BulkSendJob.countDocuments({
+      tenantId,
+      userId,
+      projectId,
+      ...dateFilter, 
+    });
+
+    const jobs = jobsRaw.map(job => ({
+      _id: job._id,
+      templateName: job.templateName,
+      totalSent: job.totalSent,
+      totalFailed: job.totalFailed,
+      status: job.status,
+      startTime: job.startTime ? job.startTime : null
+    }));
 
     return {
       status: statusCode.OK,
       success: true,
       message: resMessage.Bulk_send_jobs_fetched,
       data: jobs,
+      pagination: {
+        page,
+        limit,
+        totalJobs,
+        totalPages: Math.ceil(totalJobs / limit),
+      },
     }; 
   } catch (error) {
     console.error("Error fetching all bulk send jobs:", error.stack);
@@ -1392,6 +1741,202 @@ const downloadMedia = async (req) => {
   }
 };
 
+// Get broadcast details by ID
+const getBulkSendJobById = async (req) => {
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+  const jobId = req.params.jobId;
+
+  try {
+    const job = await BulkSendJob.findOne({
+      _id: jobId,
+      tenantId,
+      userId,
+      projectId
+    });
+
+    if (!job) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Bulk_send_job_not_found,
+      };
+    }
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Bulk_send_job_fetched,
+      data: {
+        jobDetails: job,
+        messages: [] // You might want to include some message stats here
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching bulk send job:", error.stack);
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+// Get messages for a specific broadcast with pagination
+const getBroadcastMessages = async (req) => {
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+  const jobId = req.params.jobId;
+  const page = parseInt(req.query.page || 1, 10);
+  const limit = parseInt(req.query.limit || 10, 10);
+
+  try {
+    const skip = (page - 1) * limit;
+
+    // Verify job exists and belongs to user
+    const job = await BulkSendJob.findOne({
+      _id: jobId,
+      tenantId,
+      userId,
+      projectId
+    });
+
+    if (!job) {
+      return {
+        status: statusCode.NOT_FOUND,
+        success: false,
+        message: resMessage.Bulk_send_job_not_found,
+      };
+    }
+
+    // Fetch messages for this job
+    const messages = await Message.find({
+      bulkSendJobId: jobId,
+      tenantId,
+      projectId
+    })
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .select('to status errorMessage createdAt updatedAt');
+
+    const totalMessages = await Message.countDocuments({
+      bulkSendJobId: jobId,
+      tenantId,
+      projectId
+    });
+
+    return {
+      status: statusCode.OK,
+      success: true,
+      message: resMessage.Messages_fetched,
+      data: messages,
+      pagination: {
+        page,
+        limit,
+        total: totalMessages,
+        totalPages: Math.ceil(totalMessages / limit),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching broadcast messages:", error.stack);
+    return {
+      status: statusCode.INTERNAL_SERVER_ERROR,
+      success: false,
+      message: error.message || resMessage.Server_error,
+    };
+  }
+};
+
+// Export messages to CSV
+const exportBroadcastMessages = async (req, res) => {
+  const userId = req.user._id;
+  const tenantId = req.tenant._id;
+  const projectId = req.params.projectId;
+  const jobId = req.params.jobId;
+
+  try {
+    // Verify job exists and belongs to user
+    const job = await BulkSendJob.findOne({
+      _id: jobId,
+      tenantId,
+      userId,
+      projectId
+    });
+
+    if (!job) {
+      return res.status(statusCode.NOT_FOUND).json({
+        success: false,
+        message: resMessage.Bulk_send_job_not_found,
+      });
+    }
+
+    // Fetch all messages for this job
+    const messages = await Message.find({
+      bulkSendJobId: jobId,
+      tenantId,
+      projectId
+    }).sort({ createdAt: -1 });
+
+    // Create CSV content
+    const csvHeaders = ['Recipient', 'Status', 'Time', 'Error Message'];
+    const csvRows = messages.map(message => [
+      message.to,
+      message.status,
+      new Date(message.updatedAt).toLocaleString(),
+      message.errorMessage || ''
+    ]);
+
+    const csvContent = [
+      csvHeaders,
+      ...csvRows
+    ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename=broadcast-${jobId}-messages.csv`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error("Error exporting broadcast messages:", error.stack);
+    return res.status(statusCode.INTERNAL_SERVER_ERROR).json({
+      success: false,
+      message: error.message || resMessage.Server_error,
+    });
+  }}                                                                 
+const getBulkSendStatsService = async () => {
+    try {
+        const result = await BulkSendJob.aggregate([
+            {
+                $group: {
+                    _id: null,
+                    finalSent: { $sum: '$totalContacts' },
+                    finalSuccess: { $sum: '$totalSent' },
+                    finalFailed: { $sum: '$totalFailed' }
+                }
+            }
+        ]);
+
+        const stats = result[0] || { finalSent: 0, finalSuccess: 0, finalFailed: 0 };
+
+        return {
+            status: 200,
+            success: true,
+            message: 'Bulk send stats fetched successfully',
+            data: stats
+        };
+    } catch (error) {
+        console.error('Error in getBulkSendStatsService:', error);
+        return {
+            status: 500,
+            success: false,
+            message: 'Failed to fetch bulk send stats',
+            error: error.message
+        };
+    }
+}
+
 module.exports = {
   sendMessageService,
   sendWhatsAppMessages,
@@ -1402,5 +1947,10 @@ module.exports = {
   getBulkSendJobDetailsService,
   downloadMedia,
   ScheduleBulkSendService,
-  sendBulkCatalogService
+  sendBulkCatalogService,
+  getBulkSendJobById,
+  getBroadcastMessages,
+  exportBroadcastMessages,
+  sendFlowTemplateService,
+  getBulkSendStatsService
 };
